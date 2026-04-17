@@ -9,6 +9,7 @@
 
 <body style="margin:0">
 
+
 <a-scene mindar-image="imageTargetSrc: target.mind;" vr-mode-ui="enabled:false">
 
   <a-assets>
