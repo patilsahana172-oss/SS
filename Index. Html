@@ -10,10 +10,10 @@
 <body style="margin:0">
 
 
-<a-scene mindar-image="imageTargetSrc: target.mind;" vr-mode-ui="enabled:false">
+<a-scene mindar-image="imageTargetSrc: targets.mind;" vr-mode-ui="enabled:false">
 
   <a-assets>
-    <img id="rose" src="rose.png">
+    <img id="rose" src="Rose.png">
   </a-assets>
 
   <a-entity mindar-image-target="targetIndex: 0">
