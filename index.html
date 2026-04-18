@@ -2,31 +2,24 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stories App</title>
+<title>Instagram Stories Clone</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
 <style>
+body{margin:0;font-family:system-ui;background:#fafafa;}
 
-body{
-  margin:0;
-  font-family:system-ui;
-  background:#fafafa;
-}
-
-/* HEADER */
 .header{
   display:flex;
   justify-content:space-between;
-  align-items:center;
   padding:14px;
   background:white;
   box-shadow:0 2px 10px rgba(0,0,0,0.05);
 }
 
 .camera{
-  font-size:22px;
   background:linear-gradient(135deg,#ff6a00,#ee0979);
   color:white;
   padding:10px;
@@ -34,7 +27,6 @@ body{
   cursor:pointer;
 }
 
-/* STORIES */
 .stories{
   display:flex;
   overflow-x:auto;
@@ -43,26 +35,15 @@ body{
   background:white;
 }
 
-.story{
-  text-align:center;
-}
-
+.story{text-align:center;}
 .story img{
-  width:72px;
-  height:72px;
-  border-radius:50%;
+  width:72px;height:72px;border-radius:50%;
   object-fit:cover;
   padding:3px;
   background:conic-gradient(#f09433,#e6683c,#dc2743,#cc2366,#bc1888,#f09433);
 }
+.story span{font-size:12px;}
 
-.story span{
-  font-size:12px;
-  display:block;
-  margin-top:6px;
-}
-
-/* VIEWER */
 #viewer{
   display:none;
   position:fixed;
@@ -86,48 +67,21 @@ button{
   background:red;
   color:white;
   margin:5px;
-  cursor:pointer;
 }
-
-/* LOGIN */
-#loginBox{
-  position:fixed;
-  inset:0;
-  background:white;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  gap:10px;
-}
-
-#loginBox button{
-  padding:10px 20px;
-}
-
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div id="loginBox">
-  <h2>Login</h2>
-  <button onclick="login()">Enter App</button>
-</div>
-
-<!-- HEADER -->
 <div class="header">
   <b>Stories</b>
   <div class="camera" onclick="file.click()">📸</div>
 </div>
 
-<!-- STORIES -->
 <div class="stories" id="stories"></div>
 
-<!-- VIEWER -->
 <div id="viewer">
-  <button onclick="deleteStory()">Delete My Story</button>
+  <button onclick="deleteStory()">Delete</button>
   <img id="img">
 </div>
 
@@ -139,22 +93,25 @@ button{
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
   authDomain: "stories-web-52ddd.firebaseapp.com",
-  projectId: "stories-web-52ddd"
+  projectId: "stories-web-52ddd",
+  storageBucket: "stories-web-52ddd.appspot.com"
 };
 
 firebase.initializeApp(firebaseConfig);
+
 const db = firebase.firestore();
+const storage = firebase.storage();
 
 /* USER */
 let userId = localStorage.getItem("userId");
 let userName = localStorage.getItem("userName");
 
-/* STORY STATE */
+/* STATE */
 let currentStory = null;
 let index = 0;
 let timer;
 
-/* ================= LOGIN (FIRST TIME NAME ONLY) ================= */
+/* ================= LOGIN ================= */
 function login(){
 
   let mobile = localStorage.getItem("userId");
@@ -162,10 +119,7 @@ function login(){
   if(!mobile){
 
     mobile = prompt("Enter mobile number:");
-    if(!mobile) return;
-
     let name = prompt("Enter your name:");
-    if(!name) return;
 
     localStorage.setItem("userId", mobile);
     localStorage.setItem("userName", name);
@@ -174,39 +128,28 @@ function login(){
     userName = name;
 
   } else {
-
     userId = mobile;
     userName = localStorage.getItem("userName");
-
-    if(!userName){
-      userName = prompt("Enter your name:");
-      localStorage.setItem("userName", userName);
-    }
   }
 
-  document.getElementById("loginBox").style.display="none";
   loadStories();
 }
 
-/* AUTO LOGIN */
 window.onload = ()=>{
-  if(userId){
-    document.getElementById("loginBox").style.display="none";
-    loadStories();
-  }
+  if(userId) loadStories();
+  else login();
 };
 
-/* ================= UPLOAD (1 STORY PER USER ONLY) ================= */
+/* ================= IMAGE UPLOAD (PROPER STORAGE) ================= */
 file.onchange = async (e)=>{
 
   let files = [...e.target.files];
   let urls = [];
 
   for(let f of files){
-    urls.push(await toBase64(f));
+    urls.push(await uploadToStorage(f));
   }
 
-  // 🔥 ONE USER = ONE DOC (OVERWRITE OLD STORY)
   await db.collection("stories").doc(userId).set({
     userId,
     name:userName,
@@ -217,20 +160,20 @@ file.onchange = async (e)=>{
   file.value="";
 };
 
-/* convert image */
-function toBase64(file){
-  return new Promise(res=>{
-    let r = new FileReader();
-    r.onload = ()=>res(r.result);
-    r.readAsDataURL(file);
-  });
+/* upload to firebase storage */
+async function uploadToStorage(file){
+
+  const ref = storage.ref("stories/" + userId + "/" + Date.now() + "_" + file.name);
+
+  await ref.put(file);
+
+  return await ref.getDownloadURL();
 }
 
-/* ================= LOAD STORIES (EVERYONE CAN SEE ALL) ================= */
+/* ================= LOAD ================= */
 function loadStories(){
 
-  db.collection("stories")
-  .onSnapshot(snap=>{
+  db.collection("stories").onSnapshot(snap=>{
 
     let box = document.getElementById("stories");
     box.innerHTML="";
@@ -238,8 +181,7 @@ function loadStories(){
     snap.forEach(doc=>{
 
       let s = doc.data();
-
-      if(!s.images || s.images.length === 0) return;
+      if(!s.images?.length) return;
 
       let div = document.createElement("div");
       div.className="story";
@@ -257,7 +199,7 @@ function loadStories(){
   });
 }
 
-/* ================= OPEN STORY ================= */
+/* ================= OPEN ================= */
 function openStory(id,s){
 
   currentStory = {id,...s};
@@ -268,8 +210,6 @@ function openStory(id,s){
 }
 
 function show(){
-
-  if(!currentStory) return;
 
   if(index >= currentStory.images.length){
     viewer.style.display="none";
@@ -291,10 +231,8 @@ viewer.onclick=()=>{
   show();
 };
 
-/* ================= DELETE (ONLY OWNER) ================= */
+/* ================= DELETE ================= */
 async function deleteStory(){
-
-  if(!currentStory) return;
 
   if(currentStory.id !== userId){
     alert("Not allowed");
