@@ -2,25 +2,14 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wedding Stories</title>
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<title>Stories App</title>
 
 <style>
-body {
-  margin:0;
-  font-family:sans-serif;
-  background:#fafafa;
-}
+body { margin:0; font-family:sans-serif; background:#fafafa; }
 
-/* HEADER */
 .header {
   display:flex;
   justify-content:flex-end;
-  align-items:center;
   padding:10px;
   background:white;
   border-bottom:1px solid #ddd;
@@ -28,39 +17,20 @@ body {
 
 .header-right {
   display:flex;
-  align-items:center;
   gap:10px;
 }
 
-/* PROFILE */
-.profile {
+.profile, .camera {
   width:40px;
   height:40px;
   border-radius:50%;
   background:#ddd;
-  overflow:hidden;
-}
-
-.profile img {
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-
-/* CAMERA */
-.camera {
-  width:40px;
-  height:40px;
-  border-radius:50%;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:20px;
-  background:#f2f2f2;
   cursor:pointer;
 }
 
-/* STORIES */
 .stories {
   display:flex;
   overflow-x:auto;
@@ -69,24 +39,18 @@ body {
   background:white;
 }
 
-.story {
-  text-align:center;
-  cursor:pointer;
-}
-
 .story img {
   width:70px;
   height:70px;
   border-radius:50%;
   border:3px solid orange;
+  object-fit:cover;
 }
 
-/* STORY VIEW */
-#storyView {
+#viewer {
   display:none;
   position:fixed;
-  top:0;
-  left:0;
+  top:0; left:0;
   width:100%;
   height:100%;
   background:black;
@@ -95,13 +59,8 @@ body {
   flex-direction:column;
 }
 
-#storyView img {
+#viewer img {
   width:90%;
-}
-
-#storyName {
-  color:white;
-  margin-top:10px;
 }
 </style>
 </head>
@@ -110,156 +69,100 @@ body {
 
 <!-- HEADER -->
 <div class="header">
-
   <div class="header-right">
-
-    <!-- PROFILE -->
-    <div class="profile">
-      <img id="profileImg">
-    </div>
-
-    <!-- CAMERA -->
-    <div class="camera" onclick="document.getElementById('fileInput').click()">
-      📸
-    </div>
-
+    <div class="profile">👤</div>
+    <div class="camera" onclick="file.click()">📸</div>
   </div>
-
 </div>
 
 <!-- STORIES -->
 <div class="stories" id="stories"></div>
 
-<!-- STORY VIEW -->
-<div id="storyView">
-  <img id="storyImg">
-  <div id="storyName"></div>
+<!-- VIEWER -->
+<div id="viewer">
+  <img id="img">
 </div>
 
-<!-- FILE INPUT -->
-<input type="file" id="fileInput" accept="image/*" multiple hidden>
+<input type="file" id="file" accept="image/*" multiple hidden>
 
 <script>
 
-// 🔥 FIREBASE CONFIG
-const firebaseConfig = {
-  apiKey: "AIzaSyD4ADNcYbQwY2Fmzsx6HPqVDyJemDf_Acs",
-  authDomain: "ss-app-a0b1c.firebaseapp.com",
-  projectId: "ss-app-a0b1c",
-  storageBucket: "ss-app-a0b1c.appspot.com",
-  messagingSenderId: "665271763423",
-  appId: "1:665271763423:web:d16a375f11e1f58140846a"
-};
+let stories = [];
 
-firebase.initializeApp(firebaseConfig);
+// ☁️ UPLOAD FUNCTION (YOUR CLOUDINARY)
+async function uploadImage(file) {
 
-const db = firebase.firestore();
-const storage = firebase.storage();
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", "nipieidp");
 
-// 👤 default profile image
-document.getElementById("profileImg").src =
-"https://cdn-icons-png.flaticon.com/512/847/847969.png";
+  const res = await fetch(
+    "https://api.cloudinary.com/v1_1/nipieidp/image/upload",
+    {
+      method: "POST",
+      body: formData
+    }
+  );
 
-// 👤 USER ID
-let userId = localStorage.getItem("userId");
-if (!userId) {
-  userId = "user_" + Math.random().toString(36).substr(2,9);
-  localStorage.setItem("userId", userId);
+  const data = await res.json();
+  return data.secure_url;
 }
 
-// 📥 LOAD STORIES (FIXED)
-function loadStories() {
+// 📤 FILE UPLOAD
+file.onchange = async (e) => {
 
-  const container = document.getElementById("stories");
-
-  db.collection("stories")
-    .onSnapshot(snapshot => {
-
-      container.innerHTML = "";
-
-      snapshot.forEach(doc => {
-        const data = doc.data();
-
-        if (!data.images || data.images.length === 0) return;
-
-        const div = document.createElement("div");
-        div.className = "story";
-
-        div.innerHTML = `
-          <img src="${data.images[0]}">
-          <div>${data.name}</div>
-        `;
-
-        div.onclick = () => openStory(data.images, data.name);
-
-        container.appendChild(div);
-      });
-
-    });
-}
-
-// 📤 UPLOAD STORY (FIXED)
-document.getElementById("fileInput").onchange = async (e) => {
-
-  const files = e.target.files;
-
-  if (files.length > 5) {
-    alert("Max 5 images allowed");
-    return;
-  }
-
-  const name = prompt("Enter your name");
+  const files = [...e.target.files];
 
   let urls = [];
 
-  for (let file of files) {
-
-    const ref = storage.ref("stories/" + Date.now() + "_" + file.name);
-
-    await ref.put(file);
-
-    const url = await ref.getDownloadURL();
+  for (let f of files) {
+    const url = await uploadImage(f);
     urls.push(url);
   }
 
-  await db.collection("stories").add({
-    name: name || "Guest",
-    images: urls,
-    userId: userId,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  });
-
-  alert("Uploaded ✅");
-
-  // reset input
-  document.getElementById("fileInput").value = "";
+  stories.push(urls);
+  render();
 };
 
+// 📥 RENDER STORIES
+function render() {
+
+  const container = document.getElementById("stories");
+  container.innerHTML = "";
+
+  stories.forEach((s) => {
+
+    const div = document.createElement("div");
+    div.innerHTML = `<img src="${s[0]}">`;
+
+    div.onclick = () => openStory(s);
+
+    container.appendChild(div);
+  });
+}
+
 // 👀 VIEW STORY
-function openStory(images, name) {
+function openStory(images) {
 
-  let index = 0;
+  let i = 0;
 
-  document.getElementById("storyView").style.display = "flex";
-  document.getElementById("storyName").innerText = name;
+  document.getElementById("viewer").style.display = "flex";
 
   function show() {
-    if (index >= images.length) {
-      document.getElementById("storyView").style.display = "none";
+
+    if (i >= images.length) {
+      document.getElementById("viewer").style.display = "none";
       return;
     }
 
-    document.getElementById("storyImg").src = images[index];
-    index++;
+    document.getElementById("img").src = images[i];
+    i++;
 
-    setTimeout(show, 3000);
+    setTimeout(show, 2500);
   }
 
   show();
 }
-
-// 🚀 START
-loadStories();
 
 </script>
 
