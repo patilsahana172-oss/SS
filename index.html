@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stories Insta Fix</title>
+<title>Stories App</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -34,14 +34,13 @@ body{margin:0;font-family:system-ui;background:#fafafa;}
   background:white;
 }
 
+.story{text-align:center;}
 .story img{
   width:72px;height:72px;border-radius:50%;
   object-fit:cover;
-  background:conic-gradient(#f09433,#e6683c,#dc2743,#cc2366,#bc1888,#f09433);
   padding:3px;
+  background:conic-gradient(#f09433,#e6683c,#dc2743,#cc2366,#bc1888,#f09433);
 }
-
-.story{text-align:center;}
 .story span{font-size:12px;display:block;}
 
 #viewer{
@@ -60,15 +59,8 @@ body{margin:0;font-family:system-ui;background:#fafafa;}
   object-fit:contain;
 }
 
-#topBar{
-  position:absolute;
-  top:15px;
-  right:15px;
-}
-
 button{
   padding:10px;
-  margin-left:8px;
   border:none;
   border-radius:20px;
   background:red;
@@ -87,9 +79,7 @@ button{
 <div class="stories" id="stories"></div>
 
 <div id="viewer">
-  <div id="topBar">
-    <button onclick="deleteStory()">Delete</button>
-  </div>
+  <button onclick="deleteStory()">Delete</button>
   <img id="img">
 </div>
 
@@ -107,7 +97,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-/* USER ID (MOBILE BASED GLOBAL ID) */
+/* USER */
 let userId = localStorage.getItem("userId");
 let userName = localStorage.getItem("userName");
 
@@ -133,6 +123,7 @@ function login(){
   userName = name;
 
   localStorage.setItem("userId", userId);
+
   loadStories();
 }
 
@@ -141,17 +132,18 @@ window.onload = ()=>{
   else login();
 };
 
-/* ================= UPLOAD ================= */
+/* ================= UPLOAD (1 STORY ONLY PER USER) ================= */
 file.onchange = async (e)=>{
 
   let files = [...e.target.files];
   let urls = [];
 
   for(let f of files){
-    urls.push(await toBase64(f)); // FIX: REAL STORAGE SAFE
+    urls.push(await toBase64(f));
   }
 
-  await db.collection("stories").add({
+  // 🔥 IMPORTANT: SAME DOC EVERY TIME = 1 STORY PER USER
+  await db.collection("stories").doc(userId).set({
     userId,
     name:userName,
     images:urls,
@@ -174,7 +166,6 @@ function toBase64(file){
 function loadStories(){
 
   db.collection("stories")
-  .orderBy("createdAt","desc")
   .onSnapshot(snap=>{
 
     let box = document.getElementById("stories");
@@ -209,7 +200,6 @@ function open(id,s){
   index = 0;
 
   viewer.style.display="flex";
-
   show();
 }
 
@@ -247,7 +237,7 @@ async function deleteStory(){
     return;
   }
 
-  await db.collection("stories").doc(currentStory.id).delete();
+  await db.collection("stories").doc(userId).delete();
 
   viewer.style.display="none";
 }
