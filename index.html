@@ -2,10 +2,9 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Insta Stories</title>
+<title>SS Stories</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <style>
@@ -17,30 +16,35 @@ body{
   color:white;
 }
 
-/* HEADER */
 .header{
-  display:flex;
-  justify-content:space-between;
   padding:12px;
   background:#111;
+  display:flex;
+  justify-content:space-between;
 }
 
 .logo{
-  font-weight:800;
   color:#ff2d55;
+  font-weight:800;
 }
 
-.icon{
-  cursor:pointer;
+.box{
+  padding:15px;
 }
 
-/* STORIES BAR */
+input,button{
+  padding:10px;
+  margin:5px;
+  width:90%;
+}
+
+.hidden{display:none}
+
 .stories{
   display:flex;
   gap:10px;
   overflow-x:auto;
   padding:10px;
-  background:#111;
 }
 
 .story img{
@@ -50,7 +54,6 @@ body{
   border:2px solid #ff2d55;
 }
 
-/* VIEWER */
 #viewer{
   display:none;
   position:fixed;
@@ -62,43 +65,6 @@ body{
 
 #viewer img{
   width:100%;
-  max-height:100vh;
-  object-fit:contain;
-}
-
-/* LOGIN */
-.box{
-  padding:20px;
-}
-
-input,button{
-  padding:10px;
-  margin:5px;
-  width:90%;
-}
-
-/* ADMIN */
-#adminPanel{
-  display:none;
-  background:#111;
-  padding:15px;
-}
-
-.hidden{display:none}
-
-.progress{
-  position:absolute;
-  top:10px;
-  left:10px;
-  width:90%;
-  height:3px;
-  background:gray;
-}
-
-.bar{
-  height:3px;
-  background:#ff2d55;
-  width:0%;
 }
 
 </style>
@@ -106,142 +72,117 @@ input,button{
 
 <body>
 
-<!-- HEADER -->
 <div class="header">
-  <div class="logo">SS Stories</div>
-  <div class="icon" onclick="openAdmin()">⚙️</div>
+  <div class="logo">SS STORIES</div>
 </div>
 
 <!-- LOGIN -->
 <div id="loginBox" class="box">
-  <h3>Login with OTP</h3>
-  <input id="phone" placeholder="+91XXXXXXXXXX">
-  <button onclick="sendOTP()">Send OTP</button>
+  <h3>Enter Mobile Number</h3>
+  <input id="mobile" placeholder="Mobile number">
+  <button onclick="login()">Login</button>
 </div>
 
-<div id="otpBox" class="box hidden">
-  <input id="otp" placeholder="Enter OTP">
-  <button onclick="verifyOTP()">Verify</button>
+<!-- ADMIN LOGIN -->
+<div id="adminBox" class="box hidden">
+  <h3>Admin Login</h3>
+  <input id="auser" placeholder="Username">
+  <input id="apass" type="password" placeholder="Password">
+  <button onclick="adminLogin()">Login</button>
 </div>
 
-<div id="recaptcha-container"></div>
+<!-- APP -->
+<div id="app" class="hidden">
 
-<!-- UPLOAD -->
-<div id="uploadBox" class="box hidden">
-  <input type="file" id="file" multiple>
-  <button onclick="uploadStory()">Upload Story</button>
+  <div class="stories" id="stories"></div>
+
 </div>
-
-<!-- STORIES -->
-<div class="stories" id="stories"></div>
 
 <!-- VIEWER -->
-<div id="viewer" onclick="nextStory()">
-  <div class="progress"><div class="bar" id="bar"></div></div>
+<div id="viewer" onclick="next()">
   <img id="img">
-</div>
-
-<!-- ADMIN -->
-<div id="adminPanel">
-  <h3>Admin Panel</h3>
-  <input id="cat" placeholder="Category">
-  <button onclick="createCat()">Create</button>
-  <div id="cats"></div>
 </div>
 
 <script>
 
-/* 🔥 FIREBASE CONFIG */
+/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyBuhu2WM0jS55qnS59c87rtuVuF8TK-RkI",
   authDomain: "stories-web-52ddd.firebaseapp.com",
-  projectId: "stories-web-52ddd",
-  storageBucket: "stories-web-52ddd.appspot.com",
-  messagingSenderId: "649630516222",
-  appId: "1:649630516222:web:fc99a773dfa3414ceb76af"
+  projectId: "stories-web-52ddd"
 };
 
 firebase.initializeApp(firebaseConfig);
 
-const auth = firebase.auth();
 const db = firebase.firestore();
 
 /* STATE */
-let confirmResult;
-let user;
+let user="";
 let story=[];
 let index=0;
 
-/* ================= OTP ================= */
-function sendOTP(){
+/* ================= AUTO LOGIN ================= */
+window.onload = async function(){
 
-  let phone = document.getElementById("phone").value;
+  let saved = localStorage.getItem("user");
 
-  window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier(
-    "recaptcha-container",
-    {size:"invisible"}
-  );
-
-  auth.signInWithPhoneNumber(phone, window.recaptchaVerifier)
-  .then(res=>{
-    confirmResult = res;
-    otpBox.classList.remove("hidden");
-    alert("OTP sent");
-  })
-  .catch(err=>{
-    alert(err.message);
-  });
+  if(saved){
+    user = saved;
+    loginBox.style.display="none";
+    app.classList.remove("hidden");
+    loadStories();
+  }
 
 }
 
-function verifyOTP(){
+/* ================= USER LOGIN ================= */
+async function login(){
 
-  let code = document.getElementById("otp").value;
+  let m = mobile.value.trim();
 
-  confirmResult.confirm(code)
-  .then(res=>{
+  if(!m){
+    alert("Enter mobile");
+    return;
+  }
 
-    user = res.user.phoneNumber;
+  let doc = await db.collection("users").doc(m).get();
+
+  if(doc.exists){
+
+    user = m;
+
+    localStorage.setItem("user", m);
 
     loginBox.style.display="none";
-    otpBox.style.display="none";
-    uploadBox.classList.remove("hidden");
+    app.classList.remove("hidden");
 
     loadStories();
 
-  })
-  .catch(err=>{
-    alert("Wrong OTP");
-  });
+    alert("Login success");
+
+  }else{
+    alert("Wrong mobile number");
+  }
 
 }
 
-/* ================= UPLOAD ================= */
-async function uploadStory(){
+/* ================= ADMIN LOGIN ================= */
+function adminLogin(){
 
-  let files = file.files;
-  let urls=[];
+  let u = auser.value;
+  let p = apass.value;
 
-  for(let f of files){
+  if(u==="jai_jinendra" && p==="1234"){
 
-    let form = new FormData();
-    form.append("file",f);
-    form.append("upload_preset","nipieidp");
+    adminBox.classList.add("hidden");
+    app.classList.remove("hidden");
 
-    let res = await fetch(
-      "https://api.cloudinary.com/v1_1/dahg3tht7/image/upload",
-      {method:"POST",body:form}
-    );
+    loadStories();
 
-    let data = await res.json();
-    urls.push(data.secure_url);
+  }else{
+    alert("Wrong admin login");
   }
 
-  await db.collection("stories").doc(user).set({
-    images:urls
-  });
-
-  alert("Uploaded");
 }
 
 /* ================= LOAD STORIES ================= */
@@ -258,7 +199,7 @@ function loadStories(){
 
       div.innerHTML=`<img src="${doc.data().images[0]}">`;
 
-      div.onclick=()=>openStory(doc.data().images);
+      div.onclick=()=>open(doc.data().images);
 
       stories.appendChild(div);
     });
@@ -267,8 +208,8 @@ function loadStories(){
 
 }
 
-/* ================= STORY VIEW ================= */
-function openStory(imgs){
+/* ================= VIEW STORY ================= */
+function open(imgs){
 
   story = imgs;
   index = 0;
@@ -276,68 +217,20 @@ function openStory(imgs){
   viewer.style.display="flex";
 
   show();
+
 }
 
 function show(){
-
   img.src = story[index];
-
-  bar.style.width="0%";
-
-  let t=0;
-
-  let interval = setInterval(()=>{
-
-    t+=2;
-    bar.style.width=t+"%";
-
-    if(t>=100){
-      clearInterval(interval);
-      nextStory();
-    }
-
-  },60);
-
 }
 
-function nextStory(){
-
+function next(){
   index++;
-
   if(index>=story.length){
     viewer.style.display="none";
     return;
   }
-
   show();
-}
-
-/* ================= ADMIN ================= */
-function openAdmin(){
-  adminPanel.style.display="block";
-}
-
-async function createCat(){
-
-  await db.collection("categories").add({
-    name:cat.value
-  });
-
-  loadCats();
-}
-
-function loadCats(){
-
-  db.collection("categories").onSnapshot(snap=>{
-
-    cats.innerHTML="";
-
-    snap.forEach(doc=>{
-      cats.innerHTML += `<div>${doc.data().name}</div>`;
-    });
-
-  });
-
 }
 
 </script>
