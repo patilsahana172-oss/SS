@@ -21,14 +21,12 @@ body {
   border-bottom:1px solid #ddd;
 }
 
-/* LEFT SIDE */
 .left {
   display:flex;
   align-items:center;
   gap:10px;
 }
 
-/* LOGO */
 .logo {
   width:40px;
   height:40px;
@@ -43,7 +41,6 @@ body {
   object-fit:cover;
 }
 
-/* CAMERA */
 .camera {
   font-size:22px;
   cursor:pointer;
@@ -59,6 +56,7 @@ body {
 }
 
 .story {
+  text-align:center;
   position:relative;
 }
 
@@ -68,6 +66,12 @@ body {
   border-radius:50%;
   border:3px solid orange;
   object-fit:cover;
+}
+
+.story span {
+  font-size:12px;
+  display:block;
+  margin-top:4px;
 }
 
 /* DELETE */
@@ -96,10 +100,16 @@ body {
   background:black;
   justify-content:center;
   align-items:center;
+  flex-direction:column;
 }
 
 #viewer img {
   width:90%;
+}
+
+#viewerName {
+  color:white;
+  margin-top:10px;
 }
 </style>
 </head>
@@ -125,13 +135,16 @@ body {
 <!-- VIEWER -->
 <div id="viewer">
   <img id="img">
+  <div id="viewerName"></div>
 </div>
 
-<input type="file" id="file" multiple accept="image/*" hidden>
+<!-- CAMERA + GALLERY -->
+<input type="file" id="file" multiple accept="image/*" capture="environment" hidden>
 
 <script>
 
 let userStory = JSON.parse(localStorage.getItem("userStory")) || null;
+let userName = localStorage.getItem("userName") || "";
 
 /* ☁️ CLOUDINARY UPLOAD */
 async function uploadImage(file) {
@@ -163,10 +176,23 @@ file.onchange = async (e) => {
 
   const files = [...e.target.files];
 
-  if (files.length > 6) {
-    alert("Only 6 images allowed");
+  // ❌ MINIMUM 6 CHECK
+  if (files.length < 6) {
+    alert("Please upload minimum 6 images ❌");
     return;
   }
+
+  // ❌ MAXIMUM 6 CHECK
+  if (files.length > 6) {
+    alert("Only 6 images allowed ❌");
+    return;
+  }
+
+  let name = prompt("Enter your name:");
+  if (!name) return;
+
+  userName = name;
+  localStorage.setItem("userName", userName);
 
   let urls = [];
 
@@ -199,6 +225,7 @@ function render() {
 
     div.innerHTML = `
       <img src="${userStory[0]}">
+      <span>${userName || "User"}</span>
       <button class="del" onclick="deleteStory()">x</button>
     `;
 
@@ -208,19 +235,20 @@ function render() {
   }
 }
 
-/* ❌ DELETE STORY */
+/* ❌ DELETE */
 function deleteStory() {
   userStory = null;
   localStorage.removeItem("userStory");
   render();
 }
 
-/* 👀 STORY SLIDESHOW FIXED */
+/* 👀 STORY VIEW */
 function openStory(images) {
 
   let i = 0;
 
   document.getElementById("viewer").style.display = "flex";
+  document.getElementById("viewerName").innerText = userName;
 
   function show() {
 
@@ -232,9 +260,6 @@ function openStory(images) {
     document.getElementById("img").src = images[i];
     i++;
 
-    // ⏱ RULE:
-    // 1 image → 4 sec
-    // multiple → 3 sec
     let delay = (images.length === 1) ? 4000 : 3000;
 
     setTimeout(show, delay);
