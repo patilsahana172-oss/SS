@@ -14,8 +14,8 @@ body {
 /* HEADER */
 .header {
   display:flex;
-  align-items:center;
   justify-content:space-between;
+  align-items:center;
   padding:10px;
   background:white;
   border-bottom:1px solid #ddd;
@@ -33,8 +33,8 @@ body {
   width:40px;
   height:40px;
   border-radius:50%;
-  background:#ddd;
   overflow:hidden;
+  background:#ddd;
 }
 
 .logo img {
@@ -60,7 +60,6 @@ body {
 
 .story {
   position:relative;
-  text-align:center;
 }
 
 .story img {
@@ -71,22 +70,22 @@ body {
   object-fit:cover;
 }
 
-/* DELETE BUTTON */
+/* DELETE */
 .del {
   position:absolute;
   top:-5px;
   right:-5px;
-  background:red;
-  color:white;
-  border:none;
-  border-radius:50%;
   width:20px;
   height:20px;
+  border:none;
+  border-radius:50%;
+  background:red;
+  color:white;
   font-size:12px;
   cursor:pointer;
 }
 
-/* FULL SCREEN */
+/* VIEWER */
 #viewer {
   display:none;
   position:fixed;
@@ -111,12 +110,10 @@ body {
 <div class="header">
 
   <div class="left">
-    <!-- LOGO -->
     <div class="logo">
       <img id="logoImg" src="">
     </div>
 
-    <!-- CAMERA -->
     <div class="camera" onclick="file.click()">📸</div>
   </div>
 
@@ -134,10 +131,9 @@ body {
 
 <script>
 
-let stories = [];
-let userStory = null;
+let userStory = JSON.parse(localStorage.getItem("userStory")) || null;
 
-/* ☁️ UPLOAD */
+/* ☁️ CLOUDINARY UPLOAD */
 async function uploadImage(file) {
 
   const formData = new FormData();
@@ -155,7 +151,7 @@ async function uploadImage(file) {
   const data = await res.json();
 
   if (data.error) {
-    alert(data.error.message);
+    alert("Upload failed ❌ " + data.error.message);
     return null;
   }
 
@@ -181,7 +177,10 @@ file.onchange = async (e) => {
 
   if (urls.length === 0) return;
 
-  userStory = urls; // ONLY 1 STORY PER USER
+  userStory = urls;
+
+  localStorage.setItem("userStory", JSON.stringify(userStory));
+
   render();
 
   file.value = "";
@@ -212,10 +211,11 @@ function render() {
 /* ❌ DELETE STORY */
 function deleteStory() {
   userStory = null;
+  localStorage.removeItem("userStory");
   render();
 }
 
-/* 👀 OPEN STORY */
+/* 👀 STORY SLIDESHOW FIXED */
 function openStory(images) {
 
   let i = 0;
@@ -232,11 +232,19 @@ function openStory(images) {
     document.getElementById("img").src = images[i];
     i++;
 
-    setTimeout(show, 4000); // 4 sec
+    // ⏱ RULE:
+    // 1 image → 4 sec
+    // multiple → 3 sec
+    let delay = (images.length === 1) ? 4000 : 3000;
+
+    setTimeout(show, delay);
   }
 
   show();
 }
+
+/* INIT */
+render();
 
 </script>
 
