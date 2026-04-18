@@ -2,9 +2,11 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stories App</title>
+<title>Stories App OTP</title>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <style>
@@ -99,18 +101,25 @@ button{
   <div class="adminIcon" onclick="openAdmin()">⚙️</div>
 </div>
 
-<!-- LOGIN -->
+<!-- OTP LOGIN -->
 <div id="loginBox" class="box">
-  <h3>User Login</h3>
-  <input id="mobile" placeholder="Mobile">
-  <input id="pass" type="password" placeholder="Password">
-  <button onclick="login()">Login</button>
+  <h3>Login with OTP</h3>
+  <input id="phone" placeholder="+91XXXXXXXXXX">
+  <button onclick="sendOTP()">Send OTP</button>
 </div>
+
+<div id="otpBox" class="box hidden">
+  <h3>Enter OTP</h3>
+  <input id="otp" placeholder="OTP">
+  <button onclick="verifyOTP()">Verify</button>
+</div>
+
+<div id="recaptcha-container"></div>
 
 <!-- UPLOAD -->
 <div id="uploadBox" class="box hidden">
   <h3>Upload Story</h3>
-  <input type="file" id="file" multiple accept="image/*">
+  <input type="file" id="file" multiple>
   <button onclick="uploadStory()">Upload</button>
 </div>
 
@@ -120,6 +129,23 @@ button{
 <!-- VIEWER -->
 <div id="viewer" onclick="nextStory()">
   <img id="img">
+</div>
+
+<!-- ADMIN LOGIN -->
+<div id="adminBox" class="box hidden">
+  <h3>Admin Login</h3>
+  <input id="amobile" placeholder="Mobile">
+  <input id="apass" type="password" placeholder="Password">
+  <button onclick="adminLogin()">Login</button>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="adminPanel" class="box hidden">
+  <h3>Create Category</h3>
+  <input id="cat" placeholder="Category">
+  <button onclick="createCat()">Create</button>
+
+  <div id="cats"></div>
 </div>
 
 <script>
@@ -132,6 +158,8 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
 const db = firebase.firestore();
 
 /* CLOUDINARY */
@@ -142,66 +170,66 @@ const PRESET = "nipieidp";
 let user = null;
 let story = [];
 let index = 0;
+let confirmResult;
 
-/* ================= LOGIN (FIXED 100%) ================= */
-async function login(){
+/* ================= OTP SEND ================= */
+function sendOTP(){
 
-  try{
+  let phone = document.getElementById("phone").value;
 
-    let m = document.getElementById("mobile").value.trim();
-    let p = document.getElementById("pass").value.trim();
-
-    if(!m || !p){
-      alert("Enter mobile and password");
-      return;
-    }
-
-    console.log("Login attempt:", m);
-
-    let docRef = db.collection("users").doc(m);
-    let doc = await docRef.get();
-
-    if(!doc.exists){
-      alert("User not found in Firebase");
-      return;
-    }
-
-    let data = doc.data();
-
-    if(data.password !== p){
-      alert("Wrong password");
-      return;
-    }
-
-    // SUCCESS
-    user = m;
-
-    console.log("Login success");
-
-    // UI SWITCH FIXED
-    document.getElementById("loginBox").style.display = "none";
-    document.getElementById("uploadBox").style.display = "block";
-
-    loadStories();
-
-    alert("Login successful");
-
-  }catch(err){
-    console.error("LOGIN ERROR:", err);
-    alert("Login error → check console");
+  if(!phone){
+    alert("Enter mobile");
+    return;
   }
+
+  window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier(
+    "recaptcha-container",
+    { size: "invisible" }
+  );
+
+  auth.signInWithPhoneNumber(phone, window.recaptchaVerifier)
+    .then(result=>{
+
+      confirmResult = result;
+
+      alert("OTP sent");
+
+      document.getElementById("otpBox").classList.remove("hidden");
+
+    }).catch(err=>{
+      alert(err.message);
+      console.log(err);
+    });
+}
+
+/* ================= VERIFY OTP ================= */
+function verifyOTP(){
+
+  let code = document.getElementById("otp").value;
+
+  confirmResult.confirm(code)
+    .then(result=>{
+
+      user = result.user.phoneNumber;
+
+      alert("Login success");
+
+      document.getElementById("loginBox").style.display="none";
+      document.getElementById("otpBox").style.display="none";
+      document.getElementById("uploadBox").style.display="block";
+
+      loadStories();
+
+    })
+    .catch(err=>{
+      alert("Wrong OTP");
+    });
 }
 
 /* ================= UPLOAD STORY ================= */
 async function uploadStory(){
 
   let files = document.getElementById("file").files;
-
-  if(files.length === 0){
-    alert("Select images");
-    return;
-  }
-
   let urls = [];
 
   for(let f of files){
@@ -220,10 +248,10 @@ async function uploadStory(){
   }
 
   await db.collection("stories").doc(user).set({
-    images: urls
+    images:urls
   });
 
-  alert("Story uploaded");
+  alert("Uploaded");
 }
 
 /* ================= LOAD STORIES ================= */
@@ -235,12 +263,12 @@ function loadStories(){
 
     snap.forEach(doc=>{
 
-      let div = document.createElement("div");
-      div.className = "story";
+      let div=document.createElement("div");
+      div.className="story";
 
-      div.innerHTML = `<img src="${doc.data().images[0]}">`;
+      div.innerHTML=`<img src="${doc.data().images[0]}">`;
 
-      div.onclick = () => openStory(doc.data().images);
+      div.onclick=()=>openStory(doc.data().images);
 
       stories.appendChild(div);
     });
@@ -249,18 +277,15 @@ function loadStories(){
 
 /* ================= STORY VIEW ================= */
 function openStory(imgs){
-
   story = imgs;
   index = 0;
 
-  viewer.style.display = "flex";
+  viewer.style.display="flex";
 
   show();
 }
 
-/* SHOW */
 function show(){
-
   img.src = story[index];
 
   setTimeout(()=>{
@@ -268,22 +293,60 @@ function show(){
   },3000);
 }
 
-/* NEXT */
 function nextStory(){
-
   index++;
 
-  if(index >= story.length){
-    viewer.style.display = "none";
+  if(index>=story.length){
+    viewer.style.display="none";
     return;
   }
 
   show();
 }
 
-/* ================= ADMIN ICON (placeholder) ================= */
+/* ================= ADMIN ================= */
 function openAdmin(){
-  alert("Admin feature coming next step");
+  adminBox.classList.remove("hidden");
+}
+
+async function adminLogin(){
+
+  let m = amobile.value;
+  let p = apass.value;
+
+  let doc = await db.collection("admin").doc(m).get();
+
+  if(doc.exists && doc.data().password === p){
+
+    adminBox.classList.add("hidden");
+    adminPanel.classList.remove("hidden");
+
+    loadCats();
+
+  }else{
+    alert("Invalid admin");
+  }
+}
+
+async function createCat(){
+
+  await db.collection("categories").add({
+    name:cat.value
+  });
+
+  loadCats();
+}
+
+function loadCats(){
+
+  db.collection("categories").onSnapshot(snap=>{
+
+    cats.innerHTML="";
+
+    snap.forEach(doc=>{
+      cats.innerHTML += `<div>${doc.data().name}</div>`;
+    });
+  });
 }
 
 </script>
