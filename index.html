@@ -54,7 +54,7 @@ body {
   object-fit:cover;
 }
 
-/* VIEW */
+/* VIEWER */
 #viewer {
   display:none;
   position:fixed;
@@ -105,7 +105,7 @@ async function uploadImage(file) {
   formData.append("upload_preset", "nipieidp"); // your preset
 
   const res = await fetch(
-    "https://api.cloudinary.com/v1_1/nipieidp/image/upload",
+    "https://api.cloudinary.com/v1_1/dahg3tht7/image/upload",
     {
       method: "POST",
       body: formData
@@ -114,11 +114,10 @@ async function uploadImage(file) {
 
   const data = await res.json();
 
-  console.log("Cloudinary response:", data); // IMPORTANT
+  console.log("Cloudinary response:", data);
 
   if (data.error) {
     alert("Upload failed ❌ " + data.error.message);
-    console.error(data.error);
     return null;
   }
 
@@ -133,16 +132,11 @@ file.onchange = async (e) => {
   let urls = [];
 
   for (let f of files) {
-
     const url = await uploadImage(f);
-
     if (url) urls.push(url);
   }
 
-  if (urls.length === 0) {
-    alert("No images uploaded ❌");
-    return;
-  }
+  if (urls.length === 0) return;
 
   stories.push(urls);
   render();
