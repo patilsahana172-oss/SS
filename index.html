@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SS Stories Pro</title>
+<title>SS Stories</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -16,12 +16,12 @@ body{
   color:white;
 }
 
-/* HEADER */
+/* HEADER (YOUR OLD STYLE KEEP SIMPLE) */
 .header{
-  display:flex;
-  justify-content:space-between;
   padding:12px;
   background:#111;
+  display:flex;
+  justify-content:space-between;
 }
 
 .logo{
@@ -29,7 +29,7 @@ body{
   color:#ff2d55;
 }
 
-/* LOGIN */
+/* BOX */
 .box{
   padding:15px;
 }
@@ -43,8 +43,8 @@ input,button{
 /* STORIES */
 .stories{
   display:flex;
-  overflow-x:auto;
   gap:10px;
+  overflow-x:auto;
   padding:10px;
   background:#111;
 }
@@ -73,6 +73,20 @@ input,button{
   object-fit:contain;
 }
 
+/* FOOTER */
+.footer{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  background:#111;
+  display:flex;
+  justify-content:space-around;
+  padding:10px;
+  border-top:1px solid #333;
+}
+
+/* HIDE */
 .hidden{display:none}
 
 </style>
@@ -80,6 +94,7 @@ input,button{
 
 <body>
 
+<!-- HEADER -->
 <div class="header">
   <div class="logo">SS STORIES</div>
 </div>
@@ -102,12 +117,10 @@ input,button{
 <!-- APP -->
 <div id="app" class="hidden">
 
-  <h3 style="padding-left:10px">Stories</h3>
-
   <div class="stories" id="stories"></div>
 
   <div class="box">
-    <h4>Upload Story Images</h4>
+    <h4>Upload Story</h4>
     <input type="file" id="file" multiple>
     <button onclick="upload()">Upload</button>
   </div>
@@ -117,6 +130,14 @@ input,button{
 <!-- VIEWER -->
 <div id="viewer" onclick="next()">
   <img id="img">
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div>🏠 Home</div>
+  <div>➕ Upload</div>
+  <div>❤️</div>
+  <div>👤 Profile</div>
 </div>
 
 <script>
@@ -153,20 +174,19 @@ window.onload = function(){
 
 }
 
-/* ================= LOGIN ================= */
+/* ================= LOGIN (AUTO REGISTER) ================= */
 async function login(){
 
   let m = mobile.value.trim();
 
   if(!m){
-    alert("Enter mobile");
+    alert("Enter mobile number");
     return;
   }
 
   let ref = db.collection("users").doc(m);
   let doc = await ref.get();
 
-  // 🔥 AUTO REGISTER IF NEW USER
   if(!doc.exists){
     await ref.set({ createdAt: Date.now() });
   }
@@ -201,7 +221,7 @@ function adminLogin(){
 
 }
 
-/* ================= UPLOAD (APPEND MODE) ================= */
+/* ================= UPLOAD (APPEND ONLY) ================= */
 async function upload(){
 
   let files = file.files;
@@ -221,7 +241,7 @@ async function upload(){
 
     let res = await fetch(
       "https://api.cloudinary.com/v1_1/dahg3tht7/image/upload",
-      { method: "POST", body: form }
+      { method:"POST", body:form }
     );
 
     let data = await res.json();
@@ -231,13 +251,8 @@ async function upload(){
   let ref = db.collection("stories").doc(user);
   let doc = await ref.get();
 
-  let old = [];
+  let old = doc.exists ? (doc.data().images || []) : [];
 
-  if(doc.exists){
-    old = doc.data().images || [];
-  }
-
-  // 🔥 APPEND (NOT REPLACE)
   let updated = old.concat(urls);
 
   await ref.set({
@@ -245,7 +260,7 @@ async function upload(){
     updatedAt: Date.now()
   });
 
-  alert("Images added to your story");
+  alert("Story updated");
 
 }
 
@@ -272,7 +287,7 @@ function loadStories(){
 
 }
 
-/* ================= STORY VIEW ================= */
+/* ================= VIEW STORY ================= */
 function open(imgs){
 
   story = imgs;
@@ -291,7 +306,7 @@ function show(){
 function next(){
   index++;
 
-  if(index >= story.length){
+  if(index>=story.length){
     viewer.style.display="none";
     return;
   }
