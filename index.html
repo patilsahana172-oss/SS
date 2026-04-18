@@ -4,12 +4,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Stories App</title>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
 <style>
-body {
-  margin:0;
-  font-family:sans-serif;
-  background:#fafafa;
-}
+body { margin:0; font-family:sans-serif; background:#fafafa; }
 
 /* HEADER */
 .header {
@@ -35,11 +34,7 @@ body {
   background:#ddd;
 }
 
-.logo img {
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
+.logo img { width:100%; height:100%; object-fit:cover; }
 
 .camera {
   font-size:22px;
@@ -57,6 +52,7 @@ body {
 
 .story {
   text-align:center;
+  cursor:pointer;
 }
 
 .story img {
@@ -73,7 +69,7 @@ body {
   margin-top:4px;
 }
 
-/* VIEW */
+/* VIEWER */
 #viewer {
   display:none;
   position:fixed;
@@ -87,9 +83,7 @@ body {
   flex-direction:column;
 }
 
-#viewer img {
-  width:90%;
-}
+#viewer img { width:90%; }
 
 #viewerName {
   color:white;
@@ -100,11 +94,10 @@ body {
 
 <body>
 
+<!-- HEADER -->
 <div class="header">
   <div class="left">
-    <div class="logo">
-      <img id="logoImg" src="">
-    </div>
+    <div class="logo"><img src=""></div>
     <div class="camera" onclick="file.click()">📸</div>
   </div>
 </div>
@@ -120,48 +113,32 @@ body {
 
 <script>
 
+/* 🔥 FIREBASE */
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "stories-web-52ddd.firebaseapp.com",
+  projectId: "stories-web-52ddd",
+  storageBucket: "stories-web-52ddd.appspot.com"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+/* ☁️ CLOUDINARY */
 const CLOUD = "dahg3tht7";
 const PRESET = "nipieidp";
 
-let stories = []; // global from cloud
+/* LOAD STORIES */
+db.collection("stories").orderBy("time","desc")
+  .onSnapshot(snapshot => {
 
-/* ☁️ LOAD STORIES FROM CLOUD */
-async function loadStories() {
+    const data = [];
+    snapshot.forEach(doc => data.push(doc.data()));
+    render(data);
 
-  const res = await fetch(
-    `https://res.cloudinary.com/${CLOUD}/raw/upload/stories.json`
-  );
+  });
 
-  if (res.ok) {
-    stories = await res.json();
-  }
-
-  render();
-}
-
-/* ☁️ SAVE STORIES TO CLOUD */
-async function saveStories() {
-
-  const blob = new Blob(
-    [JSON.stringify(stories)],
-    { type: "application/json" }
-  );
-
-  const form = new FormData();
-  form.append("file", blob);
-  form.append("upload_preset", PRESET);
-  form.append("resource_type", "raw");
-
-  await fetch(
-    `https://api.cloudinary.com/v1_1/${CLOUD}/raw/upload`,
-    {
-      method: "POST",
-      body: form
-    }
-  );
-}
-
-/* 📤 UPLOAD IMAGE */
+/* UPLOAD IMAGE */
 async function uploadImage(file) {
 
   const form = new FormData();
@@ -177,17 +154,16 @@ async function uploadImage(file) {
   );
 
   const data = await res.json();
-
   return data.secure_url;
 }
 
-/* 📸 UPLOAD STORY */
+/* UPLOAD STORY */
 file.onchange = async (e) => {
 
   const files = [...e.target.files];
 
   if (files.length > 6) {
-    alert("Max 6 images");
+    alert("Max 6 images allowed");
     return;
   }
 
@@ -201,23 +177,17 @@ file.onchange = async (e) => {
     urls.push(url);
   }
 
-  const story = {
-    id: Date.now(),
+  await db.collection("stories").add({
     name,
-    images: urls
-  };
-
-  stories.push(story);
-
-  await saveStories();
-
-  render();
+    images: urls,
+    time: Date.now()
+  });
 
   file.value = "";
 };
 
-/* 📥 RENDER */
-function render() {
+/* RENDER */
+function render(stories) {
 
   const c = document.getElementById("stories");
   c.innerHTML = "";
@@ -238,22 +208,22 @@ function render() {
   });
 }
 
-/* 👀 VIEW STORY */
-function openStory(story) {
+/* STORY VIEW */
+function openStory(s) {
 
   let i = 0;
 
   document.getElementById("viewer").style.display = "flex";
-  document.getElementById("viewerName").innerText = story.name;
+  document.getElementById("viewerName").innerText = s.name;
 
   function show() {
 
-    if (i >= story.images.length) {
+    if (i >= s.images.length) {
       document.getElementById("viewer").style.display = "none";
       return;
     }
 
-    document.getElementById("img").src = story.images[i];
+    document.getElementById("img").src = s.images[i];
     i++;
 
     setTimeout(show, 3000);
@@ -261,9 +231,6 @@ function openStory(story) {
 
   show();
 }
-
-/* START */
-loadStories();
 
 </script>
 
