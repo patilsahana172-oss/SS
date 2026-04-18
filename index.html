@@ -106,23 +106,9 @@ body{
   margin-left:8px;
 }
 
-/* FOOTER */
-.footer{
-  position:fixed;
-  bottom:0;
-  left:0;
-  right:0;
-  background:white;
-  display:flex;
-  justify-content:space-around;
-  padding:10px;
-  border-top:1px solid #ddd;
-}
-
-/* LOGIN SCREEN */
+/* LOGIN */
 #loginBox{
   padding:20px;
-  display:none;
 }
 
 .hidden{display:none}
@@ -146,7 +132,7 @@ body{
 </div>
 
 <!-- APP -->
-<div id="app" style="display:none;">
+<div id="app" class="hidden">
 
   <div class="stories" id="stories"></div>
 
@@ -163,14 +149,6 @@ body{
   <img id="img">
   <div id="viewerName"></div>
 
-</div>
-
-<!-- FOOTER -->
-<div class="footer">
-  <div>🏠 Home</div>
-  <div>➕ Upload</div>
-  <div>❤️</div>
-  <div>👤 Profile</div>
 </div>
 
 <input type="file" id="file" multiple hidden>
@@ -199,11 +177,11 @@ let currentStory = null;
 let currentIndex = 0;
 let timer;
 
-/* ================= SAFE APP CONTROLLER ================= */
+/* ================= APP CONTROLLER ================= */
 function openApp(){
 
   document.getElementById("loginBox").style.display = "none";
-  document.getElementById("app").style.display = "block";
+  document.getElementById("app").classList.remove("hidden");
 
   loadStories();
 }
@@ -213,9 +191,6 @@ window.onload = function(){
 
   if(userId){
     openApp();
-  } else {
-    document.getElementById("loginBox").style.display = "block";
-    document.getElementById("app").style.display = "none";
   }
 }
 
@@ -248,33 +223,49 @@ function adminLogin(){
   } else {
     alert("Wrong admin");
   }
-
 }
 
-/* ================= LOAD STORIES ================= */
+/* ================= CLOUDINARY UPLOAD ================= */
+async function uploadImage(file){
+
+  let form = new FormData();
+  form.append("file",file);
+  form.append("upload_preset",PRESET);
+
+  let res = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`,
+    {method:"POST",body:form}
+  );
+
+  let data = await res.json();
+  return data.secure_url;
+}
+
+/* ================= LOAD STORIES (FULL RESTORED) ================= */
 function loadStories(){
 
-  db.collection("stories").onSnapshot(snap=>{
+  db.collection("stories").onSnapshot(snapshot=>{
 
-    let c=document.getElementById("stories");
-    c.innerHTML="";
+    let container = document.getElementById("stories");
+    container.innerHTML = "";
 
-    snap.forEach(doc=>{
+    snapshot.forEach(doc=>{
 
-      let s=doc.data();
-      if(!s.images) return;
+      let s = doc.data();
 
-      let div=document.createElement("div");
-      div.className="story";
+      if(!s.images || s.images.length===0) return;
 
-      div.innerHTML=`
+      let div = document.createElement("div");
+      div.className = "story";
+
+      div.innerHTML = `
         <img src="${s.images[0]}">
-        <span>${s.name||"User"}</span>
+        <span>${s.name || "User"}</span>
       `;
 
-      div.onclick=()=>openStory(doc.id,s);
+      div.onclick = () => openStory(doc.id, s);
 
-      c.appendChild(div);
+      container.appendChild(div);
     });
 
   });
@@ -284,37 +275,39 @@ function loadStories(){
 /* ================= OPEN STORY ================= */
 function openStory(id,s){
 
-  currentStory={id,...s};
-  currentIndex=0;
+  currentStory = {id,...s};
+  currentIndex = 0;
 
-  viewer.style.display="flex";
-  viewerName.innerText=s.name;
+  document.getElementById("viewer").style.display = "flex";
+  document.getElementById("viewerName").innerText = s.name;
 
   show();
 }
 
-/* ================= SHOW ================= */
+/* ================= SHOW STORY ================= */
 function show(){
 
   if(!currentStory) return;
 
-  if(currentIndex>=currentStory.images.length){
-    viewer.style.display="none";
+  let imgs = currentStory.images;
+
+  if(currentIndex >= imgs.length){
+    document.getElementById("viewer").style.display = "none";
     return;
   }
 
-  img.src=currentStory.images[currentIndex];
+  document.getElementById("img").src = imgs[currentIndex];
 
   clearTimeout(timer);
 
-  timer=setTimeout(()=>{
+  timer = setTimeout(()=>{
     currentIndex++;
     show();
   },3000);
 }
 
 /* TAP NEXT */
-viewer.onclick=()=>{
+document.getElementById("viewer").onclick = ()=>{
   clearTimeout(timer);
   currentIndex++;
   show();
@@ -330,25 +323,25 @@ async function deleteCurrentImage(){
     return;
   }
 
-  let ref=db.collection("stories").doc(userId);
-  let snap=await ref.get();
+  let ref = db.collection("stories").doc(userId);
+  let snap = await ref.get();
 
-  let imgs=snap.data().images;
+  let imgs = snap.data().images;
 
   imgs.splice(currentIndex,1);
 
-  if(imgs.length===0){
+  if(imgs.length === 0){
     await ref.delete();
-    viewer.style.display="none";
+    document.getElementById("viewer").style.display="none";
     return;
   }
 
   await ref.update({images:imgs});
 
-  currentStory.images=imgs;
+  currentStory.images = imgs;
 
-  if(currentIndex>=imgs.length){
-    currentIndex=0;
+  if(currentIndex >= imgs.length){
+    currentIndex = 0;
   }
 
   show();
@@ -366,7 +359,7 @@ async function deleteAllImages(){
 
   await db.collection("stories").doc(userId).delete();
 
-  viewer.style.display="none";
+  document.getElementById("viewer").style.display="none";
 }
 
 </script>
