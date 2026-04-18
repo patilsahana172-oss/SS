@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Instagram Stories</title>
+<title>Stories App</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -120,18 +120,19 @@ const db = firebase.firestore();
 const CLOUD = "dahg3tht7";
 const PRESET = "nipieidp";
 
-/* ================= USER ================= */
+/* ================= USER (FIXED SINGLE STORY) ================= */
 let userName = localStorage.getItem("userName");
 let userId = localStorage.getItem("userId");
-let currentStory = null;
-let index = 0;
-let autoTimer;
 
-/* create unique userId ONCE */
 if (!userId) {
-  userId = "user_" + Math.random().toString(36).substr(2, 9);
+  userId = "single_story_user";
   localStorage.setItem("userId", userId);
 }
+
+/* ================= VIEWER STATE ================= */
+let currentStory = null;
+let index = 0;
+let timer;
 
 /* ================= LOAD STORIES ================= */
 db.collection("stories")
@@ -156,19 +157,19 @@ async function uploadImage(file){
 
   let res = await fetch(
     `https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`,
-    {method:"POST",body:form}
+    { method:"POST", body:form }
   );
 
   let data = await res.json();
   return data.secure_url;
 }
 
-/* ================= UPLOAD STORY (MERGE FIX) ================= */
+/* ================= UPLOAD (FIXED MERGE LOGIC) ================= */
 file.onchange = async (e)=>{
 
   let files = [...e.target.files];
 
-  if(files.length>6){
+  if(files.length > 6){
     alert("Max 6 images allowed");
     return;
   }
@@ -186,12 +187,12 @@ file.onchange = async (e)=>{
 
   const ref = db.collection("stories").doc(userId);
 
-  const doc = await ref.get();
+  let snap = await ref.get();
 
   let oldImages = [];
 
-  if(doc.exists){
-    oldImages = doc.data().images || [];
+  if(snap.exists && snap.data().images){
+    oldImages = snap.data().images;
   }
 
   await ref.set({
@@ -244,7 +245,7 @@ function show(){
 
   if(!currentStory) return;
 
-  if(index>=currentStory.images.length){
+  if(index >= currentStory.images.length){
     document.getElementById("viewer").style.display="none";
     return;
   }
@@ -254,13 +255,13 @@ function show(){
 
   index++;
 
-  clearTimeout(autoTimer);
-  autoTimer = setTimeout(show,3000);
+  clearTimeout(timer);
+  timer = setTimeout(show,3000);
 }
 
 /* TAP = SKIP */
 document.getElementById("viewer").onclick = ()=>{
-  clearTimeout(autoTimer);
+  clearTimeout(timer);
   show();
 };
 
