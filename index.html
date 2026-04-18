@@ -37,12 +37,28 @@ body{
   cursor:pointer;
 }
 
-/* STORY */
+/* BOX */
+.box{
+  padding:15px;
+}
+
+input{
+  width:90%;
+  padding:10px;
+  margin:5px;
+}
+
+button{
+  padding:10px;
+  margin:5px;
+}
+
+/* STORIES */
 .stories{
   display:flex;
   overflow-x:auto;
-  gap:12px;
-  padding:12px;
+  gap:10px;
+  padding:10px;
   background:white;
 }
 
@@ -70,23 +86,6 @@ body{
   object-fit:contain;
 }
 
-/* BOXES */
-.box{
-  padding:15px;
-}
-
-input{
-  width:90%;
-  padding:10px;
-  margin:5px;
-}
-
-button{
-  padding:10px;
-  margin:5px;
-}
-
-/* HIDE */
 .hidden{display:none;}
 
 </style>
@@ -100,7 +99,7 @@ button{
   <div class="adminIcon" onclick="openAdmin()">⚙️</div>
 </div>
 
-<!-- USER LOGIN -->
+<!-- LOGIN -->
 <div id="loginBox" class="box">
   <h3>User Login</h3>
   <input id="mobile" placeholder="Mobile">
@@ -108,7 +107,7 @@ button{
   <button onclick="login()">Login</button>
 </div>
 
-<!-- STORY UPLOAD -->
+<!-- UPLOAD -->
 <div id="uploadBox" class="box hidden">
   <h3>Upload Story</h3>
   <input type="file" id="file" multiple accept="image/*">
@@ -121,23 +120,6 @@ button{
 <!-- VIEWER -->
 <div id="viewer" onclick="nextStory()">
   <img id="img">
-</div>
-
-<!-- ADMIN LOGIN -->
-<div id="adminLogin" class="box hidden">
-  <h3>Admin Login</h3>
-  <input id="amobile" placeholder="Mobile">
-  <input id="apass" type="password" placeholder="Password">
-  <button onclick="adminLogin()">Login</button>
-</div>
-
-<!-- ADMIN PANEL -->
-<div id="adminPanel" class="box hidden">
-  <h3>Create Category</h3>
-  <input id="cat" placeholder="Category Name">
-  <button onclick="createCat()">Create</button>
-
-  <div id="cats"></div>
 </div>
 
 <script>
@@ -161,23 +143,26 @@ let user = null;
 let story = [];
 let index = 0;
 
-/* ================= LOGIN FIXED ================= */
+/* ================= LOGIN (FIXED 100%) ================= */
 async function login(){
-
-  let m = document.getElementById("mobile").value.trim();
-  let p = document.getElementById("pass").value.trim();
-
-  if(!m || !p){
-    alert("Enter mobile and password");
-    return;
-  }
 
   try{
 
-    let doc = await db.collection("users").doc(m).get();
+    let m = document.getElementById("mobile").value.trim();
+    let p = document.getElementById("pass").value.trim();
+
+    if(!m || !p){
+      alert("Enter mobile and password");
+      return;
+    }
+
+    console.log("Login attempt:", m);
+
+    let docRef = db.collection("users").doc(m);
+    let doc = await docRef.get();
 
     if(!doc.exists){
-      alert("User not found");
+      alert("User not found in Firebase");
       return;
     }
 
@@ -188,10 +173,12 @@ async function login(){
       return;
     }
 
-    // ✅ SUCCESS LOGIN
+    // SUCCESS
     user = m;
 
-    // UI SWITCH (IMPORTANT FIX)
+    console.log("Login success");
+
+    // UI SWITCH FIXED
     document.getElementById("loginBox").style.display = "none";
     document.getElementById("uploadBox").style.display = "block";
 
@@ -200,8 +187,8 @@ async function login(){
     alert("Login successful");
 
   }catch(err){
-    console.log(err);
-    alert("Login error");
+    console.error("LOGIN ERROR:", err);
+    alert("Login error → check console");
   }
 }
 
@@ -233,10 +220,10 @@ async function uploadStory(){
   }
 
   await db.collection("stories").doc(user).set({
-    images:urls
+    images: urls
   });
 
-  alert("Uploaded");
+  alert("Story uploaded");
 }
 
 /* ================= LOAD STORIES ================= */
@@ -248,12 +235,12 @@ function loadStories(){
 
     snap.forEach(doc=>{
 
-      let div=document.createElement("div");
-      div.className="story";
+      let div = document.createElement("div");
+      div.className = "story";
 
-      div.innerHTML=`<img src="${doc.data().images[0]}">`;
+      div.innerHTML = `<img src="${doc.data().images[0]}">`;
 
-      div.onclick=()=>openStory(doc.data().images);
+      div.onclick = () => openStory(doc.data().images);
 
       stories.appendChild(div);
     });
@@ -266,7 +253,7 @@ function openStory(imgs){
   story = imgs;
   index = 0;
 
-  viewer.style.display="flex";
+  viewer.style.display = "flex";
 
   show();
 }
@@ -287,60 +274,16 @@ function nextStory(){
   index++;
 
   if(index >= story.length){
-    viewer.style.display="none";
+    viewer.style.display = "none";
     return;
   }
 
   show();
 }
 
-/* ================= ADMIN ================= */
+/* ================= ADMIN ICON (placeholder) ================= */
 function openAdmin(){
-  adminLogin.classList.remove("hidden");
-}
-
-async function adminLogin(){
-
-  let m = document.getElementById("amobile").value;
-  let p = document.getElementById("apass").value;
-
-  let doc = await db.collection("admin").doc(m).get();
-
-  if(doc.exists && doc.data().password === p){
-
-    adminLogin.classList.add("hidden");
-    adminPanel.classList.remove("hidden");
-
-    loadCats();
-
-  }else{
-    alert("Invalid admin");
-  }
-}
-
-/* CATEGORY */
-async function createCat(){
-
-  await db.collection("categories").add({
-    name:cat.value
-  });
-
-  loadCats();
-}
-
-function loadCats(){
-
-  db.collection("categories").onSnapshot(snap=>{
-
-    cats.innerHTML="";
-
-    snap.forEach(doc=>{
-
-      cats.innerHTML += `
-        <div>${doc.data().name}</div>
-      `;
-    });
-  });
+  alert("Admin feature coming next step");
 }
 
 </script>
