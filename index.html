@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stories App</title>
+<title>SS AI Stories</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -19,19 +19,14 @@ body{
 .header{
   display:flex;
   justify-content:space-between;
-  align-items:center;
   padding:14px;
   background:white;
   box-shadow:0 2px 10px rgba(0,0,0,0.05);
 }
 
-.camera{
-  font-size:22px;
-  background:linear-gradient(135deg,#ff6a00,#ee0979);
-  color:white;
-  padding:10px;
-  border-radius:50%;
-  cursor:pointer;
+.logo{
+  font-weight:800;
+  color:#ff2d55;
 }
 
 /* STORIES */
@@ -48,8 +43,8 @@ body{
 }
 
 .story img{
-  width:72px;
-  height:72px;
+  width:70px;
+  height:70px;
   border-radius:50%;
   padding:3px;
   background:conic-gradient(#f09433,#e6683c,#dc2743,#cc2366,#bc1888,#f09433);
@@ -58,58 +53,41 @@ body{
 
 .story span{
   font-size:12px;
-  display:block;
-  margin-top:6px;
 }
 
 /* VIEWER */
 #viewer{
   display:none;
   position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  background:rgba(0,0,0,0.97);
+  inset:0;
+  background:black;
   justify-content:center;
   align-items:center;
   flex-direction:column;
 }
 
-/* IMAGE */
-#img{
+#viewer img{
   width:100%;
   max-height:85vh;
   object-fit:contain;
 }
 
-/* NAME */
-#viewerName{
-  color:white;
-  margin-top:10px;
+/* ADMIN PANEL */
+#adminPanel{
+  display:none;
+  padding:10px;
+  background:#fff3cd;
+  border-bottom:1px solid #ddd;
 }
 
-/* TOP BAR */
-#topBar{
-  position:absolute;
-  top:15px;
-  right:15px;
-  z-index:9999;
-}
-
-#topBar button{
-  background:red;
-  color:white;
-  border:none;
-  padding:10px 14px;
-  border-radius:20px;
-  font-size:14px;
-  cursor:pointer;
-  margin-left:8px;
+input,button{
+  padding:10px;
+  margin:5px;
+  width:90%;
 }
 
 /* FOOTER */
-.footer{
+#footer{
   position:fixed;
   bottom:0;
   left:0;
@@ -118,14 +96,14 @@ body{
   display:flex;
   justify-content:space-around;
   padding:10px;
-  box-shadow:0 -2px 10px rgba(0,0,0,0.05);
+  border-top:1px solid #ddd;
 }
 
-.footer div{
+.footerItem{
   font-size:14px;
+  cursor:pointer;
 }
 
-/* HIDDEN */
 .hidden{display:none}
 
 </style>
@@ -133,34 +111,34 @@ body{
 
 <body>
 
+<!-- HEADER -->
 <div class="header">
-  <div><b>Stories</b></div>
-  <div class="camera" onclick="file.click()">📸</div>
+  <div class="logo">SS AI STORIES</div>
+  <div onclick="openLogin()">👤</div>
 </div>
 
+<!-- ADMIN PANEL -->
+<div id="adminPanel">
+
+  <h3>Admin Footer Control</h3>
+
+  <input id="catName" placeholder="Add Category (Haldi, Mehendi)">
+  <button onclick="addCategory()">Add Category</button>
+
+  <button onclick="deleteAllCategories()">Clear Footer</button>
+
+</div>
+
+<!-- STORIES -->
 <div class="stories" id="stories"></div>
 
-<div id="viewer">
-
-  <div id="topBar">
-    <button onclick="deleteCurrentImage()">🗑 One</button>
-    <button onclick="deleteAllImages()">🗑 All</button>
-  </div>
-
+<!-- VIEWER -->
+<div id="viewer" onclick="nextStory()">
   <img id="img">
-  <div id="viewerName"></div>
-
 </div>
 
 <!-- FOOTER -->
-<div class="footer">
-  <div onclick="loginUser()">👤 Login</div>
-  <div onclick="file.click()">➕ Upload</div>
-  <div>🏠 Home</div>
-  <div>⚙ Admin</div>
-</div>
-
-<input type="file" id="file" multiple accept="image/*" capture="environment" hidden>
+<div id="footer"></div>
 
 <script>
 
@@ -168,8 +146,7 @@ body{
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
   authDomain: "stories-web-52ddd.firebaseapp.com",
-  projectId: "stories-web-52ddd",
-  storageBucket: "stories-web-52ddd.appspot.com"
+  projectId: "stories-web-52ddd"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -179,52 +156,76 @@ const db = firebase.firestore();
 const CLOUD = "dahg3tht7";
 const PRESET = "nipieidp";
 
-/* ================= USER ================= */
+/* ================= STATE ================= */
 let userId = localStorage.getItem("userId");
 let userName = localStorage.getItem("userName");
 
-/* ================= STATE ================= */
 let currentStory = null;
-let currentIndex = 0;
-let timer;
+let index = 0;
 
 /* ================= AUTO LOAD ================= */
 window.onload = function(){
+
+  if(userId){
+    loadApp();
+  }
+
   loadStories();
+  loadFooter();
 }
 
 /* ================= LOGIN ================= */
-function loginUser(){
+function openLogin(){
+
+  let type = prompt("Type: user / admin");
+
+  if(type==="user") userLogin();
+  if(type==="admin") adminLogin();
+
+}
+
+/* USER LOGIN */
+function userLogin(){
 
   let m = prompt("Enter mobile number:");
-
   if(!m) return;
 
   userId = m;
   localStorage.setItem("userId", m);
 
   if(!userName){
-    userName = prompt("Enter your name:");
+    userName = prompt("Enter name:");
     localStorage.setItem("userName", userName);
   }
 
-  alert("Login success");
+  loadApp();
 }
 
-/* ================= ADMIN LOGIN ================= */
+/* ADMIN LOGIN */
 function adminLogin(){
 
-  let u = prompt("Admin username:");
-  let p = prompt("Admin password:");
+  let u = prompt("Username:");
+  let p = prompt("Password:");
 
-  if(u==="jai_jinendra" && p==="1234"){
+  if(u==="12" && p==="12"){
+
     alert("Admin login success");
+
+    document.getElementById("adminPanel").style.display="block";
+
   }else{
     alert("Wrong admin");
   }
+
 }
 
-/* ================= CLOUDINARY UPLOAD ================= */
+/* LOAD APP */
+function loadApp(){
+  loadStories();
+  loadFooter();
+}
+
+/* ================= CLOUDINARY ================= */
 async function uploadImage(file){
 
   let form = new FormData();
@@ -240,57 +241,68 @@ async function uploadImage(file){
   return data.secure_url;
 }
 
-/* ================= UPLOAD (APPEND ONLY) ================= */
-file.onchange = async (e)=>{
+/* ================= UPLOAD STORY ================= */
+document.body.onkeydown = async function(e){
 
-  if(!userId){
-    alert("Login first");
-    return;
+  if(e.key==="u"){
+
+    let files = await filePicker();
+
+    let urls=[];
+
+    for(let f of files){
+      urls.push(await uploadImage(f));
+    }
+
+    let ref = db.collection("stories").doc(userId);
+    let snap = await ref.get();
+
+    let old = snap.exists ? snap.data().images || [] : [];
+
+    await ref.set({
+      name:userName,
+      images:[...old,...urls]
+    });
+
+    alert("Uploaded");
+
   }
 
-  let files=[...e.target.files];
-  let urls=[];
+}
 
-  for(let f of files){
-    urls.push(await uploadImage(f));
-  }
-
-  const ref = db.collection("stories").doc(userId);
-  let snap = await ref.get();
-
-  let old = snap.exists ? snap.data().images || [] : [];
-
-  await ref.set({
-    name:userName,
-    images:[...old,...urls]
+function filePicker(){
+  return new Promise(res=>{
+    let i=document.createElement("input");
+    i.type="file";
+    i.multiple=true;
+    i.onchange=()=>res([...i.files]);
+    i.click();
   });
+}
 
-  file.value="";
-};
-
-/* ================= LOAD STORIES ================= */
+/* ================= STORIES ================= */
 function loadStories(){
 
   db.collection("stories")
-  .onSnapshot(snapshot=>{
+  .onSnapshot(snap=>{
 
     let c=document.getElementById("stories");
     c.innerHTML="";
 
-    snapshot.forEach(doc=>{
+    snap.forEach(doc=>{
 
-      let s = doc.data();
-      if(!s.images || !s.images.length) return;
+      let d=doc.data();
+      if(!d.images) return;
 
       let div=document.createElement("div");
       div.className="story";
 
       div.innerHTML=`
-        <img src="${s.images[0]}">
-        <span>${s.name || "User"}</span>
+        <img src="${d.images[0]}">
+        <span>${d.name}</span>
       `;
 
-      div.onclick=()=>openStory(doc.id,s);
+      div.onclick=()=>openStory(d);
 
       c.appendChild(div);
     });
@@ -299,95 +311,78 @@ function loadStories(){
 
 }
 
-/* ================= OPEN STORY ================= */
-function openStory(id,s){
+/* ================= VIEW STORY ================= */
+function openStory(s){
 
-  currentStory={id,...s};
-  currentIndex=0;
+  currentStory=s;
+  index=0;
 
   viewer.style.display="flex";
-  viewerName.innerText=s.name;
 
   show();
 }
 
-/* ================= SHOW ================= */
 function show(){
 
   if(!currentStory) return;
 
-  let imgs=currentStory.images;
-
-  if(currentIndex>=imgs.length){
+  if(index>=currentStory.images.length){
     viewer.style.display="none";
     return;
   }
 
-  img.src=imgs[currentIndex];
-
-  clearTimeout(timer);
-
-  timer=setTimeout(()=>{
-    currentIndex++;
-    show();
-  },3000);
+  img.src=currentStory.images[index];
 }
 
 /* TAP NEXT */
-viewer.onclick=()=>{
-  clearTimeout(timer);
-  currentIndex++;
-  show();
-};
-
-/* ================= DELETE SINGLE (PRO FIX) ================= */
-async function deleteCurrentImage(){
-
-  if(!currentStory) return;
-
-  if(currentStory.id !== userId){
-    alert("Not your story");
-    return;
-  }
-
-  let ref=db.collection("stories").doc(userId);
-  let snap=await ref.get();
-
-  let imgs=snap.data().images;
-
-  imgs.splice(currentIndex,1);
-
-  if(imgs.length===0){
-    await ref.delete();
-    viewer.style.display="none";
-    return;
-  }
-
-  await ref.update({images:imgs});
-
-  currentStory.images=imgs;
-
-  if(currentIndex>=imgs.length){
-    currentIndex=0;
-  }
-
+function nextStory(){
+  index++;
   show();
 }
 
-/* ================= DELETE ALL ================= */
-async function deleteAllImages(){
+/* ================= FOOTER ================= */
+function loadFooter(){
 
-  if(!currentStory) return;
+  db.collection("categories")
+  .onSnapshot(snap=>{
 
-  if(currentStory.id !== userId){
-    alert("Not your story");
-    return;
-  }
+    let f=document.getElementById("footer");
+    f.innerHTML="";
 
-  await db.collection("stories").doc(userId).delete();
+    snap.forEach(doc=>{
 
-  viewer.style.display="none";
-  currentStory=null;
+      let div=document.createElement("div");
+      div.className="footerItem";
+      div.innerText=doc.id;
+
+      f.appendChild(div);
+    });
+
+  });
+
+}
+
+/* ================= ADMIN CATEGORY ================= */
+async function addCategory(){
+
+  let name = catName.value.trim();
+  if(!name) return;
+
+  await db.collection("categories").doc(name).set({
+    name:name
+  });
+
+  alert("Added");
+}
+
+/* DELETE ALL CATEGORIES */
+async function deleteAllCategories(){
+
+  let snap = await db.collection("categories").get();
+
+  snap.forEach(d=>d.ref.delete());
+
+  alert("Cleared footer");
 }
 
 </script>
