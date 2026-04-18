@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SS Wedding</title>
 
+<!-- CSS -->
 <style>
+
 body {
   margin: 0;
   font-family: Arial, sans-serif;
@@ -14,168 +16,194 @@ body {
 
 /* HEADER */
 .header {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px;
+  position: fixed;
+  top: 0;
+  width: 100%;
   background: white;
+  padding: 10px;
+  text-align: center;
   border-bottom: 1px solid #ddd;
 }
 
 .logo {
-  font-size: 22px;
+  font-size: 28px;
   font-weight: bold;
-  color: #d4af37;
+  background: linear-gradient(45deg,#ff4081,#ff9800);
+  -webkit-background-clip: text;
+  color: transparent;
 }
 
 /* STORIES */
 .stories {
+  margin-top: 60px;
   display: flex;
   overflow-x: auto;
   padding: 10px;
-  background: white;
+  gap: 10px;
 }
 
 .story {
   text-align: center;
-  margin-right: 10px;
-}
-
-.story-circle {
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  background: linear-gradient(45deg, pink, gold);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
-
-/* POSTS */
-.post {
-  background: white;
-  margin-top: 10px;
-}
-
-.post-header {
-  display: flex;
-  align-items: center;
-  padding: 10px;
-}
-
-.profile {
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
-  background: gold;
-  margin-right: 10px;
-}
-
-.post-img {
-  width: 100%;
-}
-
-.actions {
-  padding: 10px;
-  font-size: 22px;
   cursor: pointer;
 }
 
-.likes {
-  padding: 0 10px;
-  font-weight: bold;
-  display: none;
+.story img {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
 }
 
-.caption {
-  padding: 5px 10px;
-}
-
-.comment-box {
+/* POSTS */
+.posts {
   padding: 10px;
 }
 
-input {
-  width: 80%;
-  padding: 8px;
-  border-radius: 20px;
-  border: 1px solid #ccc;
+.post {
+  background: white;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  overflow: hidden;
 }
 
-button {
-  padding: 8px 12px;
-  border: none;
-  background: #d4af37;
+.post img {
+  width: 100%;
+}
+
+.post__header {
+  padding: 10px;
+  font-weight: bold;
+}
+
+/* CAMERA BUTTON */
+#cameraBtn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: linear-gradient(45deg,#ff4081,#ff9800);
   color: white;
-  border-radius: 20px;
-  margin-left: 5px;
+  border: none;
+  padding: 15px;
+  border-radius: 50%;
+  font-size: 20px;
 }
-</style>
 
+</style>
 </head>
 
 <body>
 
 <!-- HEADER -->
 <div class="header">
-  <div class="logo">SS 💍</div>
+  <div class="logo">SS</div>
 </div>
 
 <!-- STORIES -->
-<div class="stories">
-  <div class="story"><div class="story-circle">Haldi</div></div>
-  <div class="story"><div class="story-circle">Mehendi</div></div>
-  <div class="story"><div class="story-circle">Muhurtam</div></div>
-</div>
+<div class="stories" id="sectionsContainer"></div>
 
-<!-- POST -->
-<div class="post">
-  <div class="post-header">
-    <div class="profile"></div>
-    <b>admin</b>
-  </div>
+<!-- POSTS -->
+<div class="posts" id="postsContainer"></div>
 
-  <img class="post-img" src="https://images.unsplash.com/photo-1606800052052-a08af7148866"/>
+<!-- CAMERA -->
+<button id="cameraBtn">📸</button>
+<input type="file" id="cameraInput" accept="image/*" capture hidden>
 
-  <div class="actions">
-    <span onclick="likePost(this)">❤️</span>
-  </div>
-
-  <div class="likes">1 like</div>
-
-  <div class="caption">
-    <b>admin</b> Haldi Moments 💛
-  </div>
-
-  <!-- COMMENT -->
-  <div class="comment-box">
-    <input type="text" placeholder="Add comment..." />
-    <button onclick="addComment(this)">Post</button>
-  </div>
-
-  <div class="comments"></div>
-</div>
-
+<!-- JS -->
 <script>
-function likePost(el) {
-  let likes = el.parentElement.nextElementSibling;
-  likes.style.display = "block";
+
+// ADMIN CONTROL
+const isAdmin = true;
+
+// DATA
+let sections = ["Haldi", "Mehendi", "Muhurtham"];
+let posts = [];
+
+const sectionsContainer = document.getElementById("sectionsContainer");
+const postsContainer = document.getElementById("postsContainer");
+const cameraBtn = document.getElementById("cameraBtn");
+const cameraInput = document.getElementById("cameraInput");
+
+// LOAD SECTIONS
+function loadSections() {
+  sectionsContainer.innerHTML = "";
+
+  sections.forEach(section => {
+    const div = document.createElement("div");
+    div.className = "story";
+
+    div.innerHTML = `
+      <img src="https://via.placeholder.com/60">
+      <div>${section}</div>
+    `;
+
+    div.onclick = () => filterPosts(section);
+
+    sectionsContainer.appendChild(div);
+  });
 }
 
-function addComment(btn) {
-  let input = btn.previousElementSibling;
-  let text = input.value;
+// LOAD POSTS
+function loadPosts(data = posts) {
+  postsContainer.innerHTML = "";
 
-  if (text.trim() === "") return;
+  data.forEach(post => {
+    const div = document.createElement("div");
+    div.className = "post";
 
-  let commentDiv = btn.parentElement.nextElementSibling;
+    div.innerHTML = `
+      <div class="post__header">${post.section}</div>
+      <img src="${post.image}">
+    `;
 
-  let p = document.createElement("p");
-  p.textContent = text;
-
-  commentDiv.appendChild(p);
-  input.value = "";
+    postsContainer.appendChild(div);
+  });
 }
+
+// FILTER
+function filterPosts(section) {
+  const filtered = posts.filter(p => p.section === section);
+  loadPosts(filtered);
+}
+
+// CAMERA
+if (!isAdmin) {
+  cameraBtn.style.display = "none";
+}
+
+cameraBtn.onclick = () => {
+  cameraInput.click();
+};
+
+cameraInput.onchange = () => {
+  const file = cameraInput.files[0];
+  if (!file) return;
+
+  let section = prompt("Enter section name");
+
+  if (!section) return;
+
+  if (!sections.includes(section)) {
+    sections.push(section);
+    loadSections();
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    posts.unshift({
+      section: section,
+      image: e.target.result
+    });
+
+    loadPosts();
+  };
+
+  reader.readAsDataURL(file);
+};
+
+// INIT
+loadSections();
+loadPosts();
+
 </script>
 
 </body>
