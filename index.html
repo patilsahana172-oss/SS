@@ -11,6 +11,7 @@ body {
   background:#fafafa;
 }
 
+/* HEADER */
 .header {
   display:flex;
   justify-content:flex-end;
@@ -47,12 +48,17 @@ body {
   cursor:pointer;
 }
 
+/* STORIES */
 .stories {
   display:flex;
   overflow-x:auto;
   gap:10px;
   padding:10px;
   background:white;
+}
+
+.story {
+  text-align:center;
 }
 
 .story img {
@@ -63,6 +69,7 @@ body {
   object-fit:cover;
 }
 
+/* VIEWER */
 #viewer {
   display:none;
   position:fixed;
@@ -106,7 +113,7 @@ body {
 
 let stories = [];
 
-/* ☁️ CLOUDINARY UPLOAD (ONLY REPLACED VALUES) */
+/* ☁️ CLOUDINARY UPLOAD */
 async function uploadImage(file) {
 
   const formData = new FormData();
@@ -123,15 +130,17 @@ async function uploadImage(file) {
 
   const data = await res.json();
 
+  console.log("Upload response:", data);
+
   if (!data.secure_url) {
-    alert("Upload failed ❌ Check Cloudinary settings");
+    alert("Upload failed ❌ Check Cloudinary preset (must be unsigned)");
     return null;
   }
 
   return data.secure_url;
 }
 
-/* 📤 UPLOAD */
+/* 📤 FILE UPLOAD */
 file.onchange = async (e) => {
 
   const files = [...e.target.files];
@@ -151,7 +160,7 @@ file.onchange = async (e) => {
   file.value = "";
 };
 
-/* 📥 RENDER */
+/* 📥 RENDER STORIES */
 function render() {
 
   const container = document.getElementById("stories");
@@ -160,6 +169,8 @@ function render() {
   stories.forEach((s) => {
 
     const div = document.createElement("div");
+    div.className = "story";
+
     div.innerHTML = `<img src="${s[0]}">`;
 
     div.onclick = () => openStory(s);
