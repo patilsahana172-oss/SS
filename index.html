@@ -8,46 +8,32 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <style>
-body {
+body{
   margin:0;
   font-family:system-ui;
   background:#fafafa;
 }
 
 /* HEADER */
-.header {
+.header{
   display:flex;
   justify-content:space-between;
   align-items:center;
   padding:12px;
   background:white;
-  box-shadow:0 2px 10px rgba(0,0,0,0.05);
+  box-shadow:0 2px 8px rgba(0,0,0,0.05);
 }
 
-.logo {
-  width:42px;
-  height:42px;
-  border-radius:50%;
-  background:#ddd;
-  overflow:hidden;
-}
-
-.logo img {
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-
-.camera {
+.camera{
   font-size:24px;
   cursor:pointer;
-  background:#f2f2f2;
+  background:#eee;
   padding:8px;
   border-radius:50%;
 }
 
 /* STORIES */
-.stories {
+.stories{
   display:flex;
   overflow-x:auto;
   gap:12px;
@@ -55,31 +41,30 @@ body {
   background:white;
 }
 
-.story {
+.story{
   text-align:center;
-  width:75px;
 }
 
-.story img {
+.story img{
   width:70px;
   height:70px;
   border-radius:50%;
   padding:3px;
-  background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);
+  background:linear-gradient(45deg,#f09433,#dc2743,#bc1888);
   object-fit:cover;
 }
 
-.story span {
+.story span{
   font-size:12px;
   display:block;
   margin-top:4px;
 }
 
 /* VIEWER */
-#viewer {
+#viewer{
   display:none;
   position:fixed;
-  top:0; left:0;
+  top:0;left:0;
   width:100%;
   height:100%;
   background:black;
@@ -88,19 +73,18 @@ body {
   flex-direction:column;
 }
 
-#viewer img {
+#viewer img{
   width:100%;
   max-height:90vh;
   object-fit:contain;
 }
 
-#viewerName {
+#viewerName{
   color:white;
   margin-top:10px;
 }
 
-/* DELETE BUTTON */
-.del {
+.deleteBtn{
   position:absolute;
   top:15px;
   right:15px;
@@ -117,7 +101,7 @@ body {
 <body>
 
 <div class="header">
-  <div class="logo"><img src=""></div>
+  <div>Stories</div>
   <div class="camera" onclick="file.click()">📸</div>
 </div>
 
@@ -125,7 +109,7 @@ body {
 
 <div id="viewer">
   <img id="img">
-  <button class="del" onclick="deleteImage()">🗑</button>
+  <button class="deleteBtn" onclick="deleteImage()">🗑</button>
   <div id="viewerName"></div>
 </div>
 
@@ -136,8 +120,9 @@ body {
 /* 🔥 FIREBASE */
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_DOMAIN",
-  projectId: "YOUR_PROJECT"
+  authDomain: "stories-web-52ddd.firebaseapp.com",
+  projectId: "stories-web-52ddd",
+  storageBucket: "stories-web-52ddd.appspot.com"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -150,9 +135,9 @@ const PRESET = "nipieidp";
 /* USER */
 let userName = localStorage.getItem("userName");
 let currentStory = null;
-let currentIndex = 0;
+let index = 0;
 
-/* LOAD STORIES (FIXED) */
+/* LOAD STORIES */
 db.collection("stories")
 .orderBy("createdAt","desc")
 .onSnapshot(snapshot => {
@@ -160,17 +145,14 @@ db.collection("stories")
   let stories = [];
 
   snapshot.forEach(doc => {
-    stories.push({
-      id: doc.id,
-      ...doc.data()
-    });
+    stories.push({ id: doc.id, ...doc.data() });
   });
 
   render(stories);
 });
 
 /* UPLOAD IMAGE */
-async function uploadImage(file) {
+async function uploadImage(file){
 
   const form = new FormData();
   form.append("file", file);
@@ -179,8 +161,8 @@ async function uploadImage(file) {
   const res = await fetch(
     `https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`,
     {
-      method: "POST",
-      body: form
+      method:"POST",
+      body:form
     }
   );
 
@@ -189,107 +171,107 @@ async function uploadImage(file) {
 }
 
 /* UPLOAD STORY */
-file.onchange = async (e) => {
+file.onchange = async (e)=>{
 
-  const files = [...e.target.files];
+  let files = [...e.target.files];
 
-  if (files.length > 6) {
+  if(files.length > 6){
     alert("Max 6 images allowed");
     return;
   }
 
-  if (!userName) {
+  if(!userName){
     userName = prompt("Enter your name:");
-    localStorage.setItem("userName", userName);
+    localStorage.setItem("userName",userName);
   }
 
   let urls = [];
 
-  for (let f of files) {
+  for(let f of files){
     urls.push(await uploadImage(f));
   }
 
   await db.collection("stories").add({
-    name: userName,
-    images: urls,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    name:userName,
+    images:urls,
+    createdAt:firebase.firestore.FieldValue.serverTimestamp()
   });
 
-  file.value = "";
+  file.value="";
 };
 
 /* RENDER */
-function render(stories) {
+function render(stories){
 
-  const c = document.getElementById("stories");
-  c.innerHTML = "";
+  let c=document.getElementById("stories");
+  c.innerHTML="";
 
-  stories.forEach(s => {
+  stories.forEach(s=>{
 
-    if (!s.images || s.images.length === 0) return;
+    if(!s.images || s.images.length===0) return;
 
-    const div = document.createElement("div");
-    div.className = "story";
+    let div=document.createElement("div");
+    div.className="story";
 
-    div.innerHTML = `
+    div.innerHTML=`
       <img src="${s.images[0]}">
       <span>${s.name}</span>
     `;
 
-    div.onclick = () => openStory(s);
+    div.onclick=()=>openStory(s);
 
     c.appendChild(div);
   });
 }
 
 /* OPEN STORY */
-function openStory(story) {
+function openStory(s){
 
-  currentStory = story;
-  currentIndex = 0;
+  currentStory=s;
+  index=0;
 
-  document.getElementById("viewer").style.display = "flex";
-  document.getElementById("viewerName").innerText = story.name;
+  document.getElementById("viewer").style.display="flex";
+  document.getElementById("viewerName").innerText=s.name;
 
-  showNext();
+  show();
 }
 
-/* SLIDESHOW */
-function showNext() {
+/* SHOW SLIDES */
+function show(){
 
-  if (!currentStory) return;
+  if(!currentStory) return;
 
-  if (currentIndex >= currentStory.images.length) {
-    document.getElementById("viewer").style.display = "none";
+  if(index >= currentStory.images.length){
+    document.getElementById("viewer").style.display="none";
     return;
   }
 
   document.getElementById("img").src =
-    currentStory.images[currentIndex];
+    currentStory.images[index];
 
-  currentIndex++;
+  index++;
 
-  setTimeout(showNext, 3000);
+  setTimeout(show,3000);
 }
 
-/* DELETE CURRENT IMAGE */
-async function deleteImage() {
+/* DELETE IMAGE */
+async function deleteImage(){
 
-  if (!currentStory) return;
+  if(!currentStory) return;
 
-  let img = currentStory.images[currentIndex - 1];
+  let img = currentStory.images[index-1];
 
-  let updated = currentStory.images.filter(i => i !== img);
+  let updated = currentStory.images.filter(i=>i!==img);
 
   await db.collection("stories")
     .doc(currentStory.id)
-    .update({ images: updated });
+    .update({images:updated});
 
   currentStory.images = updated;
 
-  if (updated.length === 0) {
+  if(updated.length===0){
     await db.collection("stories").doc(currentStory.id).delete();
-    document.getElementById("viewer").style.display = "none";
+    document.getElementById("viewer").style.display="none";
   }
 }
 
