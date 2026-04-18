@@ -8,104 +8,83 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <style>
-body{
-  margin:0;
-  font-family:system-ui;
-  background:#fafafa;
-}
+body{margin:0;font-family:system-ui;background:#fafafa;}
 
 .header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:14px;
-  background:white;
+  display:flex;justify-content:space-between;
+  align-items:center;padding:14px;background:white;
   box-shadow:0 2px 10px rgba(0,0,0,0.05);
 }
 
 .camera{
   font-size:22px;
   background:linear-gradient(135deg,#ff6a00,#ee0979);
-  color:white;
-  padding:10px;
-  border-radius:50%;
-  cursor:pointer;
+  color:white;padding:10px;border-radius:50%;cursor:pointer;
 }
 
 .stories{
-  display:flex;
-  overflow-x:auto;
-  padding:12px;
-  gap:14px;
-  background:white;
+  display:flex;overflow-x:auto;padding:12px;gap:14px;background:white;
 }
 
-.story{
-  text-align:center;
-}
+.story{text-align:center;}
 
 .story img{
-  width:72px;
-  height:72px;
-  border-radius:50%;
+  width:72px;height:72px;border-radius:50%;
   padding:3px;
   background:conic-gradient(#f09433,#e6683c,#dc2743,#cc2366,#bc1888,#f09433);
   object-fit:cover;
 }
 
-.story span{
-  font-size:12px;
-  display:block;
-  margin-top:6px;
-}
+.story span{font-size:12px;display:block;margin-top:6px;}
 
 #viewer{
-  display:none;
-  position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
+  display:none;position:fixed;top:0;left:0;
+  width:100%;height:100%;
   background:rgba(0,0,0,0.97);
-  justify-content:center;
-  align-items:center;
-  flex-direction:column;
+  justify-content:center;align-items:center;flex-direction:column;
 }
 
-#img{
-  width:100%;
-  max-height:85vh;
-  object-fit:contain;
-}
+#img{width:100%;max-height:85vh;object-fit:contain;}
 
-#viewerName{
-  color:white;
-  margin-top:10px;
-}
+#viewerName{color:white;margin-top:10px;}
 
-#topBar{
-  position:absolute;
-  top:15px;
-  right:15px;
-  z-index:9999;
-}
+#topBar{position:absolute;top:15px;right:15px;z-index:9999;}
 
 #topBar button{
-  background:red;
-  color:white;
-  border:none;
-  padding:10px 14px;
-  border-radius:20px;
-  cursor:pointer;
-  margin-left:8px;
+  background:red;color:white;border:none;
+  padding:10px 14px;border-radius:20px;
+  font-size:14px;cursor:pointer;margin-left:8px;
 }
 
-.hidden{display:none}
+/* LOGIN */
+#loginBox{
+  position:fixed;inset:0;
+  background:white;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+}
 
+#loginBox button{
+  padding:10px 20px;
+  border:none;
+  border-radius:8px;
+  background:#111;
+  color:white;
+}
 </style>
 </head>
 
 <body>
+
+<!-- LOGIN -->
+<div id="loginBox">
+  <h2>Login</h2>
+  <button onclick="userLogin()">User Login</button>
+  <button onclick="adminLogin()">Admin Login</button>
+</div>
 
 <div class="header">
   <div><b>Stories</b></div>
@@ -115,6 +94,7 @@ body{
 <div class="stories" id="stories"></div>
 
 <div id="viewer">
+
   <div id="topBar">
     <button onclick="deleteCurrentImage()">🗑 One</button>
     <button onclick="deleteAllImages()">🗑 All</button>
@@ -124,7 +104,7 @@ body{
   <div id="viewerName"></div>
 </div>
 
-<input type="file" id="file" multiple accept="image/*" hidden>
+<input type="file" id="file" multiple accept="image/*" capture="environment" hidden>
 
 <script>
 
@@ -150,73 +130,118 @@ let currentStory = null;
 let currentIndex = 0;
 let timer;
 
-/* ================= LOGIN SYSTEM ================= */
-if(!userId){
-  let choice = confirm("OK = User Login | Cancel = Admin Login");
-
-  if(choice){
-    userLogin();
-  } else {
-    adminLogin();
-  }
-}
-
+/* ================= LOGIN SYSTEM (ADDED ONLY) ================= */
 function userLogin(){
-  let m = prompt("Enter Mobile Number:");
+
+  let m = prompt("Enter mobile number:");
   if(!m) return;
 
-  userId = m;
-  localStorage.setItem("userId", m);
+  let name = prompt("Enter your name:");
+  if(!name) return;
 
-  if(!userName){
-    userName = prompt("Enter Name:");
-    localStorage.setItem("userName", userName);
-  }
+  userId = m;
+  userName = name;
+
+  localStorage.setItem("userId", userId);
+  localStorage.setItem("userName", userName);
+
+  document.getElementById("loginBox").style.display="none";
+
+  loadStories();
 }
 
 function adminLogin(){
-  let u = prompt("Username:");
-  let p = prompt("Password:");
+
+  let u = prompt("Username");
+  let p = prompt("Password");
 
   if(u==="12" && p==="12"){
-    alert("Admin Logged In");
-    userId = "admin";
-    userName = "Admin";
+    alert("Admin login success");
+    document.getElementById("loginBox").style.display="none";
+    loadStories();
   } else {
-    alert("Wrong Admin");
+    alert("Wrong login");
   }
 }
 
-/* LOAD STORIES */
-db.collection("stories")
-.orderBy("createdAt","desc")
-.onSnapshot(snapshot=>{
+/* AUTO LOGIN */
+window.onload = function(){
+  if(userId && userName){
+    document.getElementById("loginBox").style.display="none";
+    loadStories();
+  }
+};
 
-  let c=document.getElementById("stories");
-  c.innerHTML="";
+/* ================= UPLOAD ================= */
+async function uploadImage(file){
 
-  snapshot.forEach(doc=>{
+  let form = new FormData();
+  form.append("file",file);
+  form.append("upload_preset",PRESET);
 
-    let s=doc.data();
+  let res = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`,
+    {method:"POST",body:form}
+  );
 
-    if(!s.images || s.images.length===0) return;
+  let data = await res.json();
+  return data.secure_url;
+}
 
-    let div=document.createElement("div");
-    div.className="story";
+/* ================= UPLOAD STORY ================= */
+file.onchange = async (e)=>{
 
-    div.innerHTML=`
-      <img src="${s.images[0]}">
-      <span>${s.name}</span>
-    `;
+  let files=[...e.target.files];
 
-    div.onclick=()=>openStory(doc.id,s);
+  let urls=[];
+  for(let f of files){
+    urls.push(await uploadImage(f));
+  }
 
-    c.appendChild(div);
+  const ref = db.collection("stories").doc(userId);
+
+  let snap = await ref.get();
+  let old = snap.exists ? (snap.data().images || []) : [];
+
+  await ref.set({
+    name:userName,
+    images:[...old,...urls]
   });
 
-});
+  file.value="";
+};
 
-/* OPEN STORY */
+/* ================= LOAD ================= */
+function loadStories(){
+
+  db.collection("stories").onSnapshot(snapshot=>{
+
+    let c=document.getElementById("stories");
+    c.innerHTML="";
+
+    snapshot.forEach(doc=>{
+
+      let s=doc.data();
+      if(!s.images) return;
+
+      let div=document.createElement("div");
+      div.className="story";
+
+      div.innerHTML=`
+        <img src="${s.images[0]}">
+        <span>${s.name}</span>
+      `;
+
+      div.onclick=()=>openStory(doc.id,s);
+
+      c.appendChild(div);
+    });
+
+  });
+
+}
+
+/* ================= VIEW ================= */
 function openStory(id,s){
 
   currentStory={id,...s};
@@ -228,19 +253,16 @@ function openStory(id,s){
   show();
 }
 
-/* SHOW STORY */
 function show(){
 
   if(!currentStory) return;
 
-  let imgs=currentStory.images;
-
-  if(currentIndex>=imgs.length){
+  if(currentIndex>=currentStory.images.length){
     viewer.style.display="none";
     return;
   }
 
-  img.src=imgs[currentIndex];
+  img.src=currentStory.images[currentIndex];
 
   clearTimeout(timer);
 
@@ -250,69 +272,55 @@ function show(){
   },3000);
 }
 
-/* NEXT */
+/* TAP */
 viewer.onclick=()=>{
   clearTimeout(timer);
   currentIndex++;
   show();
 };
 
-/* ================= PRO DELETE SINGLE ================= */
+/* ================= ADVANCED DELETE FIX ================= */
 async function deleteCurrentImage(){
 
-  if(!currentStory) return;
-
-  if(currentStory.id !== userId){
-    alert("You can delete only your story");
+  if(!currentStory || currentStory.id !== userId){
+    alert("Not allowed");
     return;
   }
 
-  let ref = db.collection("stories").doc(userId);
-  let snap = await ref.get();
+  let ref=db.collection("stories").doc(userId);
+  let snap=await ref.get();
 
   if(!snap.exists) return;
 
   let imgs = snap.data().images || [];
 
-  if(imgs.length===0) return;
-
   imgs.splice(currentIndex,1);
 
-  if(imgs.length===0){
+  if(imgs.length === 0){
     await ref.delete();
     viewer.style.display="none";
     return;
   }
 
-  await ref.update({
-    images:imgs,
-    createdAt:firebase.firestore.FieldValue.serverTimestamp()
-  });
+  await ref.update({images:imgs});
 
   currentStory.images = imgs;
 
-  if(currentIndex>=imgs.length){
-    currentIndex=0;
-  }
+  if(currentIndex >= imgs.length) currentIndex = 0;
 
   show();
 }
 
-/* ================= PRO DELETE ALL ================= */
 async function deleteAllImages(){
 
-  if(!currentStory) return;
-
-  if(currentStory.id !== userId){
-    alert("You can delete only your story");
+  if(!currentStory || currentStory.id !== userId){
+    alert("Not allowed");
     return;
   }
 
   await db.collection("stories").doc(userId).delete();
 
   viewer.style.display="none";
-  currentStory=null;
-  currentIndex=0;
 }
 
 </script>
