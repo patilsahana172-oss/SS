@@ -89,23 +89,23 @@ body{
   margin-top:10px;
 }
 
-/* TOP BAR (DELETE FIX) */
+/* TOP BAR */
 #topBar{
   position:absolute;
   top:15px;
   right:15px;
-  z-index:99999;
+  z-index:9999;
 }
 
 #topBar button{
-  background:rgba(255,0,0,0.9);
+  background:red;
   color:white;
   border:none;
   padding:10px 14px;
   border-radius:20px;
   font-size:14px;
   cursor:pointer;
-  box-shadow:0 5px 15px rgba(0,0,0,0.3);
+  margin-left:8px;
 }
 
 </style>
@@ -113,20 +113,18 @@ body{
 
 <body>
 
-<!-- HEADER -->
 <div class="header">
   <div><b>Stories</b></div>
   <div class="camera" onclick="file.click()">📸</div>
 </div>
 
-<!-- STORIES -->
 <div class="stories" id="stories"></div>
 
-<!-- VIEWER -->
 <div id="viewer">
 
   <div id="topBar">
-    <button onclick="deleteCurrentImage()">🗑 Delete</button>
+    <button onclick="deleteCurrentImage()">🗑 One</button>
+    <button onclick="deleteAllImages()">🗑 All</button>
   </div>
 
   <img id="img">
@@ -164,24 +162,24 @@ if(!userId){
 
 /* ================= STATE ================= */
 let currentStory = null;
-let index = 0;
+let currentIndex = 0;
 let timer;
 
-/* ================= LOAD ================= */
+/* ================= LOAD STORIES ================= */
 db.collection("stories")
 .orderBy("createdAt","desc")
-.onSnapshot(snap=>{
+.onSnapshot(snapshot=>{
 
   let stories=[];
 
-  snap.forEach(doc=>{
+  snapshot.forEach(doc=>{
     stories.push({id:doc.id,...doc.data()});
   });
 
   render(stories);
 });
 
-/* ================= UPLOAD ================= */
+/* ================= CLOUDINARY UPLOAD ================= */
 async function uploadImage(file){
 
   let form = new FormData();
@@ -197,10 +195,10 @@ async function uploadImage(file){
   return data.secure_url;
 }
 
-/* ================= CREATE / MERGE STORY ================= */
+/* ================= UPLOAD + MERGE ================= */
 file.onchange = async (e)=>{
 
-  let files = [...e.target.files];
+  let files=[...e.target.files];
 
   if(files.length>6){
     alert("Max 6 images allowed");
@@ -265,7 +263,7 @@ function render(stories){
 function openStory(s){
 
   currentStory=s;
-  index=0;
+  currentIndex=0;
 
   document.getElementById("viewer").style.display="flex";
   document.getElementById("viewerName").innerText=s.name;
@@ -278,48 +276,46 @@ function show(){
 
   if(!currentStory) return;
 
-  if(index>=currentStory.images.length){
+  if(currentIndex >= currentStory.images.length){
     document.getElementById("viewer").style.display="none";
     return;
   }
 
   document.getElementById("img").src =
-    currentStory.images[index];
-
-  index++;
+    currentStory.images[currentIndex];
 
   clearTimeout(timer);
-  timer = setTimeout(show,3000);
+
+  timer = setTimeout(()=>{
+    currentIndex++;
+    show();
+  },3000);
 }
 
 /* TAP = SKIP */
 document.getElementById("viewer").onclick = ()=>{
   clearTimeout(timer);
+  currentIndex++;
   show();
 };
 
-/* ================= DELETE (FIXED + SAFE) ================= */
+/* ================= DELETE SINGLE IMAGE (FIXED PERMANENT) ================= */
 async function deleteCurrentImage(){
 
   if(!currentStory) return;
 
-  // only owner can delete
   if(currentStory.id !== userId){
     alert("You can only delete your own story");
     return;
   }
 
-  let imgIndex = index - 1;
+  let updated = [...currentStory.images];
 
-  if(imgIndex < 0) return;
-
-  let updated = currentStory.images.filter((img,i)=>i!==imgIndex);
+  updated.splice(currentIndex,1);
 
   await db.collection("stories")
     .doc(currentStory.id)
-    .update({
-      images: updated
-    });
+    .update({images:updated});
 
   currentStory.images = updated;
 
@@ -333,8 +329,31 @@ async function deleteCurrentImage(){
     return;
   }
 
-  index = Math.max(0,imgIndex);
+  if(currentIndex >= updated.length){
+    currentIndex = 0;
+  }
+
   show();
+}
+
+/* ================= DELETE ALL ================= */
+async function deleteAllImages(){
+
+  if(!currentStory) return;
+
+  if(currentStory.id !== userId){
+    alert("You can only delete your own story");
+    return;
+  }
+
+  await db.collection("stories")
+    .doc(currentStory.id)
+    .delete();
+
+  currentStory = null;
+  currentIndex = 0;
+
+  document.getElementById("viewer").style.display="none";
 }
 
 </script>
