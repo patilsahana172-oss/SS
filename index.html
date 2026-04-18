@@ -55,7 +55,6 @@ body{
 
 .story span{
   font-size:12px;
-  display:block;
 }
 
 #viewer{
@@ -104,7 +103,7 @@ button{
 
 <script>
 
-/* FIREBASE */
+/* ================= FIREBASE ================= */
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
   authDomain: "stories-web-52ddd.firebaseapp.com",
@@ -117,55 +116,60 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const storage = firebase.storage();
 
-/* USER */
+/* ================= USER ================= */
 let userId = localStorage.getItem("userId");
 let userName = localStorage.getItem("userName");
 
-/* STATE */
+/* ================= STATE ================= */
 let currentStory = null;
 let index = 0;
 let timer;
 
+/* ================= APP START ================= */
+window.onload = initApp;
+
+function initApp(){
+
+  if(!userId || !userName){
+    login();
+  } else {
+    loadStories();
+  }
+}
+
 /* ================= LOGIN ================= */
 function login(){
 
-  let mobile = localStorage.getItem("userId");
+  let mobile = prompt("Enter mobile number:");
+  if(!mobile) return;
 
-  if(!mobile){
+  let name = localStorage.getItem("userName");
 
-    mobile = prompt("Enter mobile number:");
-    let name = prompt("Enter your name:");
-
-    localStorage.setItem("userId", mobile);
-    localStorage.setItem("userName", name);
-
-    userId = mobile;
-    userName = name;
-
-  } else {
-    userId = mobile;
-    userName = localStorage.getItem("userName");
+  if(!name){
+    name = prompt("Enter your name:");
   }
+
+  if(!name) return;
+
+  userId = mobile;
+  userName = name;
+
+  localStorage.setItem("userId", userId);
+  localStorage.setItem("userName", userName);
 
   loadStories();
 }
 
-window.onload = ()=>{
-  if(userId) loadStories();
-  else login();
-};
-
-/* ================= UPLOAD IMAGE ================= */
+/* ================= UPLOAD ================= */
 file.onchange = async (e)=>{
 
   let files = [...e.target.files];
   let urls = [];
 
   for(let f of files){
-    urls.push(await uploadToStorage(f));
+    urls.push(await uploadImage(f));
   }
 
-  // 1 USER = 1 STORY (replace old)
   await db.collection("stories").doc(userId).set({
     userId,
     name:userName,
@@ -176,8 +180,8 @@ file.onchange = async (e)=>{
   file.value="";
 };
 
-/* upload to firebase storage */
-async function uploadToStorage(file){
+/* upload to storage */
+async function uploadImage(file){
 
   const ref = storage.ref("stories/" + userId + "/" + Date.now() + "_" + file.name);
 
@@ -197,7 +201,7 @@ function loadStories(){
     snap.forEach(doc=>{
 
       let s = doc.data();
-      if(!s.images?.length) return;
+      if(!s.images || !s.images.length) return;
 
       let div = document.createElement("div");
       div.className="story";
