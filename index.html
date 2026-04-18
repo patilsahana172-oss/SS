@@ -1,26 +1,91 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sahana ❤️ Sammed Wedding</title>
 
-  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to bottom, #f8e1e7, #ffffff);
+      text-align: center;
+    }
+
+    .hero {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      color: #d4af37;
+    }
+
+    p {
+      color: #555;
+      font-size: 18px;
+    }
+
+    button {
+      padding: 12px 25px;
+      border: none;
+      border-radius: 25px;
+      background: #d4af37;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    .sections {
+      display: none;
+      padding: 20px;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.7);
+      margin: 10px;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      cursor: pointer;
+      font-size: 18px;
+    }
+  </style>
 </head>
 
-<body style="margin:0">
+<body>
 
+  <!-- Invitation Screen -->
+  <div class="hero" id="home">
+    <h1>💍 Sahana ❤️ Sammed</h1>
+    <p>We are getting married!</p>
+    <p>📅 April 23, 2026</p>
+    <button onclick="showSections()">View Events</button>
+  </div>
 
-<a-scene mindar-image="imageTargetSrc: targets.mind;" vr-mode-ui="enabled:false">
+  <!-- Sections -->
+  <div class="sections" id="sections">
+    <h2>✨ Wedding Events</h2>
 
-  <a-assets>
-    <img id="rose" src="Rose.png">
-  </a-assets>
+    <div class="card">💛 Haldi</div>
+    <div class="card">🌿 Mehendi</div>
+    <div class="card">🔥 Muhurtam</div>
+    <div class="card">🎉 Reception</div>
 
-  <a-entity mindar-image-target="targetIndex: 0">
-    <a-image src="#rose" width="1" height="1"></a-image>
-  </a-entity>
+  </div>
 
-</a-scene>
+  <script>
+    function showSections() {
+      document.getElementById('home').style.display = 'none';
+      document.getElementById('sections').style.display = 'block';
+    }
+  </script>
 
 </body>
 </html>
