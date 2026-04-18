@@ -4,51 +4,64 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Wedding Stories</title>
 
-<!-- ✅ Firebase (COMPAT VERSION) -->
+<!-- ✅ Firebase COMPAT (MUST USE THIS ONLY) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
 <style>
-body { margin:0; font-family:sans-serif; background:#fafafa; }
+body { margin:0; font-family:sans-serif; }
 
 .header {
-  display:flex; justify-content:space-between; align-items:center;
-  padding:12px; background:#fff; border-bottom:1px solid #ddd;
+  display:flex;
+  justify-content:space-between;
+  padding:10px;
+  background:#fff;
+  border-bottom:1px solid #ddd;
 }
 
 .logo img {
-  width:40px; height:40px; border-radius:50%;
+  width:40px;
+  height:40px;
+  border-radius:50%;
 }
 
 .stories {
-  display:flex; overflow-x:auto; gap:10px; padding:10px;
+  display:flex;
+  overflow-x:auto;
+  gap:10px;
+  padding:10px;
   background:#fff;
 }
 
-.story { text-align:center; cursor:pointer; }
+.story { text-align:center; }
 
 .story img {
-  width:70px; height:70px;
+  width:70px;
+  height:70px;
   border-radius:50%;
   border:3px solid orange;
 }
 
 #storyView {
-  display:none; position:fixed; top:0; left:0;
-  width:100%; height:100%; background:black;
-  justify-content:center; align-items:center; flex-direction:column;
+  display:none;
+  position:fixed;
+  top:0;
+  width:100%;
+  height:100%;
+  background:black;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
 }
 
 #storyView img { width:90%; }
 #storyName { color:white; margin-top:10px; }
-
 </style>
 </head>
 
 <body>
 
-<!-- HEADER -->
 <div class="header">
   <h3>Sahana ❤️ Sammed</h3>
   <div class="logo">
@@ -56,21 +69,18 @@ body { margin:0; font-family:sans-serif; background:#fafafa; }
   </div>
 </div>
 
-<!-- STORIES -->
 <div class="stories" id="stories"></div>
 
-<!-- STORY VIEW -->
 <div id="storyView">
   <img id="storyImg">
   <div id="storyName"></div>
 </div>
 
-<!-- FILE INPUT -->
 <input type="file" id="fileInput" accept="image/*" multiple hidden>
 
 <script>
 
-/* 🔥 FIREBASE CONFIG */
+// 🔥 FIREBASE CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyD4ADNcYbQwY2Fmzsx6HPqVDyJemDf_Acs",
   authDomain: "ss-app-a0b1c.firebaseapp.com",
@@ -81,18 +91,23 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+
 const db = firebase.firestore();
 const storage = firebase.storage();
 
-/* 👤 USER ID */
+console.log("Firebase Loaded ✅");
+
+// 👤 USER ID
 let userId = localStorage.getItem("userId");
 if (!userId) {
   userId = "user_" + Math.random().toString(36).substr(2,9);
   localStorage.setItem("userId", userId);
 }
 
-/* 📥 LOAD STORIES */
+// 📥 LOAD STORIES
 function loadStories() {
+
+  console.log("Loading stories...");
 
   const container = document.getElementById("stories");
 
@@ -102,19 +117,16 @@ function loadStories() {
 
       container.innerHTML = "";
 
-      // ✅ ADD BUTTON (FIRST)
-      const addDiv = document.createElement("div");
-      addDiv.className = "story";
-
-      addDiv.innerHTML = `
+      // ADD BUTTON
+      const add = document.createElement("div");
+      add.className = "story";
+      add.innerHTML = `
         <img src="https://cdn-icons-png.flaticon.com/512/1828/1828817.png">
         <div>Add</div>
       `;
+      add.onclick = () => fileInput.click();
+      container.appendChild(add);
 
-      addDiv.onclick = () => fileInput.click();
-      container.appendChild(addDiv);
-
-      // ✅ STORIES
       snapshot.forEach(doc => {
         const data = doc.data();
 
@@ -134,25 +146,25 @@ function loadStories() {
     });
 }
 
-/* 📸 UPLOAD */
+// 📸 UPLOAD
 fileInput.onchange = async (e) => {
 
   const files = e.target.files;
 
   if (files.length > 5) {
-    alert("Max 5 images");
+    alert("Max 5 images allowed");
     return;
   }
 
   const name = prompt("Enter your name");
 
-  // check existing
+  // only one story per user
   const existing = await db.collection("stories")
     .where("userId","==",userId)
     .get();
 
   if (!existing.empty) {
-    alert("Already added story");
+    alert("You already uploaded story");
     return;
   }
 
@@ -175,7 +187,7 @@ fileInput.onchange = async (e) => {
   alert("Uploaded ✅");
 };
 
-/* 👀 VIEW STORY */
+// 👀 VIEW STORY
 function openStory(images, name) {
 
   let index = 0;
@@ -191,14 +203,13 @@ function openStory(images, name) {
 
     document.getElementById("storyImg").src = images[index];
     index++;
-
     setTimeout(show, 3000);
   }
 
   show();
 }
 
-/* INIT */
+// INIT
 loadStories();
 
 </script>
