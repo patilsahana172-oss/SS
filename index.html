@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stories App</title>
+<title>Instagram Stories</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -25,11 +25,11 @@ body{
 }
 
 .camera{
-  font-size:24px;
-  cursor:pointer;
+  font-size:22px;
   background:#eee;
   padding:8px;
   border-radius:50%;
+  cursor:pointer;
 }
 
 /* STORIES */
@@ -64,7 +64,8 @@ body{
 #viewer{
   display:none;
   position:fixed;
-  top:0;left:0;
+  top:0;
+  left:0;
   width:100%;
   height:100%;
   background:black;
@@ -83,18 +84,6 @@ body{
   color:white;
   margin-top:10px;
 }
-
-.deleteBtn{
-  position:absolute;
-  top:15px;
-  right:15px;
-  background:red;
-  color:white;
-  border:none;
-  width:35px;
-  height:35px;
-  border-radius:50%;
-}
 </style>
 </head>
 
@@ -109,7 +98,6 @@ body{
 
 <div id="viewer">
   <img id="img">
-  <button class="deleteBtn" onclick="deleteImage()">🗑</button>
   <div id="viewerName"></div>
 </div>
 
@@ -117,7 +105,7 @@ body{
 
 <script>
 
-/* 🔥 FIREBASE */
+/* ================= FIREBASE ================= */
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
   authDomain: "stories-web-52ddd.firebaseapp.com",
@@ -128,16 +116,24 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-/* ☁️ CLOUDINARY */
+/* ================= CLOUDINARY ================= */
 const CLOUD = "dahg3tht7";
 const PRESET = "nipieidp";
 
-/* USER */
+/* ================= USER ================= */
 let userName = localStorage.getItem("userName");
+let userId = localStorage.getItem("userId");
 let currentStory = null;
 let index = 0;
+let autoTimer;
 
-/* LOAD STORIES */
+/* create unique userId ONCE */
+if (!userId) {
+  userId = "user_" + Math.random().toString(36).substr(2, 9);
+  localStorage.setItem("userId", userId);
+}
+
+/* ================= LOAD STORIES ================= */
 db.collection("stories")
 .orderBy("createdAt","desc")
 .onSnapshot(snapshot => {
@@ -151,31 +147,28 @@ db.collection("stories")
   render(stories);
 });
 
-/* UPLOAD IMAGE */
+/* ================= CLOUDINARY UPLOAD ================= */
 async function uploadImage(file){
 
-  const form = new FormData();
-  form.append("file", file);
-  form.append("upload_preset", PRESET);
+  let form = new FormData();
+  form.append("file",file);
+  form.append("upload_preset",PRESET);
 
-  const res = await fetch(
+  let res = await fetch(
     `https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`,
-    {
-      method:"POST",
-      body:form
-    }
+    {method:"POST",body:form}
   );
 
-  const data = await res.json();
+  let data = await res.json();
   return data.secure_url;
 }
 
-/* UPLOAD STORY */
+/* ================= UPLOAD STORY (MERGE FIX) ================= */
 file.onchange = async (e)=>{
 
   let files = [...e.target.files];
 
-  if(files.length > 6){
+  if(files.length>6){
     alert("Max 6 images allowed");
     return;
   }
@@ -191,16 +184,26 @@ file.onchange = async (e)=>{
     urls.push(await uploadImage(f));
   }
 
-  await db.collection("stories").add({
+  const ref = db.collection("stories").doc(userId);
+
+  const doc = await ref.get();
+
+  let oldImages = [];
+
+  if(doc.exists){
+    oldImages = doc.data().images || [];
+  }
+
+  await ref.set({
     name:userName,
-    images:urls,
+    images:[...oldImages,...urls],
     createdAt:firebase.firestore.FieldValue.serverTimestamp()
   });
 
   file.value="";
 };
 
-/* RENDER */
+/* ================= RENDER ================= */
 function render(stories){
 
   let c=document.getElementById("stories");
@@ -224,7 +227,7 @@ function render(stories){
   });
 }
 
-/* OPEN STORY */
+/* ================= OPEN STORY ================= */
 function openStory(s){
 
   currentStory=s;
@@ -236,12 +239,12 @@ function openStory(s){
   show();
 }
 
-/* SHOW SLIDES */
+/* ================= SHOW + TAP SKIP ================= */
 function show(){
 
   if(!currentStory) return;
 
-  if(index >= currentStory.images.length){
+  if(index>=currentStory.images.length){
     document.getElementById("viewer").style.display="none";
     return;
   }
@@ -251,29 +254,15 @@ function show(){
 
   index++;
 
-  setTimeout(show,3000);
+  clearTimeout(autoTimer);
+  autoTimer = setTimeout(show,3000);
 }
 
-/* DELETE IMAGE */
-async function deleteImage(){
-
-  if(!currentStory) return;
-
-  let img = currentStory.images[index-1];
-
-  let updated = currentStory.images.filter(i=>i!==img);
-
-  await db.collection("stories")
-    .doc(currentStory.id)
-    .update({images:updated});
-
-  currentStory.images = updated;
-
-  if(updated.length===0){
-    await db.collection("stories").doc(currentStory.id).delete();
-    document.getElementById("viewer").style.display="none";
-  }
-}
+/* TAP = SKIP */
+document.getElementById("viewer").onclick = ()=>{
+  clearTimeout(autoTimer);
+  show();
+};
 
 </script>
 
