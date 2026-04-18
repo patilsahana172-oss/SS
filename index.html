@@ -138,7 +138,7 @@ body {
   <div id="viewerName"></div>
 </div>
 
-<!-- CAMERA + GALLERY -->
+<!-- 📸 CAMERA + GALLERY -->
 <input type="file" id="file" multiple accept="image/*" capture="environment" hidden>
 
 <script>
@@ -176,15 +176,8 @@ file.onchange = async (e) => {
 
   const files = [...e.target.files];
 
-  // ❌ MINIMUM 6 CHECK
-  if (files.length < 6) {
-    alert("Please upload minimum 6 images ❌");
-    return;
-  }
-
-  // ❌ MAXIMUM 6 CHECK
   if (files.length > 6) {
-    alert("Only 6 images allowed ❌");
+    alert("Max 6 images allowed");
     return;
   }
 
@@ -201,7 +194,10 @@ file.onchange = async (e) => {
     if (url) urls.push(url);
   }
 
-  if (urls.length === 0) return;
+  /* 🔥 AUTO FILL TO 6 */
+  while (urls.length < 6) {
+    urls.push("https://via.placeholder.com/300?text=No+Image");
+  }
 
   userStory = urls;
 
@@ -242,7 +238,7 @@ function deleteStory() {
   render();
 }
 
-/* 👀 STORY VIEW */
+/* 👀 STORY SLIDESHOW */
 function openStory(images) {
 
   let i = 0;
