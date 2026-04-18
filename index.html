@@ -5,7 +5,11 @@
 <title>Stories App</title>
 
 <style>
-body { margin:0; font-family:sans-serif; background:#fafafa; }
+body {
+  margin:0;
+  font-family:sans-serif;
+  background:#fafafa;
+}
 
 .header {
   display:flex;
@@ -17,14 +21,26 @@ body { margin:0; font-family:sans-serif; background:#fafafa; }
 
 .header-right {
   display:flex;
+  align-items:center;
   gap:10px;
 }
 
-.profile, .camera {
+.profile {
   width:40px;
   height:40px;
   border-radius:50%;
   background:#ddd;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+
+.camera {
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  background:#f2f2f2;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -50,7 +66,8 @@ body { margin:0; font-family:sans-serif; background:#fafafa; }
 #viewer {
   display:none;
   position:fixed;
-  top:0; left:0;
+  top:0;
+  left:0;
   width:100%;
   height:100%;
   background:black;
@@ -83,13 +100,13 @@ body { margin:0; font-family:sans-serif; background:#fafafa; }
   <img id="img">
 </div>
 
-<input type="file" id="file" accept="image/*" multiple hidden>
+<input type="file" id="file" multiple accept="image/*" hidden>
 
 <script>
 
 let stories = [];
 
-// ☁️ UPLOAD FUNCTION (YOUR CLOUDINARY)
+/* ☁️ CLOUDINARY UPLOAD (ONLY REPLACED VALUES) */
 async function uploadImage(file) {
 
   const formData = new FormData();
@@ -105,10 +122,16 @@ async function uploadImage(file) {
   );
 
   const data = await res.json();
+
+  if (!data.secure_url) {
+    alert("Upload failed ❌ Check Cloudinary settings");
+    return null;
+  }
+
   return data.secure_url;
 }
 
-// 📤 FILE UPLOAD
+/* 📤 UPLOAD */
 file.onchange = async (e) => {
 
   const files = [...e.target.files];
@@ -117,14 +140,18 @@ file.onchange = async (e) => {
 
   for (let f of files) {
     const url = await uploadImage(f);
-    urls.push(url);
+    if (url) urls.push(url);
   }
+
+  if (urls.length === 0) return;
 
   stories.push(urls);
   render();
+
+  file.value = "";
 };
 
-// 📥 RENDER STORIES
+/* 📥 RENDER */
 function render() {
 
   const container = document.getElementById("stories");
@@ -141,7 +168,7 @@ function render() {
   });
 }
 
-// 👀 VIEW STORY
+/* 👀 VIEW STORY */
 function openStory(images) {
 
   let i = 0;
