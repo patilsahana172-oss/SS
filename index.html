@@ -3,12 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SS Wedding</title>
+<title>SS</title>
 
 <style>
-body {
+* {
   margin: 0;
-  font-family: -apple-system, sans-serif;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   background: #000;
   color: white;
 }
@@ -18,10 +23,13 @@ body {
   position: fixed;
   top: 0;
   width: 100%;
+  height: 50px;
   background: #000;
-  padding: 10px;
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  padding: 0 15px;
+  border-bottom: 1px solid #222;
   z-index: 10;
 }
 
@@ -33,84 +41,95 @@ body {
   color: transparent;
 }
 
-/* PROFILE */
-.profile {
-  margin-top: 60px;
-  padding: 15px;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.profile img {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-}
-
-.profile-info {
-  flex: 1;
-}
-
-.follow-btn {
-  padding: 6px 14px;
-  border: none;
-  border-radius: 6px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
 /* STORIES */
 .stories {
-  display: flex;
-  overflow-x: auto;
+  margin-top: 55px;
   padding: 10px;
-  gap: 10px;
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  border-bottom: 1px solid #222;
 }
 
 .story {
   text-align: center;
+  width: 70px;
 }
 
 .story img {
   width: 65px;
   height: 65px;
   border-radius: 50%;
-  border: 2px solid pink;
+  border: 2px solid #ff4081;
+  padding: 2px;
+}
+
+.story p {
+  font-size: 12px;
+  margin-top: 4px;
 }
 
 /* POSTS */
+.feed {
+  padding-bottom: 60px;
+}
+
 .post {
   margin-bottom: 20px;
 }
 
-.post__header {
+.post-header {
   display: flex;
   align-items: center;
   padding: 10px;
 }
 
-.post__header img {
-  width: 35px;
-  height: 35px;
+.post-header img {
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   margin-right: 10px;
 }
 
-.post__image img {
+.post-header span {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.post-img img {
   width: 100%;
 }
 
-.post__actions {
+.post-actions {
   display: flex;
   gap: 15px;
   padding: 10px;
   font-size: 22px;
 }
 
-.post__caption {
-  padding: 0 10px 10px;
+.post-likes {
+  padding: 0 10px;
   font-size: 14px;
+  font-weight: 600;
+}
+
+.post-caption {
+  padding: 5px 10px;
+  font-size: 14px;
+}
+
+/* BOTTOM NAV */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  height: 50px;
+  background: #000;
+  border-top: 1px solid #222;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  font-size: 22px;
 }
 </style>
 </head>
@@ -120,277 +139,64 @@ body {
 <!-- HEADER -->
 <div class="header">
   <div class="logo">SS</div>
-</div>
-
-<!-- PROFILE -->
-<div class="profile">
-  <img src="https://via.placeholder.com/150">
-
-  <div class="profile-info">
-    <div><b>SS Wedding</b></div>
-    <div id="followers">0 followers</div>
-  </div>
-
-  <button class="follow-btn" id="followBtn">Follow</button>
+  <div>✉️</div>
 </div>
 
 <!-- STORIES -->
-<div class="stories" id="stories"></div>
+<div class="stories">
+  <div class="story">
+    <img src="https://via.placeholder.com/150">
+    <p>You</p>
+  </div>
 
-<!-- POSTS -->
-<div id="posts"></div>
+  <div class="story">
+    <img src="https://via.placeholder.com/150">
+    <p>Haldi</p>
+  </div>
 
-<!-- FILE INPUT -->
-<input type="file" id="fileInput" hidden>
+  <div class="story">
+    <img src="https://via.placeholder.com/150">
+    <p>Mehendi</p>
+  </div>
 
-<script>
+  <div class="story">
+    <img src="https://via.placeholder.com/150">
+    <p>Reception</p>
+  </div>
+</div>
 
-// =======================
-// CURRENT USER (SIMULATION)
-// =======================
-const currentUser = "sahana";
+<!-- FEED -->
+<div class="feed">
 
-// =======================
-// PROFILE (FOLLOW SYSTEM)
-// =======================
-let profile = {
-  followers: []
-};
-
-const followBtn = document.getElementById("followBtn");
-const followersText = document.getElementById("followers");
-
-function updateFollowUI() {
-  const isFollowing = profile.followers.includes(currentUser);
-
-  followersText.innerText = profile.followers.length + " followers";
-
-  if (isFollowing) {
-    followBtn.innerText = "Following";
-    followBtn.style.background = "#333";
-  } else {
-    followBtn.innerText = "Follow";
-    followBtn.style.background = "#0095f6";
-  }
-}
-
-followBtn.onclick = () => {
-  const index = profile.followers.indexOf(currentUser);
-
-  if (index === -1) {
-    profile.followers.push(currentUser);
-  } else {
-    profile.followers.splice(index, 1);
-  }
-
-  updateFollowUI();
-};
-
-// =======================
-// STORIES (USER ONLY)
-// =======================
-let stories = [];
-const storiesDiv = document.getElementById("stories");
-
-function loadStories() {
-  storiesDiv.innerHTML = "";
-
-  // ADD STORY BUTTON
-  storiesDiv.innerHTML += `
-    <div class="story" id="addStory">
+  <div class="post">
+    <div class="post-header">
       <img src="https://via.placeholder.com/150">
-      <div>+</div>
+      <span>SS Wedding</span>
     </div>
-  `;
 
-  // USER STORIES
-  stories.forEach(s => {
-    storiesDiv.innerHTML += `
-      <div class="story">
-        <img src="${s.image}">
-        <div>${s.name}</div>
-      </div>
-    `;
-  });
+    <div class="post-img">
+      <img src="https://via.placeholder.com/500">
+    </div>
 
-  document.getElementById("addStory").onclick = () => {
-    document.getElementById("fileInput").click();
-  };
-}
+    <div class="post-actions">
+      ❤️ 💬 📤
+    </div>
 
-// HANDLE STORY UPLOAD
-document.getElementById("fileInput").onchange = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+    <div class="post-likes">
+      120 likes
+    </div>
 
-  const name = prompt("Enter your name");
+    <div class="post-caption">
+      <b>SS Wedding</b> Beautiful moment ❤️
+    </div>
+  </div>
 
-  const reader = new FileReader();
+</div>
 
-  reader.onload = function(ev) {
-    stories.unshift({
-      name: name || "Guest",
-      image: ev.target.result
-    });
-
-    loadStories();
-  };
-
-  reader.readAsDataURL(file);
-};
-
-// =======================
-// POSTS (ADMIN ONLY STATIC)
-// =======================
-let posts = [
-  {
-    section: "Haldi",
-    image: "https://via.placeholder.com/500",
-    caption: "Haldi vibes 💛"
-  },
-  {
-    section: "Mehendi",
-    image: "https://via.placeholder.com/500",
-    caption: "Mehendi fun 💚"
-  }
-];
-
-const postsDiv = document.getElementById("posts");
-
-function loadPosts() {
-  postsDiv.innerHTML = "";
-
-  posts.forEach(post => {
-    postsDiv.innerHTML += `
-      <div class="post">
-        <div class="post__header">
-          <img src="https://via.placeholder.com/150">
-          <b>${post.section}</b>
-        </div>
-
-        <div class="post__image">
-          <img src="${post.image}">
-        </div>
-
-        <div class="post__actions">
-          ❤️ 💬 📤
-        </div>
-
-        <div class="post__caption">
-          <b>${post.section}</b> ${post.caption}
-        </div>
-      </div>
-    `;
-  });
-}
-
-// =======================
-// INIT
-// =======================
-updateFollowUI();
-loadStories();
-loadPosts();
-
-</script>
-
-</body>
-</html<script>
-
-// ADMIN CONTROL
-const isAdmin = true;
-
-// DATA
-let sections = ["Haldi", "Mehendi", "Muhurtham"];
-let posts = [];
-
-const sectionsContainer = document.getElementById("sectionsContainer");
-const postsContainer = document.getElementById("postsContainer");
-const cameraBtn = document.getElementById("cameraBtn");
-const cameraInput = document.getElementById("cameraInput");
-
-// LOAD SECTIONS
-function loadSections() {
-  sectionsContainer.innerHTML = "";
-
-  sections.forEach(section => {
-    const div = document.createElement("div");
-    div.className = "story";
-
-    div.innerHTML = `
-      <img src="https://via.placeholder.com/60">
-      <div>${section}</div>
-    `;
-
-    div.onclick = () => filterPosts(section);
-
-    sectionsContainer.appendChild(div);
-  });
-}
-
-// LOAD POSTS
-function loadPosts(data = posts) {
-  postsContainer.innerHTML = "";
-
-  data.forEach(post => {
-    const div = document.createElement("div");
-    div.className = "post";
-
-    div.innerHTML = `
-      <div class="post__header">${post.section}</div>
-      <img src="${post.image}">
-    `;
-
-    postsContainer.appendChild(div);
-  });
-}
-
-// FILTER
-function filterPosts(section) {
-  const filtered = posts.filter(p => p.section === section);
-  loadPosts(filtered);
-}
-
-// CAMERA
-if (!isAdmin) {
-  cameraBtn.style.display = "none";
-}
-
-cameraBtn.onclick = () => {
-  cameraInput.click();
-};
-
-cameraInput.onchange = () => {
-  const file = cameraInput.files[0];
-  if (!file) return;
-
-  let section = prompt("Enter section name");
-
-  if (!section) return;
-
-  if (!sections.includes(section)) {
-    sections.push(section);
-    loadSections();
-  }
-
-  const reader = new FileReader();
-
-  reader.onload = function(e) {
-    posts.unshift({
-      section: section,
-      image: e.target.result
-    });
-
-    loadPosts();
-  };
-
-  reader.readAsDataURL(file);
-};
-
-// INIT
-loadSections();
-loadPosts();
-
-</script>
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  🏠 🔍 ➕ ❤️ 👤
+</div>
 
 </body>
 </html>
