@@ -2,9 +2,8 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stories App OTP</title>
+<title>Insta Stories</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -14,62 +13,41 @@
 body{
   margin:0;
   font-family:system-ui;
-  background:#fafafa;
+  background:#000;
+  color:white;
 }
 
 /* HEADER */
 .header{
   display:flex;
   justify-content:space-between;
-  padding:14px;
-  background:white;
-  box-shadow:0 2px 10px rgba(0,0,0,0.05);
+  padding:12px;
+  background:#111;
 }
 
 .logo{
   font-weight:800;
-  font-size:20px;
-  background:linear-gradient(135deg,#ff6a00,#ee0979);
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
+  color:#ff2d55;
 }
 
-.adminIcon{
-  font-size:22px;
+.icon{
   cursor:pointer;
 }
 
-/* BOX */
-.box{
-  padding:15px;
-}
-
-input{
-  width:90%;
-  padding:10px;
-  margin:5px;
-}
-
-button{
-  padding:10px;
-  margin:5px;
-}
-
-/* STORIES */
+/* STORIES BAR */
 .stories{
   display:flex;
-  overflow-x:auto;
   gap:10px;
+  overflow-x:auto;
   padding:10px;
-  background:white;
+  background:#111;
 }
 
 .story img{
-  width:65px;
-  height:65px;
+  width:60px;
+  height:60px;
   border-radius:50%;
-  object-fit:cover;
-  border:3px solid #ff4d6d;
+  border:2px solid #ff2d55;
 }
 
 /* VIEWER */
@@ -84,11 +62,44 @@ button{
 
 #viewer img{
   width:100%;
-  max-height:90vh;
+  max-height:100vh;
   object-fit:contain;
 }
 
-.hidden{display:none;}
+/* LOGIN */
+.box{
+  padding:20px;
+}
+
+input,button{
+  padding:10px;
+  margin:5px;
+  width:90%;
+}
+
+/* ADMIN */
+#adminPanel{
+  display:none;
+  background:#111;
+  padding:15px;
+}
+
+.hidden{display:none}
+
+.progress{
+  position:absolute;
+  top:10px;
+  left:10px;
+  width:90%;
+  height:3px;
+  background:gray;
+}
+
+.bar{
+  height:3px;
+  background:#ff2d55;
+  width:0%;
+}
 
 </style>
 </head>
@@ -97,11 +108,11 @@ button{
 
 <!-- HEADER -->
 <div class="header">
-  <div class="logo">SS</div>
-  <div class="adminIcon" onclick="openAdmin()">⚙️</div>
+  <div class="logo">SS Stories</div>
+  <div class="icon" onclick="openAdmin()">⚙️</div>
 </div>
 
-<!-- OTP LOGIN -->
+<!-- LOGIN -->
 <div id="loginBox" class="box">
   <h3>Login with OTP</h3>
   <input id="phone" placeholder="+91XXXXXXXXXX">
@@ -109,8 +120,7 @@ button{
 </div>
 
 <div id="otpBox" class="box hidden">
-  <h3>Enter OTP</h3>
-  <input id="otp" placeholder="OTP">
+  <input id="otp" placeholder="Enter OTP">
   <button onclick="verifyOTP()">Verify</button>
 </div>
 
@@ -118,9 +128,8 @@ button{
 
 <!-- UPLOAD -->
 <div id="uploadBox" class="box hidden">
-  <h3>Upload Story</h3>
   <input type="file" id="file" multiple>
-  <button onclick="uploadStory()">Upload</button>
+  <button onclick="uploadStory()">Upload Story</button>
 </div>
 
 <!-- STORIES -->
@@ -128,33 +137,28 @@ button{
 
 <!-- VIEWER -->
 <div id="viewer" onclick="nextStory()">
+  <div class="progress"><div class="bar" id="bar"></div></div>
   <img id="img">
 </div>
 
-<!-- ADMIN LOGIN -->
-<div id="adminBox" class="box hidden">
-  <h3>Admin Login</h3>
-  <input id="amobile" placeholder="Mobile">
-  <input id="apass" type="password" placeholder="Password">
-  <button onclick="adminLogin()">Login</button>
-</div>
-
-<!-- ADMIN PANEL -->
-<div id="adminPanel" class="box hidden">
-  <h3>Create Category</h3>
+<!-- ADMIN -->
+<div id="adminPanel">
+  <h3>Admin Panel</h3>
   <input id="cat" placeholder="Category">
   <button onclick="createCat()">Create</button>
-
   <div id="cats"></div>
 </div>
 
 <script>
 
-/* FIREBASE */
+/* 🔥 FIREBASE CONFIG */
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT"
+  apiKey: "PASTE_YOURS",
+  authDomain: "stories-web-52ddd.firebaseapp.com",
+  projectId: "stories-web-52ddd",
+  storageBucket: "stories-web-52ddd.appspot.com",
+  messagingSenderId: "649630516222",
+  appId: "1:649630516222:web:fc99a773dfa3414ceb76af"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -162,84 +166,70 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* CLOUDINARY */
-const CLOUD = "dahg3tht7";
-const PRESET = "nipieidp";
-
 /* STATE */
-let user = null;
-let story = [];
-let index = 0;
 let confirmResult;
+let user;
+let story=[];
+let index=0;
 
-/* ================= OTP SEND ================= */
+/* ================= OTP ================= */
 function sendOTP(){
 
   let phone = document.getElementById("phone").value;
 
-  if(!phone){
-    alert("Enter mobile");
-    return;
-  }
-
   window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier(
     "recaptcha-container",
-    { size: "invisible" }
+    {size:"invisible"}
   );
 
   auth.signInWithPhoneNumber(phone, window.recaptchaVerifier)
-    .then(result=>{
+  .then(res=>{
+    confirmResult = res;
+    otpBox.classList.remove("hidden");
+    alert("OTP sent");
+  })
+  .catch(err=>{
+    alert(err.message);
+  });
 
-      confirmResult = result;
-
-      alert("OTP sent");
-
-      document.getElementById("otpBox").classList.remove("hidden");
-
-    }).catch(err=>{
-      alert(err.message);
-      console.log(err);
-    });
 }
 
-/* ================= VERIFY OTP ================= */
 function verifyOTP(){
 
   let code = document.getElementById("otp").value;
 
   confirmResult.confirm(code)
-    .then(result=>{
+  .then(res=>{
 
-      user = result.user.phoneNumber;
+    user = res.user.phoneNumber;
 
-      alert("Login success");
+    loginBox.style.display="none";
+    otpBox.style.display="none";
+    uploadBox.classList.remove("hidden");
 
-      document.getElementById("loginBox").style.display="none";
-      document.getElementById("otpBox").style.display="none";
-      document.getElementById("uploadBox").style.display="block";
+    loadStories();
 
-      loadStories();
+  })
+  .catch(err=>{
+    alert("Wrong OTP");
+  });
 
-    })
-    .catch(err=>{
-      alert("Wrong OTP");
-    });
 }
 
-/* ================= UPLOAD STORY ================= */
+/* ================= UPLOAD ================= */
 async function uploadStory(){
 
-  let files = document.getElementById("file").files;
-  let urls = [];
+  let files = file.files;
+  let urls=[];
 
   for(let f of files){
 
     let form = new FormData();
     form.append("file",f);
-    form.append("upload_preset",PRESET);
+    form.append("upload_preset","nipieidp");
 
     let res = await fetch(
-      `https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`,
+      "https://api.cloudinary.com/v1_1/dahg3tht7/image/upload",
       {method:"POST",body:form}
     );
 
@@ -272,11 +262,14 @@ function loadStories(){
 
       stories.appendChild(div);
     });
+
   });
+
 }
 
 /* ================= STORY VIEW ================= */
 function openStory(imgs){
+
   story = imgs;
   index = 0;
 
@@ -286,14 +279,29 @@ function openStory(imgs){
 }
 
 function show(){
+
   img.src = story[index];
 
-  setTimeout(()=>{
-    nextStory();
-  },3000);
+  bar.style.width="0%";
+
+  let t=0;
+
+  let interval = setInterval(()=>{
+
+    t+=2;
+    bar.style.width=t+"%";
+
+    if(t>=100){
+      clearInterval(interval);
+      nextStory();
+    }
+
+  },60);
+
 }
 
 function nextStory(){
+
   index++;
 
   if(index>=story.length){
@@ -306,26 +314,7 @@ function nextStory(){
 
 /* ================= ADMIN ================= */
 function openAdmin(){
-  adminBox.classList.remove("hidden");
-}
-
-async function adminLogin(){
-
-  let m = amobile.value;
-  let p = apass.value;
-
-  let doc = await db.collection("admin").doc(m).get();
-
-  if(doc.exists && doc.data().password === p){
-
-    adminBox.classList.add("hidden");
-    adminPanel.classList.remove("hidden");
-
-    loadCats();
-
-  }else{
-    alert("Invalid admin");
-  }
+  adminPanel.style.display="block";
 }
 
 async function createCat(){
@@ -346,7 +335,9 @@ function loadCats(){
     snap.forEach(doc=>{
       cats.innerHTML += `<div>${doc.data().name}</div>`;
     });
+
   });
+
 }
 
 </script>
