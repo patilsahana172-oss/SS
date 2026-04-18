@@ -1,90 +1,182 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sammed ♥️ Sahana Wedding</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SS Wedding</title>
 
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to bottom, #f8e1e7, #ffffff);
-      text-align: center;
-    }
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #fafafa;
+}
 
-    .hero {
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-    }
+/* HEADER */
+.header {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  background: white;
+  border-bottom: 1px solid #ddd;
+}
 
-    h1 {
-      font-size: 2.5rem;
-      color: #d4af37;
-    }
+.logo {
+  font-size: 22px;
+  font-weight: bold;
+  color: #d4af37;
+}
 
-    p {
-      color: #555;
-      font-size: 18px;
-    }
+/* STORIES */
+.stories {
+  display: flex;
+  overflow-x: auto;
+  padding: 10px;
+  background: white;
+}
 
-    button {
-      padding: 12px 25px;
-      border: none;
-      border-radius: 25px;
-      background: #d4af37;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-      margin-top: 20px;
-    }
+.story {
+  text-align: center;
+  margin-right: 10px;
+}
 
-    .sections {
-      display: none;
-      padding: 20px;
-    }
+.story-circle {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, pink, gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
 
-    .card {
-      background: rgba(255,255,255,0.7);
-      margin: 10px;
-      padding: 20px;
-      border-radius: 15px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      cursor: pointer;
-      font-size: 18px;
-    }
-  </style>
+/* POSTS */
+.post {
+  background: white;
+  margin-top: 10px;
+}
+
+.post-header {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+}
+
+.profile {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  background: gold;
+  margin-right: 10px;
+}
+
+.post-img {
+  width: 100%;
+}
+
+.actions {
+  padding: 10px;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.likes {
+  padding: 0 10px;
+  font-weight: bold;
+  display: none;
+}
+
+.caption {
+  padding: 5px 10px;
+}
+
+.comment-box {
+  padding: 10px;
+}
+
+input {
+  width: 80%;
+  padding: 8px;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+}
+
+button {
+  padding: 8px 12px;
+  border: none;
+  background: #d4af37;
+  color: white;
+  border-radius: 20px;
+  margin-left: 5px;
+}
+</style>
+
 </head>
 
 <body>
 
-  <!-- Invitation Screen -->
-  <div class="hero" id="home">
-    <h1>💍 Sahana ❤️ Sammed</h1>
-    <p>We are getting married!</p>
-    <p>📅 April 23, 2026</p>
-    <button onclick="showSections()">View Events</button>
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">SS 💍</div>
+</div>
+
+<!-- STORIES -->
+<div class="stories">
+  <div class="story"><div class="story-circle">Haldi</div></div>
+  <div class="story"><div class="story-circle">Mehendi</div></div>
+  <div class="story"><div class="story-circle">Muhurtam</div></div>
+</div>
+
+<!-- POST -->
+<div class="post">
+  <div class="post-header">
+    <div class="profile"></div>
+    <b>admin</b>
   </div>
 
-  <!-- Sections -->
-  <div class="sections" id="sections">
-    <h2>✨ Wedding Events</h2>
+  <img class="post-img" src="https://images.unsplash.com/photo-1606800052052-a08af7148866"/>
 
-    <div class="card">💛 Haldi</div>
-    <div class="card">🌿 Mehendi</div>
-    <div class="card">🔥 Muhurtam</div>
-
+  <div class="actions">
+    <span onclick="likePost(this)">❤️</span>
   </div>
 
-  <script>
-    function showSections() {
-      document.getElementById('home').style.display = 'none';
-      document.getElementById('sections').style.display = 'block';
-    }
-  </script>
+  <div class="likes">1 like</div>
+
+  <div class="caption">
+    <b>admin</b> Haldi Moments 💛
+  </div>
+
+  <!-- COMMENT -->
+  <div class="comment-box">
+    <input type="text" placeholder="Add comment..." />
+    <button onclick="addComment(this)">Post</button>
+  </div>
+
+  <div class="comments"></div>
+</div>
+
+<script>
+function likePost(el) {
+  let likes = el.parentElement.nextElementSibling;
+  likes.style.display = "block";
+}
+
+function addComment(btn) {
+  let input = btn.previousElementSibling;
+  let text = input.value;
+
+  if (text.trim() === "") return;
+
+  let commentDiv = btn.parentElement.nextElementSibling;
+
+  let p = document.createElement("p");
+  p.textContent = text;
+
+  commentDiv.appendChild(p);
+  input.value = "";
+}
+</script>
 
 </body>
 </html>
