@@ -37,7 +37,7 @@ body{
   cursor:pointer;
 }
 
-/* STORIES */
+/* STORY */
 .stories{
   display:flex;
   overflow-x:auto;
@@ -70,22 +70,24 @@ body{
   object-fit:contain;
 }
 
-.hidden{display:none;}
+/* BOXES */
+.box{
+  padding:15px;
+}
+
+input{
+  width:90%;
+  padding:10px;
+  margin:5px;
+}
 
 button{
   padding:10px;
   margin:5px;
 }
 
-input{
-  padding:10px;
-  margin:5px;
-  width:90%;
-}
-
-.panel{
-  padding:10px;
-}
+/* HIDE */
+.hidden{display:none;}
 
 </style>
 </head>
@@ -99,7 +101,7 @@ input{
 </div>
 
 <!-- USER LOGIN -->
-<div id="loginBox">
+<div id="loginBox" class="box">
   <h3>User Login</h3>
   <input id="mobile" placeholder="Mobile">
   <input id="pass" type="password" placeholder="Password">
@@ -107,7 +109,7 @@ input{
 </div>
 
 <!-- STORY UPLOAD -->
-<div id="uploadBox" class="hidden">
+<div id="uploadBox" class="box hidden">
   <h3>Upload Story</h3>
   <input type="file" id="file" multiple accept="image/*">
   <button onclick="uploadStory()">Upload</button>
@@ -122,7 +124,7 @@ input{
 </div>
 
 <!-- ADMIN LOGIN -->
-<div id="adminLogin" class="hidden panel">
+<div id="adminLogin" class="box hidden">
   <h3>Admin Login</h3>
   <input id="amobile" placeholder="Mobile">
   <input id="apass" type="password" placeholder="Password">
@@ -130,7 +132,7 @@ input{
 </div>
 
 <!-- ADMIN PANEL -->
-<div id="adminPanel" class="hidden panel">
+<div id="adminPanel" class="box hidden">
   <h3>Create Category</h3>
   <input id="cat" placeholder="Category Name">
   <button onclick="createCat()">Create</button>
@@ -159,39 +161,64 @@ let user = null;
 let story = [];
 let index = 0;
 
-/* LOGIN */
+/* ================= LOGIN FIXED ================= */
 async function login(){
 
-  let m = mobile.value;
-  let p = pass.value;
+  let m = document.getElementById("mobile").value.trim();
+  let p = document.getElementById("pass").value.trim();
 
-  let doc = await db.collection("users").doc(m).get();
-
-  if(!doc.exists){
-    alert("User not found");
+  if(!m || !p){
+    alert("Enter mobile and password");
     return;
   }
 
-  if(doc.data().password !== p){
-    alert("Wrong password");
-    return;
+  try{
+
+    let doc = await db.collection("users").doc(m).get();
+
+    if(!doc.exists){
+      alert("User not found");
+      return;
+    }
+
+    let data = doc.data();
+
+    if(data.password !== p){
+      alert("Wrong password");
+      return;
+    }
+
+    // ✅ SUCCESS LOGIN
+    user = m;
+
+    // UI SWITCH (IMPORTANT FIX)
+    document.getElementById("loginBox").style.display = "none";
+    document.getElementById("uploadBox").style.display = "block";
+
+    loadStories();
+
+    alert("Login successful");
+
+  }catch(err){
+    console.log(err);
+    alert("Login error");
   }
-
-  user = m;
-
-  loginBox.classList.add("hidden");
-  uploadBox.classList.remove("hidden");
-
-  loadStories();
 }
 
-/* UPLOAD STORY */
+/* ================= UPLOAD STORY ================= */
 async function uploadStory(){
 
-  let files = file.files;
+  let files = document.getElementById("file").files;
+
+  if(files.length === 0){
+    alert("Select images");
+    return;
+  }
+
   let urls = [];
 
   for(let f of files){
+
     let form = new FormData();
     form.append("file",f);
     form.append("upload_preset",PRESET);
@@ -212,7 +239,7 @@ async function uploadStory(){
   alert("Uploaded");
 }
 
-/* LOAD STORIES */
+/* ================= LOAD STORIES ================= */
 function loadStories(){
 
   db.collection("stories").onSnapshot(snap=>{
@@ -233,16 +260,20 @@ function loadStories(){
   });
 }
 
-/* OPEN STORY */
+/* ================= STORY VIEW ================= */
 function openStory(imgs){
+
   story = imgs;
   index = 0;
+
   viewer.style.display="flex";
+
   show();
 }
 
-/* SHOW STORY */
+/* SHOW */
 function show(){
+
   img.src = story[index];
 
   setTimeout(()=>{
@@ -252,6 +283,7 @@ function show(){
 
 /* NEXT */
 function nextStory(){
+
   index++;
 
   if(index >= story.length){
@@ -262,16 +294,15 @@ function nextStory(){
   show();
 }
 
-/* ADMIN */
+/* ================= ADMIN ================= */
 function openAdmin(){
   adminLogin.classList.remove("hidden");
 }
 
-/* ADMIN LOGIN */
 async function adminLogin(){
 
-  let m = amobile.value;
-  let p = apass.value;
+  let m = document.getElementById("amobile").value;
+  let p = document.getElementById("apass").value;
 
   let doc = await db.collection("admin").doc(m).get();
 
@@ -281,10 +312,13 @@ async function adminLogin(){
     adminPanel.classList.remove("hidden");
 
     loadCats();
+
+  }else{
+    alert("Invalid admin");
   }
 }
 
-/* CREATE CATEGORY */
+/* CATEGORY */
 async function createCat(){
 
   await db.collection("categories").add({
@@ -294,7 +328,6 @@ async function createCat(){
   loadCats();
 }
 
-/* LOAD CATEGORY */
 function loadCats(){
 
   db.collection("categories").onSnapshot(snap=>{
