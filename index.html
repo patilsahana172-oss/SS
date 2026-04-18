@@ -57,7 +57,6 @@ body {
 
 .story {
   text-align:center;
-  position:relative;
 }
 
 .story img {
@@ -74,22 +73,7 @@ body {
   margin-top:4px;
 }
 
-/* DELETE */
-.del {
-  position:absolute;
-  top:-5px;
-  right:-5px;
-  width:20px;
-  height:20px;
-  border:none;
-  border-radius:50%;
-  background:red;
-  color:white;
-  font-size:12px;
-  cursor:pointer;
-}
-
-/* VIEWER */
+/* VIEW */
 #viewer {
   display:none;
   position:fixed;
@@ -116,92 +100,116 @@ body {
 
 <body>
 
-<!-- HEADER -->
 <div class="header">
-
   <div class="left">
     <div class="logo">
       <img id="logoImg" src="">
     </div>
-
     <div class="camera" onclick="file.click()">📸</div>
   </div>
-
 </div>
 
-<!-- STORIES -->
 <div class="stories" id="stories"></div>
 
-<!-- VIEWER -->
 <div id="viewer">
   <img id="img">
   <div id="viewerName"></div>
 </div>
 
-<!-- 📸 CAMERA + GALLERY -->
 <input type="file" id="file" multiple accept="image/*" capture="environment" hidden>
 
 <script>
 
-let userStory = JSON.parse(localStorage.getItem("userStory")) || null;
-let userName = localStorage.getItem("userName") || "";
+const CLOUD = "dahg3tht7";
+const PRESET = "nipieidp";
 
-/* ☁️ CLOUDINARY UPLOAD */
-async function uploadImage(file) {
+let stories = []; // global from cloud
 
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("upload_preset", "nipieidp");
+/* ☁️ LOAD STORIES FROM CLOUD */
+async function loadStories() {
 
   const res = await fetch(
-    "https://api.cloudinary.com/v1_1/dahg3tht7/image/upload",
+    `https://res.cloudinary.com/${CLOUD}/raw/upload/stories.json`
+  );
+
+  if (res.ok) {
+    stories = await res.json();
+  }
+
+  render();
+}
+
+/* ☁️ SAVE STORIES TO CLOUD */
+async function saveStories() {
+
+  const blob = new Blob(
+    [JSON.stringify(stories)],
+    { type: "application/json" }
+  );
+
+  const form = new FormData();
+  form.append("file", blob);
+  form.append("upload_preset", PRESET);
+  form.append("resource_type", "raw");
+
+  await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUD}/raw/upload`,
     {
       method: "POST",
-      body: formData
+      body: form
+    }
+  );
+}
+
+/* 📤 UPLOAD IMAGE */
+async function uploadImage(file) {
+
+  const form = new FormData();
+  form.append("file", file);
+  form.append("upload_preset", PRESET);
+
+  const res = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`,
+    {
+      method: "POST",
+      body: form
     }
   );
 
   const data = await res.json();
 
-  if (data.error) {
-    alert("Upload failed ❌ " + data.error.message);
-    return null;
-  }
-
   return data.secure_url;
 }
 
-/* 📤 UPLOAD STORY */
+/* 📸 UPLOAD STORY */
 file.onchange = async (e) => {
 
   const files = [...e.target.files];
 
   if (files.length > 6) {
-    alert("Max 6 images allowed");
+    alert("Max 6 images");
     return;
   }
 
   let name = prompt("Enter your name:");
   if (!name) return;
 
-  userName = name;
-  localStorage.setItem("userName", userName);
-
   let urls = [];
 
   for (let f of files) {
     const url = await uploadImage(f);
-    if (url) urls.push(url);
+    urls.push(url);
   }
 
-  /* 🔥 AUTO FILL TO 6 */
-  while (urls.length < 6) {
-    urls.push("https://via.placeholder.com/300?text=No+Image");
-  }
+  const story = {
+    id: Date.now(),
+    name,
+    images: urls
+  };
 
-  userStory = urls;
+  stories.push(story);
 
-  localStorage.setItem("userStory", JSON.stringify(userStory));
+  await saveStories();
 
   render();
 
@@ -214,58 +222,48 @@ function render() {
   const c = document.getElementById("stories");
   c.innerHTML = "";
 
-  if (userStory) {
+  stories.forEach(s => {
 
     const div = document.createElement("div");
     div.className = "story";
 
     div.innerHTML = `
-      <img src="${userStory[0]}">
-      <span>${userName || "User"}</span>
-      <button class="del" onclick="deleteStory()">x</button>
+      <img src="${s.images[0]}">
+      <span>${s.name}</span>
     `;
 
-    div.onclick = () => openStory(userStory);
+    div.onclick = () => openStory(s);
 
     c.appendChild(div);
-  }
+  });
 }
 
-/* ❌ DELETE */
-function deleteStory() {
-  userStory = null;
-  localStorage.removeItem("userStory");
-  render();
-}
-
-/* 👀 STORY SLIDESHOW */
-function openStory(images) {
+/* 👀 VIEW STORY */
+function openStory(story) {
 
   let i = 0;
 
   document.getElementById("viewer").style.display = "flex";
-  document.getElementById("viewerName").innerText = userName;
+  document.getElementById("viewerName").innerText = story.name;
 
   function show() {
 
-    if (i >= images.length) {
+    if (i >= story.images.length) {
       document.getElementById("viewer").style.display = "none";
       return;
     }
 
-    document.getElementById("img").src = images[i];
+    document.getElementById("img").src = story.images[i];
     i++;
 
-    let delay = (images.length === 1) ? 4000 : 3000;
-
-    setTimeout(show, delay);
+    setTimeout(show, 3000);
   }
 
   show();
 }
 
-/* INIT */
-render();
+/* START */
+loadStories();
 
 </script>
 
