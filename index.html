@@ -5,13 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SS Wedding</title>
 
-<!-- CSS -->
 <style>
-
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background: #fafafa;
+  font-family: -apple-system, sans-serif;
+  background: #000;
+  color: white;
 }
 
 /* HEADER */
@@ -19,23 +18,50 @@ body {
   position: fixed;
   top: 0;
   width: 100%;
-  background: white;
+  background: #000;
   padding: 10px;
-  text-align: center;
-  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  z-index: 10;
 }
 
 .logo {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: bold;
   background: linear-gradient(45deg,#ff4081,#ff9800);
   -webkit-background-clip: text;
   color: transparent;
 }
 
+/* PROFILE */
+.profile {
+  margin-top: 60px;
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.profile img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+}
+
+.profile-info {
+  flex: 1;
+}
+
+.follow-btn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
 /* STORIES */
 .stories {
-  margin-top: 60px;
   display: flex;
   overflow-x: auto;
   padding: 10px;
@@ -44,49 +70,48 @@ body {
 
 .story {
   text-align: center;
-  cursor: pointer;
 }
 
 .story img {
-  width: 60px;
-  height: 60px;
+  width: 65px;
+  height: 65px;
   border-radius: 50%;
+  border: 2px solid pink;
 }
 
 /* POSTS */
-.posts {
-  padding: 10px;
-}
-
 .post {
-  background: white;
-  margin-bottom: 15px;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.post img {
-  width: 100%;
+  margin-bottom: 20px;
 }
 
 .post__header {
+  display: flex;
+  align-items: center;
   padding: 10px;
-  font-weight: bold;
 }
 
-/* CAMERA BUTTON */
-#cameraBtn {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: linear-gradient(45deg,#ff4081,#ff9800);
-  color: white;
-  border: none;
-  padding: 15px;
+.post__header img {
+  width: 35px;
+  height: 35px;
   border-radius: 50%;
-  font-size: 20px;
+  margin-right: 10px;
 }
 
+.post__image img {
+  width: 100%;
+}
+
+.post__actions {
+  display: flex;
+  gap: 15px;
+  padding: 10px;
+  font-size: 22px;
+}
+
+.post__caption {
+  padding: 0 10px 10px;
+  font-size: 14px;
+}
 </style>
 </head>
 
@@ -97,18 +122,179 @@ body {
   <div class="logo">SS</div>
 </div>
 
+<!-- PROFILE -->
+<div class="profile">
+  <img src="https://via.placeholder.com/150">
+
+  <div class="profile-info">
+    <div><b>SS Wedding</b></div>
+    <div id="followers">0 followers</div>
+  </div>
+
+  <button class="follow-btn" id="followBtn">Follow</button>
+</div>
+
 <!-- STORIES -->
-<div class="stories" id="sectionsContainer"></div>
+<div class="stories" id="stories"></div>
 
 <!-- POSTS -->
-<div class="posts" id="postsContainer"></div>
+<div id="posts"></div>
 
-<!-- CAMERA -->
-<button id="cameraBtn">📸</button>
-<input type="file" id="cameraInput" accept="image/*" capture hidden>
+<!-- FILE INPUT -->
+<input type="file" id="fileInput" hidden>
 
-<!-- JS -->
 <script>
+
+// =======================
+// CURRENT USER (SIMULATION)
+// =======================
+const currentUser = "sahana";
+
+// =======================
+// PROFILE (FOLLOW SYSTEM)
+// =======================
+let profile = {
+  followers: []
+};
+
+const followBtn = document.getElementById("followBtn");
+const followersText = document.getElementById("followers");
+
+function updateFollowUI() {
+  const isFollowing = profile.followers.includes(currentUser);
+
+  followersText.innerText = profile.followers.length + " followers";
+
+  if (isFollowing) {
+    followBtn.innerText = "Following";
+    followBtn.style.background = "#333";
+  } else {
+    followBtn.innerText = "Follow";
+    followBtn.style.background = "#0095f6";
+  }
+}
+
+followBtn.onclick = () => {
+  const index = profile.followers.indexOf(currentUser);
+
+  if (index === -1) {
+    profile.followers.push(currentUser);
+  } else {
+    profile.followers.splice(index, 1);
+  }
+
+  updateFollowUI();
+};
+
+// =======================
+// STORIES (USER ONLY)
+// =======================
+let stories = [];
+const storiesDiv = document.getElementById("stories");
+
+function loadStories() {
+  storiesDiv.innerHTML = "";
+
+  // ADD STORY BUTTON
+  storiesDiv.innerHTML += `
+    <div class="story" id="addStory">
+      <img src="https://via.placeholder.com/150">
+      <div>+</div>
+    </div>
+  `;
+
+  // USER STORIES
+  stories.forEach(s => {
+    storiesDiv.innerHTML += `
+      <div class="story">
+        <img src="${s.image}">
+        <div>${s.name}</div>
+      </div>
+    `;
+  });
+
+  document.getElementById("addStory").onclick = () => {
+    document.getElementById("fileInput").click();
+  };
+}
+
+// HANDLE STORY UPLOAD
+document.getElementById("fileInput").onchange = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const name = prompt("Enter your name");
+
+  const reader = new FileReader();
+
+  reader.onload = function(ev) {
+    stories.unshift({
+      name: name || "Guest",
+      image: ev.target.result
+    });
+
+    loadStories();
+  };
+
+  reader.readAsDataURL(file);
+};
+
+// =======================
+// POSTS (ADMIN ONLY STATIC)
+// =======================
+let posts = [
+  {
+    section: "Haldi",
+    image: "https://via.placeholder.com/500",
+    caption: "Haldi vibes 💛"
+  },
+  {
+    section: "Mehendi",
+    image: "https://via.placeholder.com/500",
+    caption: "Mehendi fun 💚"
+  }
+];
+
+const postsDiv = document.getElementById("posts");
+
+function loadPosts() {
+  postsDiv.innerHTML = "";
+
+  posts.forEach(post => {
+    postsDiv.innerHTML += `
+      <div class="post">
+        <div class="post__header">
+          <img src="https://via.placeholder.com/150">
+          <b>${post.section}</b>
+        </div>
+
+        <div class="post__image">
+          <img src="${post.image}">
+        </div>
+
+        <div class="post__actions">
+          ❤️ 💬 📤
+        </div>
+
+        <div class="post__caption">
+          <b>${post.section}</b> ${post.caption}
+        </div>
+      </div>
+    `;
+  });
+}
+
+// =======================
+// INIT
+// =======================
+updateFollowUI();
+loadStories();
+loadPosts();
+
+</script>
+
+</body>
+</html<script>
 
 // ADMIN CONTROL
 const isAdmin = true;
