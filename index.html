@@ -15,6 +15,7 @@ body{
   background:#fafafa;
 }
 
+/* HEADER */
 .header{
   display:flex;
   justify-content:space-between;
@@ -33,6 +34,7 @@ body{
   cursor:pointer;
 }
 
+/* STORIES */
 .stories{
   display:flex;
   overflow-x:auto;
@@ -60,6 +62,7 @@ body{
   margin-top:6px;
 }
 
+/* VIEWER */
 #viewer{
   display:none;
   position:fixed;
@@ -81,6 +84,7 @@ body{
   margin-top:10px;
 }
 
+/* TOP BAR */
 #topBar{
   position:absolute;
   top:15px;
@@ -169,23 +173,32 @@ let currentStory = null;
 let currentIndex = 0;
 let timer;
 
+/* ================= OPEN APP ================= */
+function openApp(){
+  document.getElementById("loginBox").style.display="none";
+  loadStories();
+}
+
 /* ================= LOGIN ================= */
 function userLogin(){
 
   let m = prompt("Enter mobile number:");
   if(!m) return;
 
-  let n = prompt("Enter name:");
-  if(!n) return;
-
   userId = m;
+
+  let n = localStorage.getItem("userName");
+
+  if(!n){
+    n = prompt("Enter name:");
+    localStorage.setItem("userName", n);
+  }
+
   userName = n;
 
   localStorage.setItem("userId", userId);
-  localStorage.setItem("userName", userName);
 
-  document.getElementById("loginBox").style.display="none";
-  loadStories();
+  openApp();
 }
 
 function adminLogin(){
@@ -205,8 +218,7 @@ function adminLogin(){
 /* AUTO LOGIN */
 window.onload = function(){
   if(userId){
-    document.getElementById("loginBox").style.display="none";
-    loadStories();
+    openApp();
   }
 };
 
@@ -217,7 +229,7 @@ file.onchange = async (e)=>{
   let urls = [];
 
   for(let f of files){
-    urls.push(URL.createObjectURL(f)); // (fixed test-safe upload)
+    urls.push(URL.createObjectURL(f));
   }
 
   const ref = db.collection("stories").doc(userId);
@@ -227,19 +239,16 @@ file.onchange = async (e)=>{
 
   await ref.set({
     name:userName,
-    images:[...old,...urls],
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    images:[...old,...urls]
   });
 
   file.value="";
 };
 
-/* ================= LOAD STORIES (FIXED) ================= */
+/* ================= LOAD STORIES (EVERYONE CAN SEE ALL) ================= */
 function loadStories(){
 
-  db.collection("stories")
-  .orderBy("createdAt","desc")
-  .onSnapshot(snapshot=>{
+  db.collection("stories").onSnapshot(snapshot=>{
 
     let c = document.getElementById("stories");
     c.innerHTML = "";
@@ -254,7 +263,7 @@ function loadStories(){
       div.className = "story";
 
       div.innerHTML = `
-        <img src="${s.images?.[0] || ''}">
+        <img src="${s.images[0]}">
         <span>${s.name || "User"}</span>
       `;
 
@@ -303,10 +312,18 @@ viewer.onclick = ()=>{
   show();
 };
 
-/* ================= DELETE SINGLE ================= */
+/* ================= OWNER CHECK ================= */
+function isOwner(id){
+  return id === userId;
+}
+
+/* ================= DELETE SINGLE (ONLY OWNER) ================= */
 async function deleteCurrentImage(){
 
-  if(!currentStory || currentStory.id !== userId) return;
+  if(!currentStory || !isOwner(currentStory.id)){
+    alert("Not allowed");
+    return;
+  }
 
   let ref = db.collection("stories").doc(userId);
   let snap = await ref.get();
@@ -333,7 +350,10 @@ async function deleteCurrentImage(){
 /* ================= DELETE ALL ================= */
 async function deleteAllImages(){
 
-  if(!currentStory || currentStory.id !== userId) return;
+  if(!currentStory || !isOwner(currentStory.id)){
+    alert("Not allowed");
+    return;
+  }
 
   await db.collection("stories").doc(userId).delete();
 
