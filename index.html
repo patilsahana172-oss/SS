@@ -8,17 +8,25 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <style>
-body{margin:0;font-family:system-ui;background:#fafafa;}
 
+body{
+  margin:0;
+  font-family:system-ui;
+  background:#fafafa;
+}
+
+/* HEADER */
 .header{
   display:flex;
   justify-content:space-between;
+  align-items:center;
   padding:14px;
   background:white;
   box-shadow:0 2px 10px rgba(0,0,0,0.05);
 }
 
 .camera{
+  font-size:22px;
   background:linear-gradient(135deg,#ff6a00,#ee0979);
   color:white;
   padding:10px;
@@ -26,6 +34,7 @@ body{margin:0;font-family:system-ui;background:#fafafa;}
   cursor:pointer;
 }
 
+/* STORIES */
 .stories{
   display:flex;
   overflow-x:auto;
@@ -34,15 +43,26 @@ body{margin:0;font-family:system-ui;background:#fafafa;}
   background:white;
 }
 
-.story{text-align:center;}
+.story{
+  text-align:center;
+}
+
 .story img{
-  width:72px;height:72px;border-radius:50%;
+  width:72px;
+  height:72px;
+  border-radius:50%;
   object-fit:cover;
   padding:3px;
   background:conic-gradient(#f09433,#e6683c,#dc2743,#cc2366,#bc1888,#f09433);
 }
-.story span{font-size:12px;display:block;}
 
+.story span{
+  font-size:12px;
+  display:block;
+  margin-top:6px;
+}
+
+/* VIEWER */
 #viewer{
   display:none;
   position:fixed;
@@ -65,21 +85,49 @@ button{
   border-radius:20px;
   background:red;
   color:white;
+  margin:5px;
+  cursor:pointer;
 }
+
+/* LOGIN */
+#loginBox{
+  position:fixed;
+  inset:0;
+  background:white;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+}
+
+#loginBox button{
+  padding:10px 20px;
+}
+
 </style>
 </head>
 
 <body>
 
+<!-- LOGIN -->
+<div id="loginBox">
+  <h2>Login</h2>
+  <button onclick="login()">Enter App</button>
+</div>
+
+<!-- HEADER -->
 <div class="header">
   <b>Stories</b>
   <div class="camera" onclick="file.click()">📸</div>
 </div>
 
+<!-- STORIES -->
 <div class="stories" id="stories"></div>
 
+<!-- VIEWER -->
 <div id="viewer">
-  <button onclick="deleteStory()">Delete</button>
+  <button onclick="deleteStory()">Delete My Story</button>
   <img id="img">
 </div>
 
@@ -106,33 +154,49 @@ let currentStory = null;
 let index = 0;
 let timer;
 
-/* ================= LOGIN ================= */
+/* ================= LOGIN (FIRST TIME NAME ONLY) ================= */
 function login(){
 
-  let mobile = prompt("Enter mobile number:");
-  if(!mobile) return;
+  let mobile = localStorage.getItem("userId");
 
-  let name = localStorage.getItem("userName");
+  if(!mobile){
 
-  if(!name){
-    name = prompt("Enter name:");
+    mobile = prompt("Enter mobile number:");
+    if(!mobile) return;
+
+    let name = prompt("Enter your name:");
+    if(!name) return;
+
+    localStorage.setItem("userId", mobile);
     localStorage.setItem("userName", name);
+
+    userId = mobile;
+    userName = name;
+
+  } else {
+
+    userId = mobile;
+    userName = localStorage.getItem("userName");
+
+    if(!userName){
+      userName = prompt("Enter your name:");
+      localStorage.setItem("userName", userName);
+    }
   }
 
-  userId = mobile;
-  userName = name;
-
-  localStorage.setItem("userId", userId);
-
+  document.getElementById("loginBox").style.display="none";
   loadStories();
 }
 
+/* AUTO LOGIN */
 window.onload = ()=>{
-  if(userId) loadStories();
-  else login();
+  if(userId){
+    document.getElementById("loginBox").style.display="none";
+    loadStories();
+  }
 };
 
-/* ================= UPLOAD (1 STORY ONLY PER USER) ================= */
+/* ================= UPLOAD (1 STORY PER USER ONLY) ================= */
 file.onchange = async (e)=>{
 
   let files = [...e.target.files];
@@ -142,12 +206,12 @@ file.onchange = async (e)=>{
     urls.push(await toBase64(f));
   }
 
-  // 🔥 IMPORTANT: SAME DOC EVERY TIME = 1 STORY PER USER
+  // 🔥 ONE USER = ONE DOC (OVERWRITE OLD STORY)
   await db.collection("stories").doc(userId).set({
     userId,
     name:userName,
     images:urls,
-    createdAt:Date.now()
+    updatedAt:Date.now()
   });
 
   file.value="";
@@ -162,7 +226,7 @@ function toBase64(file){
   });
 }
 
-/* ================= LOAD ================= */
+/* ================= LOAD STORIES (EVERYONE CAN SEE ALL) ================= */
 function loadStories(){
 
   db.collection("stories")
@@ -175,7 +239,7 @@ function loadStories(){
 
       let s = doc.data();
 
-      if(!s.images?.length) return;
+      if(!s.images || s.images.length === 0) return;
 
       let div = document.createElement("div");
       div.className="story";
@@ -185,7 +249,7 @@ function loadStories(){
         <span>${s.name}</span>
       `;
 
-      div.onclick=()=>open(doc.id,s);
+      div.onclick=()=>openStory(doc.id,s);
 
       box.appendChild(div);
     });
@@ -193,8 +257,8 @@ function loadStories(){
   });
 }
 
-/* ================= OPEN ================= */
-function open(id,s){
+/* ================= OPEN STORY ================= */
+function openStory(id,s){
 
   currentStory = {id,...s};
   index = 0;
@@ -227,12 +291,12 @@ viewer.onclick=()=>{
   show();
 };
 
-/* ================= DELETE ONLY OWNER ================= */
+/* ================= DELETE (ONLY OWNER) ================= */
 async function deleteStory(){
 
   if(!currentStory) return;
 
-  if(currentStory.userId !== userId){
+  if(currentStory.id !== userId){
     alert("Not allowed");
     return;
   }
