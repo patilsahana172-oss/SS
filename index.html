@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Instagram Stories Clone</title>
+<title>Stories App</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -57,6 +57,7 @@ body {
 
 .story {
   text-align:center;
+  width:75px;
 }
 
 .story img {
@@ -101,15 +102,14 @@ body {
 /* DELETE BUTTON */
 .del {
   position:absolute;
-  top:10px;
-  right:10px;
+  top:15px;
+  right:15px;
   background:red;
   color:white;
   border:none;
+  width:35px;
+  height:35px;
   border-radius:50%;
-  width:30px;
-  height:30px;
-  cursor:pointer;
 }
 </style>
 </head>
@@ -125,7 +125,7 @@ body {
 
 <div id="viewer">
   <img id="img">
-  <button class="del" onclick="deleteCurrentImage()">🗑</button>
+  <button class="del" onclick="deleteImage()">🗑</button>
   <div id="viewerName"></div>
 </div>
 
@@ -152,15 +152,21 @@ let userName = localStorage.getItem("userName");
 let currentStory = null;
 let currentIndex = 0;
 
-/* LOAD STORIES */
-db.collection("stories").onSnapshot(snapshot => {
+/* LOAD STORIES (FIXED) */
+db.collection("stories")
+.orderBy("createdAt","desc")
+.onSnapshot(snapshot => {
 
-  const data = [];
+  let stories = [];
+
   snapshot.forEach(doc => {
-    data.push({ id: doc.id, ...doc.data() });
+    stories.push({
+      id: doc.id,
+      ...doc.data()
+    });
   });
 
-  render(data);
+  render(stories);
 });
 
 /* UPLOAD IMAGE */
@@ -188,7 +194,7 @@ file.onchange = async (e) => {
   const files = [...e.target.files];
 
   if (files.length > 6) {
-    alert("Max 6 images");
+    alert("Max 6 images allowed");
     return;
   }
 
@@ -206,7 +212,7 @@ file.onchange = async (e) => {
   await db.collection("stories").add({
     name: userName,
     images: urls,
-    time: Date.now()
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
   });
 
   file.value = "";
@@ -219,6 +225,8 @@ function render(stories) {
   c.innerHTML = "";
 
   stories.forEach(s => {
+
+    if (!s.images || s.images.length === 0) return;
 
     const div = document.createElement("div");
     div.className = "story";
@@ -246,7 +254,7 @@ function openStory(story) {
   showNext();
 }
 
-/* SHOW NEXT IMAGE */
+/* SLIDESHOW */
 function showNext() {
 
   if (!currentStory) return;
@@ -265,24 +273,24 @@ function showNext() {
 }
 
 /* DELETE CURRENT IMAGE */
-async function deleteCurrentImage() {
+async function deleteImage() {
 
   if (!currentStory) return;
 
-  const url = currentStory.images[currentIndex - 1];
+  let img = currentStory.images[currentIndex - 1];
 
-  const updated = currentStory.images.filter(img => img !== url);
+  let updated = currentStory.images.filter(i => i !== img);
 
   await db.collection("stories")
     .doc(currentStory.id)
     .update({ images: updated });
 
+  currentStory.images = updated;
+
   if (updated.length === 0) {
     await db.collection("stories").doc(currentStory.id).delete();
     document.getElementById("viewer").style.display = "none";
   }
-
-  currentStory.images = updated;
 }
 
 </script>
