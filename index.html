@@ -2,14 +2,18 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Instagram Stories Clone</title>
+<title>Stories App</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
 <style>
-body{margin:0;font-family:system-ui;background:#fafafa;}
+body{
+  margin:0;
+  font-family:system-ui;
+  background:#fafafa;
+}
 
 .header{
   display:flex;
@@ -20,6 +24,7 @@ body{margin:0;font-family:system-ui;background:#fafafa;}
 }
 
 .camera{
+  font-size:22px;
   background:linear-gradient(135deg,#ff6a00,#ee0979);
   color:white;
   padding:10px;
@@ -35,14 +40,23 @@ body{margin:0;font-family:system-ui;background:#fafafa;}
   background:white;
 }
 
-.story{text-align:center;}
+.story{
+  text-align:center;
+}
+
 .story img{
-  width:72px;height:72px;border-radius:50%;
+  width:72px;
+  height:72px;
+  border-radius:50%;
   object-fit:cover;
   padding:3px;
   background:conic-gradient(#f09433,#e6683c,#dc2743,#cc2366,#bc1888,#f09433);
 }
-.story span{font-size:12px;}
+
+.story span{
+  font-size:12px;
+  display:block;
+}
 
 #viewer{
   display:none;
@@ -67,6 +81,7 @@ button{
   background:red;
   color:white;
   margin:5px;
+  cursor:pointer;
 }
 </style>
 </head>
@@ -140,7 +155,7 @@ window.onload = ()=>{
   else login();
 };
 
-/* ================= IMAGE UPLOAD (PROPER STORAGE) ================= */
+/* ================= UPLOAD IMAGE ================= */
 file.onchange = async (e)=>{
 
   let files = [...e.target.files];
@@ -150,6 +165,7 @@ file.onchange = async (e)=>{
     urls.push(await uploadToStorage(f));
   }
 
+  // 1 USER = 1 STORY (replace old)
   await db.collection("stories").doc(userId).set({
     userId,
     name:userName,
@@ -170,7 +186,7 @@ async function uploadToStorage(file){
   return await ref.getDownloadURL();
 }
 
-/* ================= LOAD ================= */
+/* ================= LOAD STORIES ================= */
 function loadStories(){
 
   db.collection("stories").onSnapshot(snap=>{
@@ -199,7 +215,7 @@ function loadStories(){
   });
 }
 
-/* ================= OPEN ================= */
+/* ================= OPEN STORY ================= */
 function openStory(id,s){
 
   currentStory = {id,...s};
@@ -235,7 +251,7 @@ viewer.onclick=()=>{
 async function deleteStory(){
 
   if(currentStory.id !== userId){
-    alert("Not allowed");
+    alert("You can only delete your own story");
     return;
   }
 
