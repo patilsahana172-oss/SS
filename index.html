@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SS Stories</title>
+<title>SS Stories Pro</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -16,18 +16,20 @@ body{
   color:white;
 }
 
+/* HEADER */
 .header{
-  padding:12px;
-  background:#111;
   display:flex;
   justify-content:space-between;
+  padding:12px;
+  background:#111;
 }
 
 .logo{
-  color:#ff2d55;
   font-weight:800;
+  color:#ff2d55;
 }
 
+/* LOGIN */
 .box{
   padding:15px;
 }
@@ -38,13 +40,13 @@ input,button{
   width:90%;
 }
 
-.hidden{display:none}
-
+/* STORIES */
 .stories{
   display:flex;
-  gap:10px;
   overflow-x:auto;
+  gap:10px;
   padding:10px;
+  background:#111;
 }
 
 .story img{
@@ -52,8 +54,10 @@ input,button{
   height:60px;
   border-radius:50%;
   border:2px solid #ff2d55;
+  object-fit:cover;
 }
 
+/* VIEWER */
 #viewer{
   display:none;
   position:fixed;
@@ -65,7 +69,11 @@ input,button{
 
 #viewer img{
   width:100%;
+  max-height:100vh;
+  object-fit:contain;
 }
+
+.hidden{display:none}
 
 </style>
 </head>
@@ -83,7 +91,7 @@ input,button{
   <button onclick="login()">Login</button>
 </div>
 
-<!-- ADMIN LOGIN -->
+<!-- ADMIN -->
 <div id="adminBox" class="box hidden">
   <h3>Admin Login</h3>
   <input id="auser" placeholder="Username">
@@ -94,7 +102,15 @@ input,button{
 <!-- APP -->
 <div id="app" class="hidden">
 
+  <h3 style="padding-left:10px">Stories</h3>
+
   <div class="stories" id="stories"></div>
+
+  <div class="box">
+    <h4>Upload Story Images</h4>
+    <input type="file" id="file" multiple>
+    <button onclick="upload()">Upload</button>
+  </div>
 
 </div>
 
@@ -122,20 +138,22 @@ let story=[];
 let index=0;
 
 /* ================= AUTO LOGIN ================= */
-window.onload = async function(){
+window.onload = function(){
 
   let saved = localStorage.getItem("user");
 
   if(saved){
     user = saved;
+
     loginBox.style.display="none";
     app.classList.remove("hidden");
+
     loadStories();
   }
 
 }
 
-/* ================= USER LOGIN ================= */
+/* ================= LOGIN ================= */
 async function login(){
 
   let m = mobile.value.trim();
@@ -145,28 +163,26 @@ async function login(){
     return;
   }
 
-  let doc = await db.collection("users").doc(m).get();
+  let ref = db.collection("users").doc(m);
+  let doc = await ref.get();
 
-  if(doc.exists){
-
-    user = m;
-
-    localStorage.setItem("user", m);
-
-    loginBox.style.display="none";
-    app.classList.remove("hidden");
-
-    loadStories();
-
-    alert("Login success");
-
-  }else{
-    alert("Wrong mobile number");
+  // 🔥 AUTO REGISTER IF NEW USER
+  if(!doc.exists){
+    await ref.set({ createdAt: Date.now() });
   }
+
+  user = m;
+
+  localStorage.setItem("user", m);
+
+  loginBox.style.display="none";
+  app.classList.remove("hidden");
+
+  loadStories();
 
 }
 
-/* ================= ADMIN LOGIN ================= */
+/* ================= ADMIN ================= */
 function adminLogin(){
 
   let u = auser.value;
@@ -182,6 +198,54 @@ function adminLogin(){
   }else{
     alert("Wrong admin login");
   }
+
+}
+
+/* ================= UPLOAD (APPEND MODE) ================= */
+async function upload(){
+
+  let files = file.files;
+
+  if(!files.length){
+    alert("Select images");
+    return;
+  }
+
+  let urls = [];
+
+  for(let f of files){
+
+    let form = new FormData();
+    form.append("file", f);
+    form.append("upload_preset", "nipieidp");
+
+    let res = await fetch(
+      "https://api.cloudinary.com/v1_1/dahg3tht7/image/upload",
+      { method: "POST", body: form }
+    );
+
+    let data = await res.json();
+    urls.push(data.secure_url);
+  }
+
+  let ref = db.collection("stories").doc(user);
+  let doc = await ref.get();
+
+  let old = [];
+
+  if(doc.exists){
+    old = doc.data().images || [];
+  }
+
+  // 🔥 APPEND (NOT REPLACE)
+  let updated = old.concat(urls);
+
+  await ref.set({
+    images: updated,
+    updatedAt: Date.now()
+  });
+
+  alert("Images added to your story");
 
 }
 
@@ -208,7 +272,7 @@ function loadStories(){
 
 }
 
-/* ================= VIEW STORY ================= */
+/* ================= STORY VIEW ================= */
 function open(imgs){
 
   story = imgs;
@@ -226,10 +290,12 @@ function show(){
 
 function next(){
   index++;
-  if(index>=story.length){
+
+  if(index >= story.length){
     viewer.style.display="none";
     return;
   }
+
   show();
 }
 
