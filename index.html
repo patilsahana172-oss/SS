@@ -1,201 +1,284 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SS</title>
+<title>SS Wedding</title>
+
+<!-- ✅ Firebase OLD VERSION (COMPATIBLE) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js"></script>
 
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-
 body {
-  font-family: -apple-system, sans-serif;
-  background: #000;
-  color: white;
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: #fafafa;
 }
 
 /* HEADER */
 .header {
-  height: 55px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 15px;
-  border-bottom: 1px solid #222;
+  padding: 12px 15px;
+  background: white;
+  border-bottom: 1px solid #ddd;
 }
 
-.logo {
-  font-size: 24px;
+.title {
+  font-size: 20px;
   font-weight: bold;
 }
 
-/* RIGHT PROFILE IMAGE */
-.profile-pic {
+.logo {
   width: 35px;
   height: 35px;
   border-radius: 50%;
-  background: gray;
-  overflow: hidden;
-}
-
-.profile-pic img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  background: #eee;
 }
 
 /* STORIES */
 .stories {
   display: flex;
-  gap: 12px;
-  padding: 10px;
   overflow-x: auto;
+  padding: 10px;
+  gap: 12px;
+  background: white;
 }
 
 .story {
   text-align: center;
-  width: 70px;
-  cursor: pointer;
 }
 
 .story img {
-  width: 65px;
-  height: 65px;
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
-  border: 2px solid #ff4081;
-  padding: 2px;
+  padding: 3px;
+  background: linear-gradient(45deg, #ff004f, #ff9900);
 }
 
 .story span {
   font-size: 12px;
 }
 
+.add-story {
+  background: #ddd !important;
+}
+
 /* STORY VIEW */
-.story-view {
+#storyView {
+  display: none;
   position: fixed;
   top: 0;
-  left: 0;
   width: 100%;
   height: 100%;
   background: black;
-  display: none;
   justify-content: center;
   align-items: center;
   flex-direction: column;
 }
 
-.story-view img {
-  width: 100%;
-  max-height: 80%;
+#storyView img {
+  width: 90%;
 }
 
-.story-name {
-  position: absolute;
-  bottom: 30px;
-  font-size: 18px;
+#storyName {
+  color: white;
+  margin-top: 10px;
+}
+
+/* BUTTONS */
+button {
+  margin: 5px;
+  padding: 8px 12px;
 }
 </style>
 </head>
 
 <body>
 
-<!-- HEADER -->
 <div class="header">
-  <div class="logo">SS</div>
-
-  <div class="profile-pic">
-    <!-- later you add image url here -->
-    <!-- <img src="your-image-url"> -->
-  </div>
+  <div class="title">Sahana ❤️ Sammed</div>
+  <div class="logo"></div>
 </div>
 
-<!-- STORIES -->
 <div class="stories" id="stories"></div>
 
-<!-- STORY VIEW -->
-<div class="story-view" id="storyView">
+<div id="storyView">
   <img id="storyImg">
-  <div class="story-name" id="storyName"></div>
+  <div id="storyName"></div>
+
+  <button id="deleteImageBtn" onclick="deleteImage()">Delete Image</button>
+  <button id="deleteStoryBtn" onclick="deleteStory()">Delete Story</button>
 </div>
 
-<!-- FILE INPUT -->
-<input type="file" id="fileInput" hidden>
+<input type="file" id="fileInput" hidden multiple>
 
 <script>
 
-let stories = [];
+/* 🔥 FIREBASE CONFIG (YOURS) */
+const firebaseConfig = {
+  apiKey: "AIzaSyD4ADNcYbQwY2Fmzsx6HPqVDyJemDf_Acs",
+  authDomain: "ss-app-a0b1c.firebaseapp.com",
+  projectId: "ss-app-a0b1c",
+  storageBucket: "ss-app-a0b1c.appspot.com",
+  messagingSenderId: "665271763423",
+  appId: "1:665271763423:web:833be07fae1d320040846a"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.firestore();
+const storage = firebase.storage();
+
+/* 👤 UNIQUE USER ID */
+let userId = localStorage.getItem("userId");
+if (!userId) {
+  userId = "user_" + Math.random().toString(36).substr(2, 9);
+  localStorage.setItem("userId", userId);
+}
 
 const storiesDiv = document.getElementById("stories");
 const fileInput = document.getElementById("fileInput");
 
-// LOAD STORIES
+/* 📥 LOAD STORIES */
 function loadStories() {
-  storiesDiv.innerHTML = "";
+  db.collection("stories")
+    .orderBy("createdAt", "desc")
+    .onSnapshot(snapshot => {
 
-  // ADD STORY BUTTON
-  storiesDiv.innerHTML += `
-    <div class="story" id="addStory">
-      <img src="https://via.placeholder.com/150">
-      <span>+</span>
-    </div>
-  `;
+      storiesDiv.innerHTML = "";
 
-  // USER STORIES
-  stories.forEach((s, index) => {
-    storiesDiv.innerHTML += `
-      <div class="story" onclick="openStory(${index})">
-        <img src="${s.image}">
-        <span>${s.name}</span>
-      </div>
-    `;
-  });
+      // ADD BUTTON
+      storiesDiv.innerHTML += `
+        <div class="story" id="addStory">
+          <img class="add-story" src="https://via.placeholder.com/150">
+          <span>Add</span>
+        </div>
+      `;
 
-  document.getElementById("addStory").onclick = () => {
-    fileInput.click();
-  };
+      snapshot.forEach(doc => {
+        const s = doc.data();
+
+        storiesDiv.innerHTML += `
+          <div class="story">
+            <img src="${s.images[0]}"
+              onclick="openStory(${JSON.stringify(s.images)}, '${s.name}', '${doc.id}', '${s.userId}')">
+            <span>${s.name}</span>
+          </div>
+        `;
+      });
+
+      document.getElementById("addStory").onclick = () => {
+        fileInput.click();
+      };
+    });
 }
 
-// ADD STORY
-fileInput.onchange = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+/* 📸 ADD STORY */
+fileInput.onchange = async (e) => {
+  const files = e.target.files;
+
+  if (files.length > 5) {
+    alert("Max 5 images allowed");
+    return;
+  }
 
   const name = prompt("Enter your name");
 
-  const reader = new FileReader();
+  // CHECK IF ALREADY ADDED
+  const existing = await db.collection("stories")
+    .where("userId", "==", userId)
+    .get();
 
-  reader.onload = function(ev) {
-    stories.unshift({
-      image: ev.target.result,
-      name: name || "Guest"
-    });
+  if (!existing.empty) {
+    alert("You already added a story");
+    return;
+  }
 
-    loadStories();
-  };
+  let urls = [];
 
-  reader.readAsDataURL(file);
+  for (let file of files) {
+    const ref = storage.ref("stories/" + Date.now() + file.name);
+    await ref.put(file);
+    const url = await ref.getDownloadURL();
+    urls.push(url);
+  }
+
+  await db.collection("stories").add({
+    name: name || "Guest",
+    images: urls,
+    userId: userId,
+    createdAt: new Date()
+  });
 };
 
-// STORY VIEW
-function openStory(index) {
-  const story = stories[index];
+/* 👀 VIEW STORY */
+let currentImages = [];
+let currentIndex = 0;
+let currentDocId = "";
 
-  const view = document.getElementById("storyView");
-  const img = document.getElementById("storyImg");
-  const name = document.getElementById("storyName");
+function openStory(images, name, docId, storyUserId) {
+  currentImages = images;
+  currentIndex = 0;
+  currentDocId = docId;
 
-  img.src = story.image;
-  name.innerText = story.name;
+  document.getElementById("storyName").innerText = name;
 
-  view.style.display = "flex";
+  // SHOW DELETE ONLY FOR OWNER
+  if (userId === storyUserId) {
+    deleteImageBtn.style.display = "block";
+    deleteStoryBtn.style.display = "block";
+  } else {
+    deleteImageBtn.style.display = "none";
+    deleteStoryBtn.style.display = "none";
+  }
 
-  // AUTO CLOSE AFTER 3 SEC
-  setTimeout(() => {
-    view.style.display = "none";
-  }, 3000);
+  document.getElementById("storyView").style.display = "flex";
+
+  showNext();
 }
 
-// INIT
+function showNext() {
+  if (currentIndex >= currentImages.length) {
+    document.getElementById("storyView").style.display = "none";
+    return;
+  }
+
+  document.getElementById("storyImg").src = currentImages[currentIndex];
+  currentIndex++;
+
+  setTimeout(showNext, 3000);
+}
+
+/* ❌ DELETE IMAGE */
+async function deleteImage() {
+  currentImages.splice(currentIndex - 1, 1);
+
+  if (currentImages.length === 0) {
+    await deleteStory();
+    return;
+  }
+
+  await db.collection("stories").doc(currentDocId).update({
+    images: currentImages
+  });
+
+  alert("Image deleted");
+}
+
+/* ❌ DELETE STORY */
+async function deleteStory() {
+  await db.collection("stories").doc(currentDocId).delete();
+
+  document.getElementById("storyView").style.display = "none";
+
+  alert("Story deleted");
+}
+
+/* 🚀 INIT */
 loadStories();
 
 </script>
