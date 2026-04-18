@@ -2,27 +2,28 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Instagram Stories Pro</title>
+<title>Stories Pro Advanced</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <style>
 
-/* ===== GLOBAL ===== */
+/* ================= GLOBAL ================= */
 body{
   margin:0;
   font-family:system-ui;
   background:#fafafa;
 }
 
-/* ===== HEADER ===== */
+/* ================= HEADER ================= */
 .header{
   display:flex;
   justify-content:space-between;
   align-items:center;
   padding:14px;
-  background:white;
+  background:rgba(255,255,255,0.8);
+  backdrop-filter:blur(10px);
   position:sticky;
   top:0;
   z-index:10;
@@ -30,15 +31,15 @@ body{
 }
 
 .camera{
+  font-size:22px;
   background:linear-gradient(135deg,#ff6a00,#ee0979);
   color:white;
   padding:10px;
   border-radius:50%;
-  font-size:20px;
   cursor:pointer;
 }
 
-/* ===== STORIES ===== */
+/* ================= STORIES ================= */
 .stories{
   display:flex;
   overflow-x:auto;
@@ -66,14 +67,15 @@ body{
   margin-top:6px;
 }
 
-/* ===== VIEWER ===== */
+/* ================= VIEWER ================= */
 #viewer{
   display:none;
   position:fixed;
-  top:0;left:0;
+  top:0;
+  left:0;
   width:100%;
   height:100%;
-  background:rgba(0,0,0,0.96);
+  background:rgba(0,0,0,0.97);
   justify-content:center;
   align-items:center;
   flex-direction:column;
@@ -84,6 +86,12 @@ body{
   width:100%;
   max-height:85vh;
   object-fit:contain;
+  animation:fade 0.3s ease;
+}
+
+@keyframes fade{
+  from{opacity:0;transform:scale(0.95);}
+  to{opacity:1;transform:scale(1);}
 }
 
 /* NAME */
@@ -100,10 +108,9 @@ body{
   background:red;
   color:white;
   border:none;
-  width:42px;
-  height:42px;
-  border-radius:50%;
-  font-size:18px;
+  padding:10px 14px;
+  border-radius:20px;
+  font-size:14px;
   cursor:pointer;
   z-index:999;
 }
@@ -113,20 +120,20 @@ body{
 
 <body>
 
+<!-- HEADER -->
 <div class="header">
   <div><b>Stories</b></div>
   <div class="camera" onclick="file.click()">📸</div>
 </div>
 
+<!-- STORIES -->
 <div class="stories" id="stories"></div>
 
+<!-- VIEWER -->
 <div id="viewer">
-
-  <button id="deleteBtn" onclick="deleteImage()">🗑</button>
-
+  <button id="deleteBtn" onclick="deleteCurrentImage()">🗑 Delete</button>
   <img id="img">
   <div id="viewerName"></div>
-
 </div>
 
 <input type="file" id="file" multiple accept="image/*" capture="environment" hidden>
@@ -192,10 +199,10 @@ async function uploadImage(file){
   return data.secure_url;
 }
 
-/* ================= UPLOAD STORY (MERGE FIXED) ================= */
+/* ================= UPLOAD + MERGE ================= */
 file.onchange = async (e)=>{
 
-  let files = [...e.target.files];
+  let files=[...e.target.files];
 
   if(files.length>6){
     alert("Max 6 images allowed");
@@ -293,18 +300,24 @@ document.getElementById("viewer").onclick = ()=>{
   show();
 };
 
-/* ================= DELETE IMAGE ================= */
-async function deleteImage(){
+/* ================= DELETE (ONLY OWNER CAN DELETE) ================= */
+async function deleteCurrentImage(){
 
   if(!currentStory) return;
 
-  let imgIndex = index-1;
+  // SECURITY CHECK
+  if(currentStory.id !== userId){
+    alert("You can only delete your own story");
+    return;
+  }
+
+  let imgIndex = index - 1;
 
   if(imgIndex < 0) return;
 
-  let img = currentStory.images[imgIndex];
+  let imgToDelete = currentStory.images[imgIndex];
 
-  let updated = currentStory.images.filter(i=>i!==img);
+  let updated = currentStory.images.filter(i=>i!==imgToDelete);
 
   await db.collection("stories")
     .doc(currentStory.id)
@@ -312,7 +325,8 @@ async function deleteImage(){
 
   currentStory.images = updated;
 
-  if(updated.length===0){
+  if(updated.length === 0){
+
     await db.collection("stories")
       .doc(currentStory.id)
       .delete();
@@ -321,6 +335,7 @@ async function deleteImage(){
     return;
   }
 
+  index = Math.max(0,imgIndex);
   show();
 }
 
