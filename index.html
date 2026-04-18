@@ -14,26 +14,38 @@ body {
 /* HEADER */
 .header {
   display:flex;
-  justify-content:flex-end;
+  align-items:center;
+  justify-content:space-between;
   padding:10px;
   background:white;
   border-bottom:1px solid #ddd;
 }
 
-.header-right {
+/* LEFT SIDE */
+.left {
   display:flex;
   align-items:center;
   gap:10px;
 }
 
-.profile, .camera {
+/* LOGO */
+.logo {
   width:40px;
   height:40px;
   border-radius:50%;
   background:#ddd;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  overflow:hidden;
+}
+
+.logo img {
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+/* CAMERA */
+.camera {
+  font-size:22px;
   cursor:pointer;
 }
 
@@ -46,6 +58,11 @@ body {
   background:white;
 }
 
+.story {
+  position:relative;
+  text-align:center;
+}
+
 .story img {
   width:70px;
   height:70px;
@@ -54,7 +71,22 @@ body {
   object-fit:cover;
 }
 
-/* VIEWER */
+/* DELETE BUTTON */
+.del {
+  position:absolute;
+  top:-5px;
+  right:-5px;
+  background:red;
+  color:white;
+  border:none;
+  border-radius:50%;
+  width:20px;
+  height:20px;
+  font-size:12px;
+  cursor:pointer;
+}
+
+/* FULL SCREEN */
 #viewer {
   display:none;
   position:fixed;
@@ -77,10 +109,17 @@ body {
 
 <!-- HEADER -->
 <div class="header">
-  <div class="header-right">
-    <div class="profile">👤</div>
+
+  <div class="left">
+    <!-- LOGO -->
+    <div class="logo">
+      <img id="logoImg" src="">
+    </div>
+
+    <!-- CAMERA -->
     <div class="camera" onclick="file.click()">📸</div>
   </div>
+
 </div>
 
 <!-- STORIES -->
@@ -96,13 +135,14 @@ body {
 <script>
 
 let stories = [];
+let userStory = null;
 
-/* ☁️ CLOUDINARY UPLOAD */
+/* ☁️ UPLOAD */
 async function uploadImage(file) {
 
   const formData = new FormData();
   formData.append("file", file);
-  formData.append("upload_preset", "nipieidp"); // your preset
+  formData.append("upload_preset", "nipieidp");
 
   const res = await fetch(
     "https://api.cloudinary.com/v1_1/dahg3tht7/image/upload",
@@ -114,20 +154,23 @@ async function uploadImage(file) {
 
   const data = await res.json();
 
-  console.log("Cloudinary response:", data);
-
   if (data.error) {
-    alert("Upload failed ❌ " + data.error.message);
+    alert(data.error.message);
     return null;
   }
 
   return data.secure_url;
 }
 
-/* 📤 FILE UPLOAD */
+/* 📤 UPLOAD STORY */
 file.onchange = async (e) => {
 
   const files = [...e.target.files];
+
+  if (files.length > 6) {
+    alert("Only 6 images allowed");
+    return;
+  }
 
   let urls = [];
 
@@ -138,30 +181,41 @@ file.onchange = async (e) => {
 
   if (urls.length === 0) return;
 
-  stories.push(urls);
+  userStory = urls; // ONLY 1 STORY PER USER
   render();
 
   file.value = "";
 };
 
-/* 📥 RENDER STORIES */
+/* 📥 RENDER */
 function render() {
 
-  const container = document.getElementById("stories");
-  container.innerHTML = "";
+  const c = document.getElementById("stories");
+  c.innerHTML = "";
 
-  stories.forEach((s) => {
+  if (userStory) {
 
     const div = document.createElement("div");
-    div.innerHTML = `<img src="${s[0]}">`;
+    div.className = "story";
 
-    div.onclick = () => openStory(s);
+    div.innerHTML = `
+      <img src="${userStory[0]}">
+      <button class="del" onclick="deleteStory()">x</button>
+    `;
 
-    container.appendChild(div);
-  });
+    div.onclick = () => openStory(userStory);
+
+    c.appendChild(div);
+  }
 }
 
-/* 👀 VIEW STORY */
+/* ❌ DELETE STORY */
+function deleteStory() {
+  userStory = null;
+  render();
+}
+
+/* 👀 OPEN STORY */
 function openStory(images) {
 
   let i = 0;
@@ -178,7 +232,7 @@ function openStory(images) {
     document.getElementById("img").src = images[i];
     i++;
 
-    setTimeout(show, 2500);
+    setTimeout(show, 4000); // 4 sec
   }
 
   show();
