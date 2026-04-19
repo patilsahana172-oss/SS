@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
-
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Stories App</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
 <style>
 body{
@@ -153,164 +153,126 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+
 const db = firebase.firestore();
+const storage = firebase.storage();
 
 /* ================= USER ================= */
 let userId = localStorage.getItem("userId");
 let userName = localStorage.getItem("userName");
 
-/* ================= STATE ================= */
-let currentStory = null;
-let index = 0;
-let timer;
-
 /* ================= AUTO LOGIN ================= */
 window.onload = function(){
-
-  userId = localStorage.getItem("userId");
-  userName = localStorage.getItem("userName");
-
   if(userId && userName){
-    document.getElementById("loginBox").style.display = "none";
+    loginBox.style.display="none";
     loadStories();
-  } else {
-    document.getElementById("loginBox").style.display = "flex";
   }
-
 };
 
 /* ================= LOGIN ================= */
 function login(){
 
-  let m = document.getElementById("mobile").value;
-  let n = document.getElementById("name").value;
+let m = mobile.value;
+let n = name.value;
 
-  if(!m){
-    alert("Enter mobile number");
-    return;
-  }
-
-  if(!userName && !n){
-    alert("Enter name first time");
-    return;
-  }
-
-  userId = m;
-  userName = userName || n;
-
-  localStorage.setItem("userId", userId);
-  localStorage.setItem("userName", userName);
-
-  document.getElementById("loginBox").style.display = "none";
-
-  loadStories();
+if(!m){
+alert("Enter mobile");
+return;
 }
 
-/* ================= IMAGE TO BASE64 ================= */
-function toBase64(file){
-  return new Promise((res)=>{
-    let r = new FileReader();
-    r.onload = ()=>res(r.result);
-    r.readAsDataURL(file);
-  });
+if(!userName && !n){
+alert("Enter name first time");
+return;
 }
 
-/* ================= UPLOAD ================= */
+userId = m;
+userName = userName || n;
+
+localStorage.setItem("userId",userId);
+localStorage.setItem("userName",userName);
+
+loginBox.style.display="none";
+
+loadStories();
+
+}
+
+/* ================= UPLOAD IMAGE (FIREBASE STORAGE) ================= */
 file.onchange = async (e)=>{
 
-  let files = [...e.target.files];
-  let images = [];
+let files = [...e.target.files];
 
-  for(let f of files){
-    images.push(await toBase64(f));
-  }
+for(let f of files){
 
-  await db.collection("stories").doc(userId).set({
-    name:userName,
-    images:images,
-    createdAt:Date.now()
-  });
+let path = "stories/" + userId + "/" + Date.now() + "_" + f.name;
 
-  file.value="";
+let ref = storage.ref(path);
+
+await ref.put(f);
+
+let url = await ref.getDownloadURL();
+
+/* SAVE TO FIRESTORE */
+await db.collection("stories").doc(userId).set({
+name:userName,
+image:url,
+createdAt:Date.now()
+});
+
+}
+
+file.value="";
+
+loadStories();
 };
 
-/* ================= LOAD ================= */
+/* ================= LOAD STORIES ================= */
 function loadStories(){
 
 db.collection("stories")
 .orderBy("createdAt","desc")
 .onSnapshot(snap=>{
 
-  let box = document.getElementById("stories");
-  box.innerHTML="";
+let box = document.getElementById("stories");
+box.innerHTML="";
 
-  snap.forEach(doc=>{
+snap.forEach(doc=>{
 
-    let s = doc.data();
-    if(!s.images) return;
+let s = doc.data();
 
-    let div = document.createElement("div");
-    div.className="story";
+let div = document.createElement("div");
+div.className="story";
 
-    div.innerHTML=`
-      <img src="${s.images[0]}">
-      <span>${s.name}</span>
-    `;
+div.innerHTML=`
+<img src="${s.image}">
+<span>${s.name}</span>
+`;
 
-    div.onclick=()=>openStory(doc.id,s);
+div.onclick=()=>{
+viewer.style.display="flex";
+img.src=s.image;
+currentId=doc.id;
+};
 
-    box.appendChild(div);
-  });
+box.appendChild(div);
+
+});
 
 });
 
 }
 
-/* ================= OPEN ================= */
-function openStory(id,s){
-
-currentStory = {id,...s};
-index = 0;
-
-viewer.style.display="flex";
-show();
-
-}
-
-function show(){
-
-if(!currentStory) return;
-
-if(index >= currentStory.images.length){
-viewer.style.display="none";
-return;
-}
-
-img.src = currentStory.images[index];
-
-clearTimeout(timer);
-
-timer = setTimeout(()=>{
-index++;
-show();
-},3000);
-
-}
-
-viewer.onclick=()=>{
-index++;
-show();
-};
-
 /* ================= DELETE ================= */
-async function deleteStory(){
+let currentId=null;
 
-if(!currentStory || currentStory.id !== userId){
+function deleteStory(){
+
+if(!currentId || currentId!==userId){
 alert("Not allowed");
 return;
 }
 
-await db.collection("stories").doc(userId).delete();
+db.collection("stories").doc(userId).delete();
 
 viewer.style.display="none";
 
