@@ -2,8 +2,9 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stories</title>
+<title>Stories App</title>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -11,37 +12,65 @@
 <style>
 body{margin:0;font-family:sans-serif;background:#fafafa}
 
+/* HEADER */
 .header{
-  display:flex;justify-content:space-between;
-  padding:14px;background:#fff;
+  display:flex;
+  justify-content:space-between;
+  padding:14px;
+  background:#fff;
+  box-shadow:0 2px 10px rgba(0,0,0,0.05);
 }
 
 .camera{
-  font-size:22px;background:#ff3e6c;color:#fff;
-  padding:10px;border-radius:50%;
-  cursor:pointer
+  font-size:22px;
+  background:#ff3e6c;
+  color:#fff;
+  padding:10px;
+  border-radius:50%;
+  cursor:pointer;
 }
 
+/* STORIES */
 .stories{
-  display:flex;overflow-x:auto;
-  padding:10px;gap:12px;
+  display:flex;
+  overflow-x:auto;
+  padding:10px;
+  gap:12px;
+  background:#fff;
 }
 
 .story{text-align:center}
+
 .story img{
-  width:70px;height:70px;border-radius:50%;
-  border:3px solid orange;object-fit:cover
+  width:70px;
+  height:70px;
+  border-radius:50%;
+  border:3px solid orange;
+  object-fit:cover;
 }
 
+/* VIEWER */
 #viewer{
-  display:none;position:fixed;
-  top:0;left:0;width:100%;height:100%;
-  background:#000;color:#fff;
-  justify-content:center;align-items:center;
-  flex-direction:column
+  display:none;
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  background:#000;
+  color:#fff;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
 }
 
-#img{width:100%;max-height:85vh}
+#img{
+  width:100%;
+  max-height:85vh;
+  object-fit:contain;
+}
+
+#name{
+  margin-top:10px;
+}
 </style>
 </head>
 
@@ -63,7 +92,7 @@ body{margin:0;font-family:sans-serif;background:#fafafa}
 
 <script>
 
-/* FIREBASE */
+/* ================= FIREBASE ================= */
 const firebaseConfig = {
   apiKey: "AIzaSyD4ADNcYbQwY2Fmzsx6HPqVDyJemDf_Acs",
   authDomain: "ss-app-a0b1c.firebaseapp.com",
@@ -71,33 +100,45 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* CLOUDINARY */
+/* ================= CLOUDINARY ================= */
 const CLOUD = "dahg3tht7";
 const PRESET = "nipieidp";
 
-/* STATE */
-let currentUser = null;
+/* ================= STATE ================= */
+let user = null;
 let userId = null;
 let userName = null;
 
-/* ✅ CAMERA ALWAYS WORKS */
+/* ================= CAMERA (ALWAYS ACTIVE) ================= */
 document.getElementById("cameraBtn").onclick = () => {
+  if (!user) {
+    alert("Please login first");
+    return;
+  }
   document.getElementById("file").click();
 };
 
-/* AUTH */
-auth.onAuthStateChanged(async (user) => {
+/* ================= AUTH FIX (NO LOOP) ================= */
+let firstRun = true;
 
-  if (!user) {
+auth.onAuthStateChanged(async (u) => {
+
+  if (firstRun) {
+    firstRun = false;
+    return; // ignore first unstable trigger
+  }
+
+  if (!u) {
     window.location.href = "index.html";
     return;
   }
 
-  currentUser = user;
-  userId = user.uid;
+  user = u;
+  userId = u.uid;
 
   const ref = db.collection("stories").doc(userId);
   const snap = await ref.get();
@@ -113,21 +154,21 @@ auth.onAuthStateChanged(async (user) => {
     });
   }
 
-  listenStories();
+  loadStories();
 });
 
-/* REALTIME */
-function listenStories(){
+/* ================= LOAD STORIES ================= */
+function loadStories(){
   db.collection("stories").onSnapshot(snap => {
-    let list = [];
-    snap.forEach(d => list.push(d.data()));
-    render(list);
+    let arr = [];
+    snap.forEach(d => arr.push(d.data()));
+    render(arr);
   });
 }
 
-/* UI */
+/* ================= RENDER ================= */
 function render(data){
-  let box = document.getElementById("stories");
+  const box = document.getElementById("stories");
   box.innerHTML = "";
 
   data.forEach(s => {
@@ -146,43 +187,41 @@ function render(data){
   });
 }
 
-/* VIEW STORY */
-let index = 0, currentStory;
+/* ================= STORY VIEW ================= */
+let currentStory = null;
+let index = 0;
 
 function openStory(s){
   currentStory = s;
   index = 0;
   viewer.style.display = "flex";
-  name.innerText = s.name;
   show();
 }
 
 function show(){
-  if(index >= currentStory.images.length){
+  if (index >= currentStory.images.length) {
     viewer.style.display = "none";
     return;
   }
-  img.src = currentStory.images[index];
 
-  setTimeout(()=>{
-    index++;
-    show();
-  },2000);
+  img.src = currentStory.images[index];
+  name.innerText = currentStory.name;
 }
 
+/* tap = next */
 viewer.onclick = () => {
   index++;
   show();
 };
 
-/* UPLOAD */
+/* ================= UPLOAD ================= */
 document.getElementById("file").onchange = async (e) => {
 
-  let files = [...e.target.files];
+  const files = [...e.target.files];
   if (!files.length) return;
 
-  if (!currentUser) {
-    alert("Login not ready");
+  if (!user) {
+    alert("Login required");
     return;
   }
 
@@ -211,9 +250,10 @@ document.getElementById("file").onchange = async (e) => {
       urls.push(data.secure_url);
     }
 
+    /* 1 USER = 1 STORY (overwrite) */
     await db.collection("stories").doc(userId).set({
       name: userName,
-      email: currentUser.email,
+      email: user.email,
       images: urls
     });
 
@@ -221,7 +261,7 @@ document.getElementById("file").onchange = async (e) => {
 
   } catch (err) {
     console.error(err);
-    alert("Error ❌");
+    alert("Error uploading ❌");
   }
 };
 
