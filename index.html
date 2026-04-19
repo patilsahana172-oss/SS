@@ -1,12 +1,20 @@
-<!DOCTYPE html>  <html>      <head>      
-<meta name="viewport" content="width=device-width, initial-scale=1.0">      
-<title>Stories App</title>  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>  <style>      body{
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stories App</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<style>
+body{
 margin:0;
 font-family:system-ui;
 background:#fafafa;
 }
 
-/* HEADER */
 .header{
 display:flex;
 justify-content:space-between;
@@ -25,7 +33,6 @@ border-radius:50%;
 cursor:pointer;
 }
 
-/* STORIES */
 .stories{
 display:flex;
 overflow-x:auto;
@@ -53,7 +60,6 @@ display:block;
 margin-top:6px;
 }
 
-/* VIEWER */
 #viewer{
 display:none;
 position:fixed;
@@ -67,20 +73,17 @@ align-items:center;
 flex-direction:column;
 }
 
-/* IMAGE */
 #img{
 width:100%;
 max-height:85vh;
 object-fit:contain;
 }
 
-/* NAME */
 #viewerName{
 color:white;
 margin-top:10px;
 }
 
-/* TOP BAR */
 #topBar{
 position:absolute;
 top:15px;
@@ -99,15 +102,67 @@ cursor:pointer;
 margin-left:8px;
 }
 
-</style>  </head>  <body>  <div class="header">
+/* LOGIN */
+#loginBox{
+position:fixed;
+inset:0;
+background:white;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+gap:10px;
+z-index:99999;
+}
 
-  <div><b>Stories</b></div>      
-  <div class="camera" onclick="file.click()">📸</div>      
-</div>  <div class="stories" id="stories"></div>  <div id="viewer">    <div id="topBar">      
-    <button onclick="deleteCurrentImage()">🗑 One</button>      
-    <button onclick="deleteAllImages()">🗑 All</button>      
-  </div>    <img id="img">      
-  <div id="viewerName"></div>  </div>  <input type="file" id="file" multiple accept="image/*" capture="environment" hidden>  <script>      /* ================= FIREBASE ================= */
+#loginBox input{
+padding:10px;
+font-size:16px;
+width:200px;
+}
+
+#loginBox button{
+padding:10px 20px;
+background:green;
+color:white;
+border:none;
+}
+</style>
+
+</head>
+
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginBox">
+<h3>Login</h3>
+<input id="mobile" placeholder="Enter mobile number">
+<input id="name" placeholder="Enter name (first time only)">
+<button onclick="login()">Enter</button>
+</div>
+
+<div class="header">
+<div><b>Stories</b></div>
+<div class="camera" onclick="file.click()">📸</div>
+</div>
+
+<div class="stories" id="stories"></div>
+
+<div id="viewer">
+<div id="topBar">
+<button onclick="deleteCurrentImage()">🗑 One</button>
+<button onclick="deleteAllImages()">🗑 All</button>
+</div>
+
+<img id="img">
+<div id="viewerName"></div>
+</div>
+
+<input type="file" id="file" multiple accept="image/*" capture="environment" hidden>
+
+<script>
+
+/* ================= FIREBASE ================= */
 const firebaseConfig = {
 apiKey: "YOUR_API_KEY",
 authDomain: "stories-web-52ddd.firebaseapp.com",
@@ -118,25 +173,53 @@ storageBucket: "stories-web-52ddd.appspot.com"
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-/* ================= CLOUDINARY ================= */
-const CLOUD = "dahg3tht7";
-const PRESET = "nipieidp";
-
-/* ================= USER ================= */
-let userName = localStorage.getItem("userName");
+/* ================= USER LOGIN ================= */
 let userId = localStorage.getItem("userId");
+let userName = localStorage.getItem("userName");
 
-if(!userId){
-userId = "single_story_user";
-localStorage.setItem("userId",userId);
+function login(){
+
+let m = document.getElementById("mobile").value;
+let n = document.getElementById("name").value;
+
+if(!m){
+alert("Enter mobile");
+return;
 }
+
+if(!userName && !n){
+alert("Enter name first time");
+return;
+}
+
+userId = m;
+userName = userName || n;
+
+localStorage.setItem("userId", userId);
+localStorage.setItem("userName", userName);
+
+document.getElementById("loginBox").style.display="none";
+
+loadStories();
+}
+
+/* AUTO LOGIN */
+window.onload = ()=>{
+
+if(userId && userName){
+document.getElementById("loginBox").style.display="none";
+loadStories();
+}
+};
 
 /* ================= STATE ================= */
 let currentStory = null;
 let currentIndex = 0;
 let timer;
 
-/* ================= LOAD STORIES ================= */
+/* ================= LOAD ================= */
+function loadStories(){
+
 db.collection("stories")
 .orderBy("createdAt","desc")
 .onSnapshot(snapshot=>{
@@ -148,63 +231,38 @@ stories.push({id:doc.id,...doc.data()});
 });
 
 render(stories);
+
 });
-
-/* ================= CLOUDINARY UPLOAD ================= */
-async function uploadImage(file){
-
-let form = new FormData();
-form.append("file",file);
-form.append("upload_preset",PRESET);
-
-let res = await fetch(
-https://api.cloudinary.com/v1_1/${CLOUD}/image/upload,
-{method:"POST",body:form}
-);
-
-let data = await res.json();
-return data.secure_url;
 }
 
-/* ================= UPLOAD + MERGE ================= */
+/* ================= UPLOAD ================= */
 file.onchange = async (e)=>{
 
 let files=[...e.target.files];
 
-if(files.length>6){
-alert("Max 6 images allowed");
-return;
-}
-
-if(!userName){
-userName = prompt("Enter your name:");
-localStorage.setItem("userName",userName);
-}
-
 let urls=[];
 
 for(let f of files){
-urls.push(await uploadImage(f));
+urls.push(await toBase64(f));
 }
 
-const ref = db.collection("stories").doc(userId);
-
-let snap = await ref.get();
-
-let old=[];
-
-if(snap.exists && snap.data().images){
-old = snap.data().images;
-}
-
-await ref.set({
+await db.collection("stories").doc(userId).set({
 name:userName,
-images:[...old,...urls],
-createdAt:firebase.firestore.FieldValue.serverTimestamp()
+images:urls,
+createdAt:Date.now()
 });
 
 file.value="";
 };
+
+/* BASE64 */
+function toBase64(file){
+return new Promise((res)=>{
+let r = new FileReader();
+r.onload = ()=>res(r.result);
+r.readAsDataURL(file);
+});
+}
 
 /* ================= RENDER ================= */
 function render(stories){
@@ -214,121 +272,92 @@ c.innerHTML="";
 
 stories.forEach(s=>{
 
-if(!s.images || s.images.length===0) return;      
-  
-let div=document.createElement("div");      
-div.className="story";      
-  
-div.innerHTML=`      
-  <img src="${s.images[0]}">      
-  <span>${s.name}</span>      
-`;      
-  
-div.onclick=()=>openStory(s);      
-  
+if(!s.images) return;
+
+let div=document.createElement("div");
+div.className="story";
+
+div.innerHTML=`
+<img src="${s.images[0]}">
+<span>${s.name}</span>
+`;
+
+div.onclick=()=>openStory(s);
+
 c.appendChild(div);
 
 });
 }
 
-/* ================= OPEN STORY ================= */
+/* ================= OPEN ================= */
 function openStory(s){
 
 currentStory=s;
 currentIndex=0;
 
-document.getElementById("viewer").style.display="flex";
-document.getElementById("viewerName").innerText=s.name;
+viewer.style.display="flex";
+viewerName.innerText=s.name;
 
 show();
 }
 
-/* ================= SHOW ================= */
 function show(){
 
 if(!currentStory) return;
 
-if(currentIndex >= currentStory.images.length){
-document.getElementById("viewer").style.display="none";
+if(currentIndex>=currentStory.images.length){
+viewer.style.display="none";
 return;
 }
 
-document.getElementById("img").src =
-currentStory.images[currentIndex];
+img.src=currentStory.images[currentIndex];
 
 clearTimeout(timer);
 
-timer = setTimeout(()=>{
+timer=setTimeout(()=>{
 currentIndex++;
 show();
 },3000);
 }
 
-/* TAP = SKIP */
-document.getElementById("viewer").onclick = ()=>{
-clearTimeout(timer);
+viewer.onclick=()=>{
 currentIndex++;
 show();
 };
 
-/* ================= DELETE SINGLE IMAGE (FIXED PERMANENT) ================= */
+/* ================= DELETE (ADVANCED FIX) ================= */
 async function deleteCurrentImage(){
 
-if(!currentStory) return;
-
-if(currentStory.id !== userId){
-alert("You can only delete your own story");
+if(!currentStory || currentStory.id !== userId){
+alert("Not allowed");
 return;
 }
 
-let updated = [...currentStory.images];
+currentStory.images.splice(currentIndex,1);
 
-updated.splice(currentIndex,1);
+await db.collection("stories").doc(userId).update({
+images:currentStory.images
+});
 
-await db.collection("stories")
-.doc(currentStory.id)
-.update({images:updated});
-
-currentStory.images = updated;
-
-if(updated.length === 0){
-
-await db.collection("stories")      
-  .doc(currentStory.id)      
-  .delete();      
-  
-document.getElementById("viewer").style.display="none";      
-return;
-
+if(currentStory.images.length==0){
+await db.collection("stories").doc(userId).delete();
+viewer.style.display="none";
+}
 }
 
-if(currentIndex >= updated.length){
-currentIndex = 0;
-}
-
-show();
-}
-
-/* ================= DELETE ALL ================= */
 async function deleteAllImages(){
 
-if(!currentStory) return;
-
-if(currentStory.id !== userId){
-alert("You can only delete your own story");
+if(!currentStory || currentStory.id !== userId){
+alert("Not allowed");
 return;
 }
 
-await db.collection("stories")
-.doc(currentStory.id)
-.delete();
+await db.collection("stories").doc(userId).delete();
 
-currentStory = null;
-currentIndex = 0;
-
-document.getElementById("viewer").style.display="none";
+viewer.style.display="none";
 }
 
-</script>  </body>
+</script>
 
-</html>  
+</body>
+</html>
