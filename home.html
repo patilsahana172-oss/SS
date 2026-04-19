@@ -1,9 +1,20 @@
-<!DOCTYPE html>  <html>      <head>        <meta name="viewport" content="width=device-width, initial-scale=1.0">        
-<title>Stories App</title>  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>  <style>      body{  
-margin:0;  
-font-family:system-ui;  
-background:#fafafa;  
-}  /* HEADER */
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stories App</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<style>
+body{
+margin:0;
+font-family:system-ui;
+background:#fafafa;
+}
+
+/* HEADER */
 .header{
 display:flex;
 justify-content:space-between;
@@ -64,6 +75,16 @@ align-items:center;
 flex-direction:column;
 }
 
+/* PROGRESS BAR */
+#progress{
+position:absolute;
+top:0;
+left:0;
+height:4px;
+background:white;
+width:0%;
+}
+
 /* IMAGE */
 #img{
 width:100%;
@@ -95,79 +116,95 @@ font-size:14px;
 cursor:pointer;
 margin-left:8px;
 }
+</style>
+</head>
 
-</style>  </head>  <body>  <div class="header">
+<body>
 
-  <div><b>Stories</b></div>        
-  <div class="camera" onclick="file.click()">📸</div>        
-</div>  <div class="stories" id="stories"></div>  <div id="viewer">    <div id="topBar">        
-    <button onclick="deleteCurrentImage()">🗑 One</button>        
-    <button onclick="deleteAllImages()">🗑 All</button>        
-  </div>    <img id="img">        
-  <div id="viewerName"></div>  </div>  <input type="file" id="file" multiple accept="image/*" capture="environment" hidden>  <script>      /* ================= FIREBASE ================= */  
-const firebaseConfig = {  
-apiKey: "YOUR_API_KEY",  
-authDomain: "stories-web-52ddd.firebaseapp.com",  
-projectId: "stories-web-52ddd",  
-storageBucket: "stories-web-52ddd.appspot.com"  
-};  firebase.initializeApp(firebaseConfig);
+<div class="header">
+<div><b>Stories</b></div>
+<div class="camera" onclick="file.click()">📸</div>
+</div>
+
+<div class="stories" id="stories"></div>
+
+<div id="viewer">
+<div id="progress"></div>
+
+<div id="topBar">
+<button onclick="deleteCurrentImage(event)">🗑 One</button>
+<button onclick="deleteAllImages(event)">🗑 All</button>
+</div>
+
+<img id="img">
+<div id="viewerName"></div>
+</div>
+
+<input type="file" id="file" multiple accept="image/*" hidden>
+
+<script>
+
+/* FIREBASE */
+const firebaseConfig = {
+apiKey: "YOUR_API_KEY",
+authDomain: "stories-web-52ddd.firebaseapp.com",
+projectId: "stories-web-52ddd"
+};
+
+firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-/* ================= CLOUDINARY ================= */
+/* CLOUDINARY */
 const CLOUD = "dahg3tht7";
 const PRESET = "nipieidp";
 
-/* ================= USER ================= */
+/* USER */
 let userName = localStorage.getItem("userName");
 let userId = localStorage.getItem("userId");
 
 if(!userId){
-userId = "single_story_user";
+userId = "user_" + Date.now();
 localStorage.setItem("userId",userId);
 }
 
-/* ================= STATE ================= */
-let currentStory = null;
-let currentIndex = 0;
+/* STATE */
+let currentStory=null;
+let currentIndex=0;
 let timer;
 
-/* ================= LOAD STORIES ================= */
+/* LOAD */
 db.collection("stories")
 .orderBy("createdAt","desc")
 .onSnapshot(snapshot=>{
-
 let stories=[];
-
 snapshot.forEach(doc=>{
 stories.push({id:doc.id,...doc.data()});
 });
-
 render(stories);
 });
 
-/* ================= CLOUDINARY UPLOAD ================= */
+/* FIXED CLOUDINARY */
 async function uploadImage(file){
-
-let form = new FormData();
+let form=new FormData();
 form.append("file",file);
 form.append("upload_preset",PRESET);
 
-let res = await fetch(
-https://api.cloudinary.com/v1_1/${CLOUD}/image/upload,
+let res=await fetch(
+`https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`,
 {method:"POST",body:form}
 );
 
-let data = await res.json();
+let data=await res.json();
 return data.secure_url;
 }
 
-/* ================= UPLOAD + MERGE ================= */
+/* UPLOAD */
 file.onchange = async (e)=>{
 
 let files=[...e.target.files];
 
 if(files.length>6){
-alert("Max 6 images allowed");
+alert("Max 6 images");
 return;
 }
 
@@ -177,19 +214,16 @@ localStorage.setItem("userName",userName);
 }
 
 let urls=[];
-
 for(let f of files){
 urls.push(await uploadImage(f));
 }
 
-const ref = db.collection("stories").doc(userId);
-
-let snap = await ref.get();
+const ref=db.collection("stories").doc(userId);
+let snap=await ref.get();
 
 let old=[];
-
 if(snap.exists && snap.data().images){
-old = snap.data().images;
+old=snap.data().images;
 }
 
 await ref.set({
@@ -201,7 +235,7 @@ createdAt:firebase.firestore.FieldValue.serverTimestamp()
 file.value="";
 };
 
-/* ================= RENDER ================= */
+/* RENDER FIX */
 function render(stories){
 
 let c=document.getElementById("stories");
@@ -214,7 +248,10 @@ if(!s.images || s.images.length===0) return;
 let div=document.createElement("div");
 div.className="story";
 
-div.innerHTML=        <img src="${s.images[0]}">         <span>${s.name}</span>        ;
+div.innerHTML=`
+<img src="${s.images[0]}">
+<span>${s.name}</span>
+`;
 
 div.onclick=()=>openStory(s);
 
@@ -223,9 +260,8 @@ c.appendChild(div);
 });
 }
 
-/* ================= OPEN STORY ================= */
+/* OPEN */
 function openStory(s){
-
 currentStory=s;
 currentIndex=0;
 
@@ -235,7 +271,7 @@ document.getElementById("viewerName").innerText=s.name;
 show();
 }
 
-/* ================= SHOW ================= */
+/* SHOW + PROGRESS */
 function show(){
 
 if(!currentStory) return;
@@ -248,81 +284,77 @@ return;
 document.getElementById("img").src =
 currentStory.images[currentIndex];
 
-clearTimeout(timer);
-
-timer = setTimeout(()=>{
-currentIndex++;
-show();
-},3000);
+startProgress();
 }
 
-/* TAP = SKIP */
+/* PROGRESS ANIMATION */
+function startProgress(){
+let bar=document.getElementById("progress");
+bar.style.width="0%";
+
+let width=0;
+
+clearInterval(timer);
+
+timer=setInterval(()=>{
+width+=2;
+bar.style.width=width+"%";
+
+if(width>=100){
+clearInterval(timer);
+currentIndex++;
+show();
+}
+},60);
+}
+
+/* TAP NEXT */
 document.getElementById("viewer").onclick = ()=>{
-clearTimeout(timer);
+clearInterval(timer);
 currentIndex++;
 show();
 };
 
-/* ================= DELETE SINGLE IMAGE (FIXED PERMANENT) ================= */
-async function deleteCurrentImage(){
-
-if(!currentStory) return;
+/* FIX CLICK CONFLICT */
+function deleteCurrentImage(e){
+e.stopPropagation();
 
 if(currentStory.id !== userId){
-alert("You can only delete your own story");
+alert("Only your story");
 return;
 }
 
-let updated = [...currentStory.images];
-
+let updated=[...currentStory.images];
 updated.splice(currentIndex,1);
 
-await db.collection("stories")
-.doc(currentStory.id)
+db.collection("stories").doc(currentStory.id)
 .update({images:updated});
 
-currentStory.images = updated;
+currentStory.images=updated;
 
-if(updated.length === 0){
-
-await db.collection("stories")
-.doc(currentStory.id)
-.delete();
-
+if(updated.length===0){
+db.collection("stories").doc(currentStory.id).delete();
 document.getElementById("viewer").style.display="none";
 return;
-
-}
-
-if(currentIndex >= updated.length){
-currentIndex = 0;
 }
 
 show();
 }
 
-/* ================= DELETE ALL ================= */
-async function deleteAllImages(){
-
-if(!currentStory) return;
+/* DELETE ALL */
+function deleteAllImages(e){
+e.stopPropagation();
 
 if(currentStory.id !== userId){
-alert("You can only delete your own story");
+alert("Only your story");
 return;
 }
 
-await db.collection("stories")
-.doc(currentStory.id)
-.delete();
-
-currentStory = null;
-currentIndex = 0;
+db.collection("stories").doc(currentStory.id).delete();
 
 document.getElementById("viewer").style.display="none";
 }
 
-</script>  </body>
-
-</html>  Here put that userlogin      
-And make some advance level changes in delete    For this exact code I want single line also  
-For this code you can login
+</script>
+</body>
+</html>
