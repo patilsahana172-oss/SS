@@ -70,7 +70,7 @@ body{margin:0;font-family:sans-serif;background:#fafafa}
 
 <script>
 
-/* ---------- CONFIG ---------- */
+/* 🔥 FIREBASE CONFIG */
 const firebaseConfig = {
   apiKey: "AIzaSyD4ADNcYbQwY2Fmzsx6HPqVDyJemDf_Acs",
   authDomain: "ss-app-a0b1c.firebaseapp.com",
@@ -82,31 +82,39 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+/* ☁️ CLOUDINARY */
 const CLOUD = "dahg3tht7";
 const PRESET = "nipieidp";
 
-/* ---------- STATE ---------- */
+/* STATE */
 let currentUser = null;
 let userId = null;
 let userName = null;
 
-/* ---------- AUTH ---------- */
+/* 🚫 FIX REDIRECT LOOP */
+let checked = false;
+
 auth.onAuthStateChanged(async (user) => {
 
+  if (!checked) {
+    checked = true;
+    return; // ignore first call
+  }
+
   if (!user) {
-    location.href = "index.html";
+    window.location.href = "index.html";
     return;
   }
 
   currentUser = user;
   userId = user.uid;
 
-  // enable camera AFTER login
+  /* ✅ enable camera */
   const cam = document.getElementById("cameraBtn");
   cam.style.opacity = "1";
   cam.onclick = () => document.getElementById("file").click();
 
-  // get or create user
+  /* 👤 get/create user */
   const ref = db.collection("stories").doc(userId);
   const snap = await ref.get();
 
@@ -124,7 +132,7 @@ auth.onAuthStateChanged(async (user) => {
   listenStories();
 });
 
-/* ---------- REALTIME ---------- */
+/* 📡 REALTIME */
 function listenStories(){
   db.collection("stories").onSnapshot(snap => {
     const list = [];
@@ -133,7 +141,7 @@ function listenStories(){
   });
 }
 
-/* ---------- RENDER ---------- */
+/* 🎨 UI */
 function render(data){
   const box = document.getElementById("stories");
   box.innerHTML = "";
@@ -154,7 +162,7 @@ function render(data){
   });
 }
 
-/* ---------- VIEW STORY ---------- */
+/* 📖 STORY VIEW */
 let currentStory = null, index = 0, timer;
 
 function openStory(s){
@@ -196,11 +204,16 @@ viewer.onclick = () => {
   show();
 };
 
-/* ---------- UPLOAD ---------- */
+/* 📤 UPLOAD */
 document.getElementById("file").onchange = async (e) => {
 
   const files = [...e.target.files];
   if (!files.length) return;
+
+  if (!currentUser) {
+    alert("Login not ready");
+    return;
+  }
 
   try {
 
@@ -219,12 +232,12 @@ document.getElementById("file").onchange = async (e) => {
 
       const data = await res.json();
 
-      if (!data.secure_url) throw "Upload failed";
+      if (!data.secure_url) throw "Upload error";
 
       urls.push(data.secure_url);
     }
 
-    // overwrite → 1 user = 1 story
+    /* ✅ 1 USER = 1 STORY */
     await db.collection("stories").doc(userId).set({
       name: userName,
       email: currentUser.email,
@@ -237,7 +250,6 @@ document.getElementById("file").onchange = async (e) => {
     console.error(err);
     alert("Upload failed ❌");
   }
-
 };
 
 </script>
