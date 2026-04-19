@@ -163,41 +163,48 @@ let userName = localStorage.getItem("userName");
 
 /* ================= AUTO LOGIN ================= */
 window.onload = function(){
+
+  userId = localStorage.getItem("userId");
+  userName = localStorage.getItem("userName");
+
   if(userId && userName){
-    loginBox.style.display="none";
+    loginBox.style.display = "none";
     loadStories();
+  } else {
+    loginBox.style.display = "flex";
   }
 };
 
 /* ================= LOGIN ================= */
 function login(){
 
-let m = mobile.value;
-let n = name.value;
+  let m = document.getElementById("mobile").value.trim();
+  let n = document.getElementById("name").value.trim();
 
-if(!m){
-alert("Enter mobile");
-return;
+  if(!m){
+    alert("Enter mobile number");
+    return;
+  }
+
+  if(!localStorage.getItem("userName")){
+    if(!n){
+      alert("Enter name first time");
+      return;
+    }
+    localStorage.setItem("userName", n);
+  }
+
+  localStorage.setItem("userId", m);
+
+  userId = m;
+  userName = localStorage.getItem("userName");
+
+  loginBox.style.display = "none";
+
+  loadStories();
 }
 
-if(!userName && !n){
-alert("Enter name first time");
-return;
-}
-
-userId = m;
-userName = userName || n;
-
-localStorage.setItem("userId",userId);
-localStorage.setItem("userName",userName);
-
-loginBox.style.display="none";
-
-loadStories();
-
-}
-
-/* ================= UPLOAD IMAGE (FIREBASE STORAGE) ================= */
+/* ================= UPLOAD ================= */
 file.onchange = async (e)=>{
 
 let files = [...e.target.files];
@@ -212,7 +219,6 @@ await ref.put(f);
 
 let url = await ref.getDownloadURL();
 
-/* SAVE TO FIRESTORE */
 await db.collection("stories").doc(userId).set({
 name:userName,
 image:url,
@@ -222,7 +228,6 @@ createdAt:Date.now()
 }
 
 file.value="";
-
 loadStories();
 };
 
@@ -267,7 +272,7 @@ let currentId=null;
 
 function deleteStory(){
 
-if(!currentId || currentId!==userId){
+if(!currentId || currentId !== userId){
 alert("Not allowed");
 return;
 }
