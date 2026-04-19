@@ -4,7 +4,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Stories</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -15,18 +14,17 @@ body{margin:0;font-family:sans-serif;background:#fafafa}
 .header{
   display:flex;justify-content:space-between;
   padding:14px;background:#fff;
-  box-shadow:0 2px 10px rgba(0,0,0,0.05)
 }
 
 .camera{
   font-size:22px;background:#ff3e6c;color:#fff;
   padding:10px;border-radius:50%;
-  opacity:0.5;cursor:pointer
+  cursor:pointer
 }
 
 .stories{
   display:flex;overflow-x:auto;
-  padding:10px;gap:12px;background:#fff
+  padding:10px;gap:12px;
 }
 
 .story{text-align:center}
@@ -44,10 +42,6 @@ body{margin:0;font-family:sans-serif;background:#fafafa}
 }
 
 #img{width:100%;max-height:85vh}
-#progress{
-  position:absolute;top:0;left:0;
-  height:4px;background:#fff;width:0%
-}
 </style>
 </head>
 
@@ -61,7 +55,6 @@ body{margin:0;font-family:sans-serif;background:#fafafa}
 <div id="stories" class="stories"></div>
 
 <div id="viewer">
-  <div id="progress"></div>
   <img id="img">
   <div id="name"></div>
 </div>
@@ -70,7 +63,7 @@ body{margin:0;font-family:sans-serif;background:#fafafa}
 
 <script>
 
-/* 🔥 FIREBASE CONFIG */
+/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyD4ADNcYbQwY2Fmzsx6HPqVDyJemDf_Acs",
   authDomain: "ss-app-a0b1c.firebaseapp.com",
@@ -78,11 +71,10 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* ☁️ CLOUDINARY */
+/* CLOUDINARY */
 const CLOUD = "dahg3tht7";
 const PRESET = "nipieidp";
 
@@ -91,15 +83,13 @@ let currentUser = null;
 let userId = null;
 let userName = null;
 
-/* 🚫 FIX REDIRECT LOOP */
-let checked = false;
+/* ✅ CAMERA ALWAYS WORKS */
+document.getElementById("cameraBtn").onclick = () => {
+  document.getElementById("file").click();
+};
 
+/* AUTH */
 auth.onAuthStateChanged(async (user) => {
-
-  if (!checked) {
-    checked = true;
-    return; // ignore first call
-  }
 
   if (!user) {
     window.location.href = "index.html";
@@ -109,12 +99,6 @@ auth.onAuthStateChanged(async (user) => {
   currentUser = user;
   userId = user.uid;
 
-  /* ✅ enable camera */
-  const cam = document.getElementById("cameraBtn");
-  cam.style.opacity = "1";
-  cam.onclick = () => document.getElementById("file").click();
-
-  /* 👤 get/create user */
   const ref = db.collection("stories").doc(userId);
   const snap = await ref.get();
 
@@ -132,24 +116,24 @@ auth.onAuthStateChanged(async (user) => {
   listenStories();
 });
 
-/* 📡 REALTIME */
+/* REALTIME */
 function listenStories(){
   db.collection("stories").onSnapshot(snap => {
-    const list = [];
-    snap.forEach(d => list.push({id:d.id, ...d.data()}));
+    let list = [];
+    snap.forEach(d => list.push(d.data()));
     render(list);
   });
 }
 
-/* 🎨 UI */
+/* UI */
 function render(data){
-  const box = document.getElementById("stories");
+  let box = document.getElementById("stories");
   box.innerHTML = "";
 
   data.forEach(s => {
     if (!s.images || s.images.length === 0) return;
 
-    const div = document.createElement("div");
+    let div = document.createElement("div");
     div.className = "story";
 
     div.innerHTML = `
@@ -162,8 +146,8 @@ function render(data){
   });
 }
 
-/* 📖 STORY VIEW */
-let currentStory = null, index = 0, timer;
+/* VIEW STORY */
+let index = 0, currentStory;
 
 function openStory(s){
   currentStory = s;
@@ -174,40 +158,27 @@ function openStory(s){
 }
 
 function show(){
-  if (index >= currentStory.images.length){
+  if(index >= currentStory.images.length){
     viewer.style.display = "none";
     return;
   }
   img.src = currentStory.images[index];
-  start();
-}
 
-function start(){
-  let w = 0;
-  progress.style.width = "0%";
-  clearInterval(timer);
-
-  timer = setInterval(()=>{
-    w += 2;
-    progress.style.width = w + "%";
-    if (w >= 100){
-      clearInterval(timer);
-      index++;
-      show();
-    }
-  }, 60);
+  setTimeout(()=>{
+    index++;
+    show();
+  },2000);
 }
 
 viewer.onclick = () => {
-  clearInterval(timer);
   index++;
   show();
 };
 
-/* 📤 UPLOAD */
+/* UPLOAD */
 document.getElementById("file").onchange = async (e) => {
 
-  const files = [...e.target.files];
+  let files = [...e.target.files];
   if (!files.length) return;
 
   if (!currentUser) {
@@ -217,27 +188,29 @@ document.getElementById("file").onchange = async (e) => {
 
   try {
 
-    const urls = [];
+    let urls = [];
 
-    for (const f of files) {
+    for (let f of files) {
 
-      const form = new FormData();
+      let form = new FormData();
       form.append("file", f);
       form.append("upload_preset", PRESET);
 
-      const res = await fetch(
+      let res = await fetch(
         `https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`,
         { method: "POST", body: form }
       );
 
-      const data = await res.json();
+      let data = await res.json();
 
-      if (!data.secure_url) throw "Upload error";
+      if (!data.secure_url) {
+        alert("Upload failed");
+        return;
+      }
 
       urls.push(data.secure_url);
     }
 
-    /* ✅ 1 USER = 1 STORY */
     await db.collection("stories").doc(userId).set({
       name: userName,
       email: currentUser.email,
@@ -248,7 +221,7 @@ document.getElementById("file").onchange = async (e) => {
 
   } catch (err) {
     console.error(err);
-    alert("Upload failed ❌");
+    alert("Error ❌");
   }
 };
 
