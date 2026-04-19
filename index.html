@@ -94,6 +94,25 @@
         status.innerText = "Not Logged In";
       }
     });
+    
+  const loginBtn = document.getElementById("login-btn");
+
+  loginBtn.addEventListener("click", function(e) {
+    e.preventDefault();
+
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    auth.signInWithEmailAndPassword(email, password)
+      .then(() => {
+        // ✅ Redirect to next page
+        window.location.href = "home.html";
+      })
+      .catch(error => {
+        alert(error.message);
+      });
+  });
+
 
   </script>
 
