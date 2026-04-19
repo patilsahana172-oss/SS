@@ -12,25 +12,23 @@
 <style>
 body{margin:0;font-family:sans-serif;background:#fafafa}
 
-/* HEADER */
 .header{
   display:flex;
   justify-content:space-between;
   padding:14px;
   background:#fff;
-  box-shadow:0 2px 10px rgba(0,0,0,0.05);
+  box-shadow:0 2px 8px rgba(0,0,0,0.08);
 }
 
 .camera{
   font-size:22px;
-  background:#ff3e6c;
+  background:#ff3b6b;
   color:#fff;
   padding:10px;
   border-radius:50%;
   cursor:pointer;
 }
 
-/* STORIES */
 .stories{
   display:flex;
   overflow-x:auto;
@@ -39,7 +37,9 @@ body{margin:0;font-family:sans-serif;background:#fafafa}
   background:#fff;
 }
 
-.story{text-align:center}
+.story{
+  text-align:center;
+}
 
 .story img{
   width:70px;
@@ -49,12 +49,12 @@ body{margin:0;font-family:sans-serif;background:#fafafa}
   object-fit:cover;
 }
 
-/* VIEWER */
 #viewer{
   display:none;
   position:fixed;
   top:0;left:0;
-  width:100%;height:100%;
+  width:100%;
+  height:100%;
   background:#000;
   color:#fff;
   justify-content:center;
@@ -66,10 +66,6 @@ body{margin:0;font-family:sans-serif;background:#fafafa}
   width:100%;
   max-height:85vh;
   object-fit:contain;
-}
-
-#name{
-  margin-top:10px;
 }
 </style>
 </head>
@@ -92,7 +88,7 @@ body{margin:0;font-family:sans-serif;background:#fafafa}
 
 <script>
 
-/* ================= FIREBASE ================= */
+/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyD4ADNcYbQwY2Fmzsx6HPqVDyJemDf_Acs",
   authDomain: "ss-app-a0b1c.firebaseapp.com",
@@ -104,33 +100,29 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* ================= CLOUDINARY ================= */
+/* CLOUDINARY */
 const CLOUD = "dahg3tht7";
 const PRESET = "nipieidp";
 
-/* ================= STATE ================= */
+/* STATE */
 let user = null;
 let userId = null;
 let userName = null;
+let authLoaded = false;
 
-/* ================= CAMERA (ALWAYS ACTIVE) ================= */
+/* CAMERA (no login blocking click) */
 document.getElementById("cameraBtn").onclick = () => {
-  if (!user) {
+  if (!authLoaded || !user) {
     alert("Please login first");
     return;
   }
   document.getElementById("file").click();
 };
 
-/* ================= AUTH FIX (NO LOOP) ================= */
-let firstRun = true;
-
+/* AUTH SAFE HANDLING */
 auth.onAuthStateChanged(async (u) => {
 
-  if (firstRun) {
-    firstRun = false;
-    return; // ignore first unstable trigger
-  }
+  authLoaded = true;
 
   if (!u) {
     window.location.href = "index.html";
@@ -149,7 +141,7 @@ auth.onAuthStateChanged(async (u) => {
     userName = prompt("Enter your name:");
     await ref.set({
       name: userName,
-      email: user.email,
+      email: u.email,
       images: []
     });
   }
@@ -157,7 +149,7 @@ auth.onAuthStateChanged(async (u) => {
   loadStories();
 });
 
-/* ================= LOAD STORIES ================= */
+/* LOAD STORIES */
 function loadStories(){
   db.collection("stories").onSnapshot(snap => {
     let arr = [];
@@ -166,7 +158,7 @@ function loadStories(){
   });
 }
 
-/* ================= RENDER ================= */
+/* RENDER */
 function render(data){
   const box = document.getElementById("stories");
   box.innerHTML = "";
@@ -187,7 +179,7 @@ function render(data){
   });
 }
 
-/* ================= STORY VIEW ================= */
+/* STORY VIEW */
 let currentStory = null;
 let index = 0;
 
@@ -199,31 +191,30 @@ function openStory(s){
 }
 
 function show(){
-  if (index >= currentStory.images.length) {
+  if (index >= currentStory.images.length){
     viewer.style.display = "none";
     return;
   }
 
   img.src = currentStory.images[index];
-  name.innerText = currentStory.name;
 }
 
-/* tap = next */
+/* next */
 viewer.onclick = () => {
   index++;
   show();
 };
 
-/* ================= UPLOAD ================= */
+/* UPLOAD */
 document.getElementById("file").onchange = async (e) => {
-
-  const files = [...e.target.files];
-  if (!files.length) return;
 
   if (!user) {
     alert("Login required");
     return;
   }
+
+  let files = [...e.target.files];
+  if (!files.length) return;
 
   try {
 
@@ -250,7 +241,6 @@ document.getElementById("file").onchange = async (e) => {
       urls.push(data.secure_url);
     }
 
-    /* 1 USER = 1 STORY (overwrite) */
     await db.collection("stories").doc(userId).set({
       name: userName,
       email: user.email,
