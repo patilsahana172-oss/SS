@@ -1,117 +1,90 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Stories App</title>
+  <title>Stories</title>
+
   <style>
-    body {
-      margin: 0;
-      font-family: Arial;
-      background: #fafafa;
-    }
+    body { margin:0; font-family:Arial; background:#fafafa; }
 
     .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px;
-      background: white;
-      border-bottom: 1px solid #ddd;
+      display:flex;
+      justify-content:space-between;
+      padding:10px;
+      background:white;
+      border-bottom:1px solid #ddd;
     }
 
-    .logo {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-    }
-
-    .upload-box {
-      padding: 10px;
-      background: white;
-    }
+    .logo { width:40px; height:40px; border-radius:50%; }
 
     .stories {
-      display: flex;
-      overflow-x: auto;
-      padding: 10px;
-      background: white;
-    }
-
-    .story {
-      margin-right: 12px;
-      text-align: center;
-      cursor: pointer;
+      display:flex;
+      overflow-x:auto;
+      padding:10px;
+      background:white;
     }
 
     .story img {
-      width: 70px;
-      height: 70px;
-      border-radius: 50%;
-      border: 3px solid #ff004f;
+      width:70px;
+      height:70px;
+      border-radius:50%;
+      border:3px solid red;
+      margin-right:10px;
     }
 
     .viewer {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: black;
-      display: none;
-      justify-content: center;
-      align-items: center;
+      position:fixed;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background:black;
+      display:none;
+      justify-content:center;
+      align-items:center;
     }
 
     .viewer img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
+      width:100%;
+      height:100%;
+      object-fit:contain;
     }
 
     .close {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      color: white;
-      font-size: 25px;
-      cursor: pointer;
+      position:absolute;
+      top:20px;
+      right:20px;
+      color:white;
+      font-size:25px;
     }
 
     .delete {
-      position: absolute;
-      bottom: 20px;
-      right: 20px;
-      color: white;
-      background: red;
-      padding: 10px;
-      border: none;
-      cursor: pointer;
+      position:absolute;
+      bottom:20px;
+      right:20px;
+      background:red;
+      color:white;
+      padding:10px;
     }
   </style>
 </head>
+
 <body>
 
-<!-- Header -->
 <div class="header">
   <h3>Stories</h3>
-  <img class="logo" src="YOUR_LOGO_URL_HERE">
+  <img class="logo" src="YOUR_LOGO_URL">
 </div>
 
-<!-- Upload -->
-<div class="upload-box">
-  <input type="file" id="upload" multiple>
-</div>
+<input type="file" id="upload" multiple>
 
-<!-- Stories -->
-<div class="stories" id="stories"></div>
+<div id="stories" class="stories"></div>
 
-<!-- Viewer -->
-<div class="viewer" id="viewer">
+<div id="viewer" class="viewer">
   <span class="close" onclick="closeViewer()">X</span>
   <img id="viewerImg">
-  <button class="delete" id="deleteBtn">Delete</button>
+  <button id="deleteBtn" class="delete">Delete</button>
 </div>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -122,7 +95,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyBuhu2WM0jS55qnS59c87rtuVuF8TK-RkI",
   authDomain: "stories-web-52ddd.firebaseapp.com",
   projectId: "stories-web-52ddd",
-  storageBucket: "stories-web-52ddd.appspot.com" // ✅ FIXED
+  storageBucket: "stories-web-52ddd.appspot.com"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -146,24 +119,32 @@ auth.onAuthStateChanged(user => {
   }
 });
 
-// Upload story
+// Upload (PERMANENT FIX)
 document.getElementById("upload").addEventListener("change", async (e) => {
   const files = e.target.files;
-  let urls = [];
+  let newUrls = [];
 
   for (let file of files) {
-    const ref = storage.ref("stories/" + currentUser.uid + "/" + file.name);
+    const ref = storage.ref("stories/" + currentUser.uid + "/" + Date.now() + "_" + file.name);
     await ref.put(file);
     const url = await ref.getDownloadURL();
-    urls.push(url);
+    newUrls.push(url);
   }
 
-  await db.collection("stories").doc(currentUser.uid).set({
+  const docRef = db.collection("stories").doc(currentUser.uid);
+  const docSnap = await docRef.get();
+
+  let existing = [];
+  if (docSnap.exists) existing = docSnap.data().images || [];
+
+  const allImages = [...existing, ...newUrls];
+
+  await docRef.set({
     userId: currentUser.uid,
-    images: urls
+    images: allImages
   });
 
-  alert("Story uploaded ✅");
+  alert("Uploaded ✅");
   loadStories();
 });
 
@@ -176,6 +157,7 @@ async function loadStories() {
 
   snapshot.forEach(doc => {
     const data = doc.data();
+    if (!data.images || data.images.length === 0) return;
 
     const div = document.createElement("div");
     div.className = "story";
@@ -205,35 +187,34 @@ function showImage() {
   document.getElementById("viewerImg").src = currentImages[currentIndex];
 
   if (currentUser.uid === currentStoryId) {
-    document.getElementById("deleteBtn").style.display = "block";
+    deleteBtn.style.display = "block";
   } else {
-    document.getElementById("deleteBtn").style.display = "none";
+    deleteBtn.style.display = "none";
   }
 }
 
 // Next image
-document.getElementById("viewerImg").addEventListener("click", () => {
+viewerImg.onclick = () => {
   currentIndex++;
-
   if (currentIndex < currentImages.length) {
     showImage();
   } else {
     closeViewer();
   }
-});
+};
 
 // Close
 function closeViewer() {
   document.getElementById("viewer").style.display = "none";
 }
 
-// Delete story
-document.getElementById("deleteBtn").addEventListener("click", async () => {
+// Delete
+deleteBtn.onclick = async () => {
   await db.collection("stories").doc(currentStoryId).delete();
-  alert("Deleted ✅");
+  alert("Deleted");
   closeViewer();
   loadStories();
-});
+};
 </script>
 
 </body>
