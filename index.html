@@ -2,201 +2,261 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stories App</title>
+<title>Stories Pro</title>
 
 <style>
-body{
-margin:0;
-font-family:system-ui;
-background:#fafafa;
+body{margin:0;font-family:system-ui;background:#fafafa}
+
+/* LOGIN */
+#login{
+display:flex;flex-direction:column;
+justify-content:center;align-items:center;
+height:100vh;gap:10px;
 }
+input,button{
+padding:10px;border-radius:8px;border:1px solid #ccc;
+}
+button{background:#ff4d6d;color:#fff;border:none}
+
+/* APP */
+#app{display:none}
 
 .header{
-display:flex;
-justify-content:space-between;
-align-items:center;
-padding:12px;
-background:#fff;
+display:flex;justify-content:space-between;
+padding:12px;background:#fff;
 box-shadow:0 2px 10px rgba(0,0,0,0.05);
 }
 
 .stories{
-display:flex;
-overflow-x:auto;
-gap:12px;
-padding:10px;
-background:#fff;
+display:flex;gap:12px;overflow-x:auto;
+padding:10px;background:#fff;
 }
 
 .story{
 text-align:center;
 }
-
 .story img{
-width:70px;
-height:70px;
-border-radius:50%;
-object-fit:cover;
-border:3px solid #ff4d6d;
+width:70px;height:70px;border-radius:50%;
+border:3px solid #ff4d6d;object-fit:cover;
 }
+.story span{font-size:12px}
 
-.story span{
-font-size:12px;
-display:block;
-}
-
+/* VIEWER */
 #viewer{
-display:none;
-position:fixed;
-inset:0;
-background:black;
-justify-content:center;
-align-items:center;
-flex-direction:column;
+display:none;position:fixed;inset:0;
+background:black;justify-content:center;
+align-items:center;flex-direction:column;
 }
 
 #viewer img{
-width:100%;
-max-height:85vh;
+width:100%;max-height:85vh;
 object-fit:contain;
 }
 
-button{
-padding:8px 12px;
-margin:5px;
-border:none;
-border-radius:20px;
-background:red;
-color:white;
+#top{
+position:absolute;top:15px;right:15px;
+}
+
+#loader{
+position:fixed;top:0;left:0;width:100%;
+background:#ff4d6d;color:#fff;
+text-align:center;padding:6px;
+display:none;
 }
 </style>
-
 </head>
 
 <body>
 
-<!-- HEADER -->
-<div class="header">
-<div><b>Stories</b></div>
-<input type="file" id="file">
+<div id="loader">Uploading...</div>
+
+<!-- LOGIN -->
+<div id="login">
+<h2>Login</h2>
+<input id="mobile" placeholder="Mobile number">
+<input id="name" placeholder="Name">
+<button onclick="login()">Enter</button>
 </div>
 
-<!-- STORIES -->
+<!-- APP -->
+<div id="app">
+<div class="header">
+<b>Stories</b>
+<input type="file" id="file" multiple>
+</div>
+
 <div class="stories" id="stories"></div>
+</div>
 
 <!-- VIEWER -->
-<div id="viewer" onclick="nextStory()">
+<div id="viewer">
+<div id="top">
+<button onclick="deleteStory()">Delete</button>
+</div>
 <img id="img">
 </div>
 
 <script>
 
-/* ================= CLOUDINARY ================= */
+/* CONFIG */
 const CLOUD = "dsygezfli";
-const PRESET = "YOUR_UPLOAD_PRESET"; // ⚠️ CHANGE THIS
+const PRESET = "dsygezfli";
 
-/* ================= LOGIN ================= */
+/* STATE */
 let userId = localStorage.getItem("userId");
 let userName = localStorage.getItem("userName");
 
-if(!userId){
-userId = prompt("Enter mobile number:");
-localStorage.setItem("userId", userId);
+let data = JSON.parse(localStorage.getItem("stories") || "{}");
+
+let current = [];
+let index = 0;
+let currentOwner = null;
+let timer;
+
+/* INIT */
+if(userId) start();
+
+/* LOGIN */
+function login(){
+if(!mobile.value) return alert("Enter mobile");
+
+localStorage.setItem("userId", mobile.value);
+localStorage.setItem("userName", name.value || "User");
+
+start();
 }
 
-if(!userName){
-userName = prompt("Enter your name:");
-localStorage.setItem("userName", userName);
+/* START */
+function start(){
+login.style.display="none";
+app.style.display="block";
+render();
 }
 
-/* ================= STORAGE ================= */
-let all = JSON.parse(localStorage.getItem("stories") || "{}");
-
-/* ================= UPLOAD ================= */
+/* UPLOAD */
 file.onchange = async (e)=>{
 
-let f = e.target.files[0];
+let files = [...e.target.files];
+if(files.length === 0) return;
+
+loader.style.display="block";
+
+try{
+
+for(let f of files){
 
 let form = new FormData();
 form.append("file", f);
 form.append("upload_preset", PRESET);
 
-let res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`,{
-method:"POST",
-body:form
-});
+let res = await fetch(
+`https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`,
+{method:"POST", body:form}
+);
 
-let data = await res.json();
+let result = await res.json();
 
-if(!all[userId]) all[userId] = [];
+if(!result.secure_url){
+alert("Upload failed. Check preset.");
+continue;
+}
 
-all[userId].push(data.secure_url);
+if(!data[userId]) data[userId]=[];
+data[userId].push(result.secure_url);
 
-localStorage.setItem("stories", JSON.stringify(all));
+}
+
+localStorage.setItem("stories", JSON.stringify(data));
 
 render();
 
+}catch(err){
+alert("Upload error");
+}
+
+loader.style.display="none";
+
 };
 
-/* ================= RENDER ================= */
+/* RENDER */
 function render(){
 
-let box = document.getElementById("stories");
-box.innerHTML="";
+stories.innerHTML="";
 
-Object.keys(all).forEach(id=>{
+Object.keys(data).forEach(id=>{
+
+if(!data[id] || data[id].length===0) return;
 
 let div = document.createElement("div");
 div.className="story";
 
 div.innerHTML = `
-<img src="${all[id][0]}">
+<img src="${data[id][0]}">
 <span>${id}</span>
 `;
 
-div.onclick = ()=>{
-openStory(all[id]);
-};
+div.onclick = ()=>open(data[id], id);
 
-box.appendChild(div);
+stories.appendChild(div);
 
 });
 
 }
 
-render();
-
-/* ================= VIEW STORY ================= */
-let index = 0;
-let current = [];
-
-function openStory(arr){
+/* OPEN */
+function open(arr, owner){
 current = arr;
 index = 0;
+currentOwner = owner;
 
 viewer.style.display="flex";
-img.src = current[index];
+show();
 }
 
-function nextStory(){
+/* SHOW */
+function show(){
+
+img.src = current[index];
+
+clearTimeout(timer);
+
+timer = setTimeout(()=>{
+next();
+},3000);
+
+}
+
+/* NEXT */
+function next(){
 index++;
 
 if(index >= current.length){
 viewer.style.display="none";
 }else{
-img.src = current[index];
+show();
 }
 }
 
-/* ================= DELETE OWN STORY ================= */
-function deleteMyStory(){
+viewer.onclick = next;
 
-if(all[userId]){
-delete all[userId];
-localStorage.setItem("stories", JSON.stringify(all));
-render();
+/* DELETE */
+function deleteStory(){
+
+if(currentOwner !== userId){
+alert("You can delete only your story");
+return;
+}
+
+data[userId].splice(index,1);
+
+if(data[userId].length === 0){
+delete data[userId];
 viewer.style.display="none";
 }
+
+localStorage.setItem("stories", JSON.stringify(data));
+
+render();
 
 }
 
