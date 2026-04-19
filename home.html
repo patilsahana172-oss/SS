@@ -67,16 +67,13 @@ height:4px;background:#fff;width:0%
 
 <body>
 
-<!-- HEADER -->
 <div class="header">
 <div><b>Stories</b></div>
 <div class="camera" onclick="openFile()">📸</div>
 </div>
 
-<!-- STORIES -->
 <div id="stories" class="stories"></div>
 
-<!-- VIEWER -->
 <div id="viewer">
 <div id="progress"></div>
 <img id="img">
@@ -87,14 +84,12 @@ height:4px;background:#fff;width:0%
 
 <script>
 
-/* ================= FIREBASE ================= */
+/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyD4ADNcYbQwY2Fmzsx6HPqVDyJemDf_Acs",
   authDomain: "ss-app-a0b1c.firebaseapp.com",
   projectId: "ss-app-a0b1c",
-  storageBucket: "ss-app-a0b1c.appspot.com",
-  messagingSenderId: "YOUR_ID",
-  appId: "YOUR_APP_ID"
+  storageBucket: "ss-app-a0b1c.appspot.com"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -102,11 +97,11 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* ================= CLOUDINARY ================= */
+/* CLOUDINARY */
 const CLOUD = "dahg3tht7";
 const PRESET = "nipieidp";
 
-/* ================= GLOBAL ================= */
+/* GLOBAL */
 let currentUser = null;
 let userId = null;
 let userName = null;
@@ -115,13 +110,13 @@ let currentStory = null;
 let currentIndex = 0;
 let timer;
 
-/* ================= AUTH FIX ================= */
-let authReady = false;
+/* AUTH FIX */
+let ready = false;
 
 auth.onAuthStateChanged(async user => {
 
-  if (!authReady) {
-    authReady = true;
+  if (!ready) {
+    ready = true;
     if (!user) return;
   }
 
@@ -148,24 +143,22 @@ auth.onAuthStateChanged(async user => {
   }
 
   loadStories();
-
 });
 
-/* ================= LOAD STORIES ================= */
+/* LOAD */
 function loadStories(){
   db.collection("stories").onSnapshot(snapshot=>{
-    let list = [];
+    let arr = [];
     snapshot.forEach(doc=>{
-      list.push({id:doc.id,...doc.data()});
+      arr.push({id:doc.id,...doc.data()});
     });
-    render(list);
+    render(arr);
   });
 }
 
-/* ================= RENDER ================= */
+/* RENDER */
 function render(data){
-  const container = document.getElementById("stories");
-  container.innerHTML = "";
+  stories.innerHTML = "";
 
   data.forEach(s=>{
     if(!s.images || s.images.length === 0) return;
@@ -178,13 +171,12 @@ function render(data){
       <span>${s.name}</span>
     `;
 
-    div.onclick = () => openStory(s);
-
-    container.appendChild(div);
+    div.onclick = ()=>openStory(s);
+    stories.appendChild(div);
   });
 }
 
-/* ================= VIEW STORY ================= */
+/* VIEW STORY */
 function openStory(s){
   currentStory = s;
   currentIndex = 0;
@@ -205,18 +197,18 @@ function show(){
   startProgress();
 }
 
-/* ================= PROGRESS ================= */
+/* PROGRESS */
 function startProgress(){
-  let width = 0;
+  let w = 0;
   progress.style.width = "0%";
 
   clearInterval(timer);
 
   timer = setInterval(()=>{
-    width += 2;
-    progress.style.width = width + "%";
+    w += 2;
+    progress.style.width = w + "%";
 
-    if(width >= 100){
+    if(w >= 100){
       clearInterval(timer);
       currentIndex++;
       show();
@@ -224,55 +216,77 @@ function startProgress(){
   },60);
 }
 
-/* CLICK NEXT */
 viewer.onclick = ()=>{
   clearInterval(timer);
   currentIndex++;
   show();
 };
 
-/* ================= FILE ================= */
+/* FILE */
 function openFile(){
-  document.getElementById("file").click();
+  file.click();
 }
 
-/* ================= UPLOAD ================= */
-file.onchange = async e => {
-
-  if (!currentUser) {
-    alert("Please wait...");
-    return;
-  }
+/* UPLOAD FINAL FIX */
+file.onchange = async (e)=>{
 
   let files = [...e.target.files];
   if(files.length === 0) return;
 
-  let urls = [];
-
-  for(let f of files){
-    let form = new FormData();
-    form.append("file", f);
-    form.append("upload_preset", PRESET);
-
-    let res = await fetch(
-      `https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`,
-      {method:"POST", body:form}
-    );
-
-    let data = await res.json();
-    urls.push(data.secure_url);
+  // wait for login
+  let count = 0;
+  while(!currentUser && count < 10){
+    await new Promise(r=>setTimeout(r,300));
+    count++;
   }
 
-  const ref = db.collection("stories").doc(userId);
-  let snap = await ref.get();
+  if(!currentUser){
+    alert("Refresh once and try again");
+    return;
+  }
 
-  let old = snap.exists && snap.data().images ? snap.data().images : [];
+  try{
 
-  await ref.set({
-    name: userName,
-    email: currentUser.email,
-    images: [...old, ...urls]
-  }, {merge:true});
+    let urls = [];
+
+    for(let f of files){
+
+      let form = new FormData();
+      form.append("file", f);
+      form.append("upload_preset", PRESET);
+
+      let res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`,{
+        method:"POST",
+        body:form
+      });
+
+      let data = await res.json();
+
+      if(!data.secure_url){
+        alert("Cloudinary error");
+        return;
+      }
+
+      urls.push(data.secure_url);
+    }
+
+    const ref = db.collection("stories").doc(userId);
+    let snap = await ref.get();
+
+    let old = snap.exists && snap.data().images ? snap.data().images : [];
+
+    await ref.set({
+      name: userName,
+      email: currentUser.email,
+      images: [...old, ...urls]
+    }, {merge:true});
+
+    alert("Uploaded ✅");
+
+  }catch(err){
+    console.error(err);
+    alert("Upload failed ❌");
+  }
 
 };
 
