@@ -75,7 +75,7 @@ display:none;
 <h2>Login</h2>
 <input id="mobile" placeholder="Mobile number">
 <input id="name" placeholder="Name">
-<button onclick="login()">Enter</button>
+<button id="loginBtn">Enter</button>
 </div>
 
 <!-- APP -->
@@ -91,12 +91,23 @@ display:none;
 <!-- VIEWER -->
 <div id="viewer">
 <div id="top">
-<button onclick="deleteStory()">Delete</button>
+<button id="deleteBtn">Delete</button>
 </div>
 <img id="img">
 </div>
 
 <script>
+
+/* ELEMENTS */
+const loginPage = document.getElementById("login");
+const appPage = document.getElementById("app");
+const storiesBox = document.getElementById("stories");
+const fileInput = document.getElementById("file");
+const viewer = document.getElementById("viewer");
+const img = document.getElementById("img");
+const loader = document.getElementById("loader");
+const loginBtn = document.getElementById("loginBtn");
+const deleteBtn = document.getElementById("deleteBtn");
 
 /* CONFIG */
 const CLOUD = "dsygezfli";
@@ -105,7 +116,6 @@ const PRESET = "dsygezfli";
 /* STATE */
 let userId = localStorage.getItem("userId");
 let userName = localStorage.getItem("userName");
-
 let data = JSON.parse(localStorage.getItem("stories") || "{}");
 
 let current = [];
@@ -114,27 +124,38 @@ let currentOwner = null;
 let timer;
 
 /* INIT */
-if(userId) start();
-
-/* LOGIN */
-function login(){
-if(!mobile.value) return alert("Enter mobile");
-
-localStorage.setItem("userId", mobile.value);
-localStorage.setItem("userName", name.value || "User");
-
-start();
+if(userId){
+startApp();
 }
 
-/* START */
-function start(){
-login.style.display="none";
-app.style.display="block";
+/* LOGIN */
+loginBtn.onclick = () => {
+let mobile = document.getElementById("mobile").value;
+let name = document.getElementById("name").value;
+
+if(!mobile){
+alert("Enter mobile number");
+return;
+}
+
+localStorage.setItem("userId", mobile);
+localStorage.setItem("userName", name || "User");
+
+userId = mobile;
+userName = name;
+
+startApp();
+};
+
+/* START APP */
+function startApp(){
+loginPage.style.display = "none";
+appPage.style.display = "block";
 render();
 }
 
 /* UPLOAD */
-file.onchange = async (e)=>{
+fileInput.onchange = async (e)=>{
 
 let files = [...e.target.files];
 if(files.length === 0) return;
@@ -142,7 +163,6 @@ if(files.length === 0) return;
 loader.style.display="block";
 
 try{
-
 for(let f of files){
 
 let form = new FormData();
@@ -161,13 +181,12 @@ alert("Upload failed. Check preset.");
 continue;
 }
 
-if(!data[userId]) data[userId]=[];
+if(!data[userId]) data[userId] = [];
 data[userId].push(result.secure_url);
 
 }
 
 localStorage.setItem("stories", JSON.stringify(data));
-
 render();
 
 }catch(err){
@@ -181,7 +200,7 @@ loader.style.display="none";
 /* RENDER */
 function render(){
 
-stories.innerHTML="";
+storiesBox.innerHTML="";
 
 Object.keys(data).forEach(id=>{
 
@@ -195,52 +214,51 @@ div.innerHTML = `
 <span>${id}</span>
 `;
 
-div.onclick = ()=>open(data[id], id);
+div.onclick = ()=>openStory(data[id], id);
 
-stories.appendChild(div);
+storiesBox.appendChild(div);
 
 });
 
 }
 
-/* OPEN */
-function open(arr, owner){
+/* OPEN STORY */
+function openStory(arr, owner){
 current = arr;
 index = 0;
 currentOwner = owner;
 
 viewer.style.display="flex";
-show();
+showStory();
 }
 
 /* SHOW */
-function show(){
-
+function showStory(){
 img.src = current[index];
 
 clearTimeout(timer);
 
 timer = setTimeout(()=>{
-next();
+nextStory();
 },3000);
-
 }
 
 /* NEXT */
-function next(){
+function nextStory(){
 index++;
 
 if(index >= current.length){
 viewer.style.display="none";
 }else{
-show();
+showStory();
 }
 }
 
-viewer.onclick = next;
+viewer.onclick = nextStory;
 
 /* DELETE */
-function deleteStory(){
+deleteBtn.onclick = (e)=>{
+e.stopPropagation();
 
 if(currentOwner !== userId){
 alert("You can delete only your story");
@@ -255,10 +273,8 @@ viewer.style.display="none";
 }
 
 localStorage.setItem("stories", JSON.stringify(data));
-
 render();
-
-}
+};
 
 </script>
 
