@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Home Page</title>
+</head>
+<body>
+
+  <h2>Welcome 🎉</h2>
+  <h3 id="user"></h3>
+
+  <button id="logout">Logout</button>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBuhu2WM0jS55qnS59c87rtuVuF8TK-RkI",
+      authDomain: "stories-web-52ddd.firebaseapp.com",
+      projectId: "stories-web-52ddd",
+      storageBucket: "stories-web-52ddd.firebasestorage.app",
+      messagingSenderId: "649630516222",
+      appId: "1:649630516222:web:fc99a773dfa3414ceb76af",
+      measurementId: "G-YF48HZTSB7"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    const userText = document.getElementById("user");
+
+    // ✅ Check user login
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        userText.innerText = "Logged in as: " + user.email;
+      } else {
+        // ❌ If not logged in → go back
+        window.location.href = "index.html";
+      }
+    });
+
+    // Logout
+    document.getElementById("logout").addEventListener("click", () => {
+      auth.signOut().then(() => {
+        window.location.href = "index.html";
+      });
+    });
+  </script>
+
+</body>
+</html>
