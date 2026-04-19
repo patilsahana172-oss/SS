@@ -1,30 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Firebase Auth - Single Page</title>
+  <title>Login</title>
 </head>
 <body>
 
-  <h2>Firebase Auth Demo</h2>
+  <h2>Login Page</h2>
 
-  <!-- Form -->
   <form>
     <input type="email" id="email" placeholder="Enter Email" required><br><br>
     <input type="password" id="password" placeholder="Enter Password" required><br><br>
 
-    <button id="signup-btn">Sign Up</button>
     <button id="login-btn">Login</button>
-    <button id="logout-btn">Logout</button>
   </form>
 
-  <h3 id="status">Status: Not Logged In</h3>
-
-  <!-- Firebase SDK -->
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
   <script>
-    // Your Firebase Config
+    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyBuhu2WM0jS55qnS59c87rtuVuF8TK-RkI",
       authDomain: "stories-web-52ddd.firebaseapp.com",
@@ -35,33 +30,13 @@
       measurementId: "G-YF48HZTSB7"
     };
 
-    // Initialize Firebase
+    // Init Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
 
-    // Elements
-    const signupBtn = document.getElementById("signup-btn");
+    // Login button (ONLY ONE declaration ✅)
     const loginBtn = document.getElementById("login-btn");
-    const logoutBtn = document.getElementById("logout-btn");
-    const status = document.getElementById("status");
 
-    // SIGN UP
-    signupBtn.addEventListener("click", function(e) {
-      e.preventDefault();
-
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-
-      auth.createUserWithEmailAndPassword(email, password)
-        .then(() => {
-          alert("User Signed Up ✅");
-        })
-        .catch(error => {
-          alert(error.message);
-        });
-    });
-
-    // LOGIN
     loginBtn.addEventListener("click", function(e) {
       e.preventDefault();
 
@@ -70,48 +45,13 @@
 
       auth.signInWithEmailAndPassword(email, password)
         .then(() => {
-          alert("Login Success ✅");
+          // Redirect
+          window.location.href = "home.html";
         })
         .catch(error => {
           alert(error.message);
         });
     });
-
-    // LOGOUT
-    logoutBtn.addEventListener("click", function(e) {
-      e.preventDefault();
-
-      auth.signOut().then(() => {
-        alert("Logged Out ✅");
-      });
-    });
-
-    // AUTH STATE
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        status.innerText = "Logged in: " + user.email;
-      } else {
-        status.innerText = "Not Logged In";
-      }
-    });
-    
-  const loginBtn = document.getElementById("login-btn");
-
-loginBtn.addEventListener("click", function(e) {
-  e.preventDefault();
-
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-
-  auth.signInWithEmailAndPassword(email, password)
-    .then(() => {
-      window.location.href = "home.html";
-    })
-    .catch(error => {
-      alert(error.message);
-    });
-});
-
   </script>
 
 </body>
