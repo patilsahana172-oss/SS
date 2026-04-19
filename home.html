@@ -1,221 +1,328 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Stories</title>
+<!DOCTYPE html>  <html>      <head>        <meta name="viewport" content="width=device-width, initial-scale=1.0">        
+<title>Stories App</title>  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>  <style>      body{  
+margin:0;  
+font-family:system-ui;  
+background:#fafafa;  
+}  /* HEADER */
+.header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:14px;
+background:white;
+box-shadow:0 2px 10px rgba(0,0,0,0.05);
+}
 
-  <style>
-    body { margin:0; font-family:Arial; background:#fafafa; }
+.camera{
+font-size:22px;
+background:linear-gradient(135deg,#ff6a00,#ee0979);
+color:white;
+padding:10px;
+border-radius:50%;
+cursor:pointer;
+}
 
-    .header {
-      display:flex;
-      justify-content:space-between;
-      padding:10px;
-      background:white;
-      border-bottom:1px solid #ddd;
-    }
+/* STORIES */
+.stories{
+display:flex;
+overflow-x:auto;
+padding:12px;
+gap:14px;
+background:white;
+}
 
-    .logo { width:40px; height:40px; border-radius:50%; }
+.story{
+text-align:center;
+}
 
-    .stories {
-      display:flex;
-      overflow-x:auto;
-      padding:10px;
-      background:white;
-    }
+.story img{
+width:72px;
+height:72px;
+border-radius:50%;
+padding:3px;
+background:conic-gradient(#f09433,#e6683c,#dc2743,#cc2366,#bc1888,#f09433);
+object-fit:cover;
+}
 
-    .story img {
-      width:70px;
-      height:70px;
-      border-radius:50%;
-      border:3px solid red;
-      margin-right:10px;
-    }
+.story span{
+font-size:12px;
+display:block;
+margin-top:6px;
+}
 
-    .viewer {
-      position:fixed;
-      top:0;
-      left:0;
-      width:100%;
-      height:100%;
-      background:black;
-      display:none;
-      justify-content:center;
-      align-items:center;
-    }
+/* VIEWER */
+#viewer{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.97);
+justify-content:center;
+align-items:center;
+flex-direction:column;
+}
 
-    .viewer img {
-      width:100%;
-      height:100%;
-      object-fit:contain;
-    }
+/* IMAGE */
+#img{
+width:100%;
+max-height:85vh;
+object-fit:contain;
+}
 
-    .close {
-      position:absolute;
-      top:20px;
-      right:20px;
-      color:white;
-      font-size:25px;
-    }
+/* NAME */
+#viewerName{
+color:white;
+margin-top:10px;
+}
 
-    .delete {
-      position:absolute;
-      bottom:20px;
-      right:20px;
-      background:red;
-      color:white;
-      padding:10px;
-    }
-  </style>
-</head>
+/* TOP BAR */
+#topBar{
+position:absolute;
+top:15px;
+right:15px;
+z-index:9999;
+}
 
-<body>
+#topBar button{
+background:red;
+color:white;
+border:none;
+padding:10px 14px;
+border-radius:20px;
+font-size:14px;
+cursor:pointer;
+margin-left:8px;
+}
 
-<div class="header">
-  <h3>Stories</h3>
-  <img class="logo" src="YOUR_LOGO_URL">
-</div>
+</style>  </head>  <body>  <div class="header">
 
-<input type="file" id="upload" multiple>
-
-<div id="stories" class="stories"></div>
-
-<div id="viewer" class="viewer">
-  <span class="close" onclick="closeViewer()">X</span>
-  <img id="viewerImg">
-  <button id="deleteBtn" class="delete">Delete</button>
-</div>
-
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
-
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSyBuhu2WM0jS55qnS59c87rtuVuF8TK-RkI",
-  authDomain: "stories-web-52ddd.firebaseapp.com",
-  projectId: "stories-web-52ddd",
-  storageBucket: "stories-web-52ddd.appspot.com"
-};
-
-firebase.initializeApp(firebaseConfig);
-
-const auth = firebase.auth();
+  <div><b>Stories</b></div>        
+  <div class="camera" onclick="file.click()">📸</div>        
+</div>  <div class="stories" id="stories"></div>  <div id="viewer">    <div id="topBar">        
+    <button onclick="deleteCurrentImage()">🗑 One</button>        
+    <button onclick="deleteAllImages()">🗑 All</button>        
+  </div>    <img id="img">        
+  <div id="viewerName"></div>  </div>  <input type="file" id="file" multiple accept="image/*" capture="environment" hidden>  <script>      /* ================= FIREBASE ================= */  
+const firebaseConfig = {  
+apiKey: "YOUR_API_KEY",  
+authDomain: "stories-web-52ddd.firebaseapp.com",  
+projectId: "stories-web-52ddd",  
+storageBucket: "stories-web-52ddd.appspot.com"  
+};  firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-const storage = firebase.storage();
 
-let currentUser;
-let currentImages = [];
+/* ================= CLOUDINARY ================= */
+const CLOUD = "dahg3tht7";
+const PRESET = "nipieidp";
+
+/* ================= USER ================= */
+let userName = localStorage.getItem("userName");
+let userId = localStorage.getItem("userId");
+
+if(!userId){
+userId = "single_story_user";
+localStorage.setItem("userId",userId);
+}
+
+/* ================= STATE ================= */
+let currentStory = null;
 let currentIndex = 0;
-let currentStoryId = "";
+let timer;
 
-// Auth check
-auth.onAuthStateChanged(user => {
-  if (!user) {
-    window.location.href = "index.html";
-  } else {
-    currentUser = user;
-    loadStories();
-  }
+/* ================= LOAD STORIES ================= */
+db.collection("stories")
+.orderBy("createdAt","desc")
+.onSnapshot(snapshot=>{
+
+let stories=[];
+
+snapshot.forEach(doc=>{
+stories.push({id:doc.id,...doc.data()});
 });
 
-// Upload (PERMANENT FIX)
-document.getElementById("upload").addEventListener("change", async (e) => {
-  const files = e.target.files;
-  let newUrls = [];
-
-  for (let file of files) {
-    const ref = storage.ref("stories/" + currentUser.uid + "/" + Date.now() + "_" + file.name);
-    await ref.put(file);
-    const url = await ref.getDownloadURL();
-    newUrls.push(url);
-  }
-
-  const docRef = db.collection("stories").doc(currentUser.uid);
-  const docSnap = await docRef.get();
-
-  let existing = [];
-  if (docSnap.exists) existing = docSnap.data().images || [];
-
-  const allImages = [...existing, ...newUrls];
-
-  await docRef.set({
-    userId: currentUser.uid,
-    images: allImages
-  });
-
-  alert("Uploaded ✅");
-  loadStories();
+render(stories);
 });
 
-// Load stories
-async function loadStories() {
-  const container = document.getElementById("stories");
-  container.innerHTML = "";
+/* ================= CLOUDINARY UPLOAD ================= */
+async function uploadImage(file){
 
-  const snapshot = await db.collection("stories").get();
+let form = new FormData();
+form.append("file",file);
+form.append("upload_preset",PRESET);
 
-  snapshot.forEach(doc => {
-    const data = doc.data();
-    if (!data.images || data.images.length === 0) return;
+let res = await fetch(
+https://api.cloudinary.com/v1_1/${CLOUD}/image/upload,
+{method:"POST",body:form}
+);
 
-    const div = document.createElement("div");
-    div.className = "story";
-
-    const img = document.createElement("img");
-    img.src = data.images[0];
-
-    div.appendChild(img);
-    div.onclick = () => openStory(data.images, doc.id);
-
-    container.appendChild(div);
-  });
+let data = await res.json();
+return data.secure_url;
 }
 
-// Open story
-function openStory(images, id) {
-  currentImages = images;
-  currentIndex = 0;
-  currentStoryId = id;
+/* ================= UPLOAD + MERGE ================= */
+file.onchange = async (e)=>{
 
-  document.getElementById("viewer").style.display = "flex";
-  showImage();
+let files=[...e.target.files];
+
+if(files.length>6){
+alert("Max 6 images allowed");
+return;
 }
 
-// Show image
-function showImage() {
-  document.getElementById("viewerImg").src = currentImages[currentIndex];
-
-  if (currentUser.uid === currentStoryId) {
-    deleteBtn.style.display = "block";
-  } else {
-    deleteBtn.style.display = "none";
-  }
+if(!userName){
+userName = prompt("Enter your name:");
+localStorage.setItem("userName",userName);
 }
 
-// Next image
-viewerImg.onclick = () => {
-  currentIndex++;
-  if (currentIndex < currentImages.length) {
-    showImage();
-  } else {
-    closeViewer();
-  }
+let urls=[];
+
+for(let f of files){
+urls.push(await uploadImage(f));
+}
+
+const ref = db.collection("stories").doc(userId);
+
+let snap = await ref.get();
+
+let old=[];
+
+if(snap.exists && snap.data().images){
+old = snap.data().images;
+}
+
+await ref.set({
+name:userName,
+images:[...old,...urls],
+createdAt:firebase.firestore.FieldValue.serverTimestamp()
+});
+
+file.value="";
 };
 
-// Close
-function closeViewer() {
-  document.getElementById("viewer").style.display = "none";
+/* ================= RENDER ================= */
+function render(stories){
+
+let c=document.getElementById("stories");
+c.innerHTML="";
+
+stories.forEach(s=>{
+
+if(!s.images || s.images.length===0) return;
+
+let div=document.createElement("div");
+div.className="story";
+
+div.innerHTML=        <img src="${s.images[0]}">         <span>${s.name}</span>        ;
+
+div.onclick=()=>openStory(s);
+
+c.appendChild(div);
+
+});
 }
 
-// Delete
-deleteBtn.onclick = async () => {
-  await db.collection("stories").doc(currentStoryId).delete();
-  alert("Deleted");
-  closeViewer();
-  loadStories();
-};
-</script>
+/* ================= OPEN STORY ================= */
+function openStory(s){
 
-</body>
-</html>
+currentStory=s;
+currentIndex=0;
+
+document.getElementById("viewer").style.display="flex";
+document.getElementById("viewerName").innerText=s.name;
+
+show();
+}
+
+/* ================= SHOW ================= */
+function show(){
+
+if(!currentStory) return;
+
+if(currentIndex >= currentStory.images.length){
+document.getElementById("viewer").style.display="none";
+return;
+}
+
+document.getElementById("img").src =
+currentStory.images[currentIndex];
+
+clearTimeout(timer);
+
+timer = setTimeout(()=>{
+currentIndex++;
+show();
+},3000);
+}
+
+/* TAP = SKIP */
+document.getElementById("viewer").onclick = ()=>{
+clearTimeout(timer);
+currentIndex++;
+show();
+};
+
+/* ================= DELETE SINGLE IMAGE (FIXED PERMANENT) ================= */
+async function deleteCurrentImage(){
+
+if(!currentStory) return;
+
+if(currentStory.id !== userId){
+alert("You can only delete your own story");
+return;
+}
+
+let updated = [...currentStory.images];
+
+updated.splice(currentIndex,1);
+
+await db.collection("stories")
+.doc(currentStory.id)
+.update({images:updated});
+
+currentStory.images = updated;
+
+if(updated.length === 0){
+
+await db.collection("stories")
+.doc(currentStory.id)
+.delete();
+
+document.getElementById("viewer").style.display="none";
+return;
+
+}
+
+if(currentIndex >= updated.length){
+currentIndex = 0;
+}
+
+show();
+}
+
+/* ================= DELETE ALL ================= */
+async function deleteAllImages(){
+
+if(!currentStory) return;
+
+if(currentStory.id !== userId){
+alert("You can only delete your own story");
+return;
+}
+
+await db.collection("stories")
+.doc(currentStory.id)
+.delete();
+
+currentStory = null;
+currentIndex = 0;
+
+document.getElementById("viewer").style.display="none";
+}
+
+</script>  </body>
+
+</html>  Here put that userlogin      
+And make some advance level changes in delete    For this exact code I want single line also  
+For this code you can login
