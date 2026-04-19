@@ -4,10 +4,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Stories App</title>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
-
 <style>
 body{
 margin:0;
@@ -19,26 +15,17 @@ background:#fafafa;
 display:flex;
 justify-content:space-between;
 align-items:center;
-padding:14px;
-background:white;
+padding:12px;
+background:#fff;
 box-shadow:0 2px 10px rgba(0,0,0,0.05);
-}
-
-.camera{
-font-size:22px;
-background:linear-gradient(135deg,#ff6a00,#ee0979);
-color:white;
-padding:10px;
-border-radius:50%;
-cursor:pointer;
 }
 
 .stories{
 display:flex;
 overflow-x:auto;
-padding:12px;
-gap:14px;
-background:white;
+gap:12px;
+padding:10px;
+background:#fff;
 }
 
 .story{
@@ -46,18 +33,16 @@ text-align:center;
 }
 
 .story img{
-width:72px;
-height:72px;
+width:70px;
+height:70px;
 border-radius:50%;
-padding:3px;
-background:conic-gradient(#f09433,#e6683c,#dc2743,#cc2366,#bc1888,#f09433);
 object-fit:cover;
+border:3px solid #ff4d6d;
 }
 
 .story span{
 font-size:12px;
 display:block;
-margin-top:6px;
 }
 
 #viewer{
@@ -77,39 +62,12 @@ object-fit:contain;
 }
 
 button{
-padding:10px;
+padding:8px 12px;
+margin:5px;
 border:none;
 border-radius:20px;
 background:red;
 color:white;
-margin:5px;
-cursor:pointer;
-}
-
-/* LOGIN */
-#loginBox{
-position:fixed;
-inset:0;
-background:white;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-gap:10px;
-z-index:9999;
-}
-
-#loginBox input{
-padding:10px;
-font-size:16px;
-width:200px;
-}
-
-#loginBox button{
-padding:10px 20px;
-background:green;
-color:white;
-border:none;
 }
 </style>
 
@@ -117,169 +75,128 @@ border:none;
 
 <body>
 
-<!-- LOGIN -->
-<div id="loginBox">
-<h3>Login</h3>
-<input id="mobile" placeholder="Mobile number">
-<input id="name" placeholder="Name (first time only)">
-<button onclick="login()">Enter</button>
-</div>
-
+<!-- HEADER -->
 <div class="header">
 <div><b>Stories</b></div>
-<div class="camera" onclick="file.click()">📸</div>
+<input type="file" id="file">
 </div>
 
+<!-- STORIES -->
 <div class="stories" id="stories"></div>
 
-<div id="viewer">
-<button onclick="deleteStory()">Delete</button>
+<!-- VIEWER -->
+<div id="viewer" onclick="nextStory()">
 <img id="img">
 </div>
 
-<input type="file" id="file" multiple accept="image/*" hidden>
-
 <script>
 
-/* ================= FIREBASE ================= */
-const firebaseConfig = {
-  apiKey: "AIzaSyBuhu2WM0jS55qnS59c87rtuVuF8TK-RkI",
-  authDomain: "stories-web-52ddd.firebaseapp.com",
-  projectId: "stories-web-52ddd",
-  storageBucket: "stories-web-52ddd.appspot.com",
-  messagingSenderId: "649630516222",
-  appId: "1:649630516222:web:fc99a773dfa3414ceb76af",
-  measurementId: "G-YF48HZTSB7"
-};
+/* ================= CLOUDINARY ================= */
+const CLOUD = "dsygezfli";
+const PRESET = "YOUR_UPLOAD_PRESET"; // ⚠️ CHANGE THIS
 
-firebase.initializeApp(firebaseConfig);
-
-const db = firebase.firestore();
-const storage = firebase.storage();
-
-/* ================= USER ================= */
+/* ================= LOGIN ================= */
 let userId = localStorage.getItem("userId");
 let userName = localStorage.getItem("userName");
 
-/* ================= AUTO LOGIN ================= */
-window.onload = function(){
-
-  userId = localStorage.getItem("userId");
-  userName = localStorage.getItem("userName");
-
-  if(userId && userName){
-    loginBox.style.display = "none";
-    loadStories();
-  } else {
-    loginBox.style.display = "flex";
-  }
-};
-
-/* ================= LOGIN ================= */
-function login(){
-
-  let m = document.getElementById("mobile").value.trim();
-  let n = document.getElementById("name").value.trim();
-
-  if(!m){
-    alert("Enter mobile number");
-    return;
-  }
-
-  if(!localStorage.getItem("userName")){
-    if(!n){
-      alert("Enter name first time");
-      return;
-    }
-    localStorage.setItem("userName", n);
-  }
-
-  localStorage.setItem("userId", m);
-
-  userId = m;
-  userName = localStorage.getItem("userName");
-
-  loginBox.style.display = "none";
-
-  loadStories();
+if(!userId){
+userId = prompt("Enter mobile number:");
+localStorage.setItem("userId", userId);
 }
+
+if(!userName){
+userName = prompt("Enter your name:");
+localStorage.setItem("userName", userName);
+}
+
+/* ================= STORAGE ================= */
+let all = JSON.parse(localStorage.getItem("stories") || "{}");
 
 /* ================= UPLOAD ================= */
 file.onchange = async (e)=>{
 
-let files = [...e.target.files];
+let f = e.target.files[0];
 
-for(let f of files){
+let form = new FormData();
+form.append("file", f);
+form.append("upload_preset", PRESET);
 
-let path = "stories/" + userId + "/" + Date.now() + "_" + f.name;
-
-let ref = storage.ref(path);
-
-await ref.put(f);
-
-let url = await ref.getDownloadURL();
-
-await db.collection("stories").doc(userId).set({
-name:userName,
-image:url,
-createdAt:Date.now()
+let res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`,{
+method:"POST",
+body:form
 });
 
-}
+let data = await res.json();
 
-file.value="";
-loadStories();
+if(!all[userId]) all[userId] = [];
+
+all[userId].push(data.secure_url);
+
+localStorage.setItem("stories", JSON.stringify(all));
+
+render();
+
 };
 
-/* ================= LOAD STORIES ================= */
-function loadStories(){
-
-db.collection("stories")
-.orderBy("createdAt","desc")
-.onSnapshot(snap=>{
+/* ================= RENDER ================= */
+function render(){
 
 let box = document.getElementById("stories");
 box.innerHTML="";
 
-snap.forEach(doc=>{
-
-let s = doc.data();
+Object.keys(all).forEach(id=>{
 
 let div = document.createElement("div");
 div.className="story";
 
-div.innerHTML=`
-<img src="${s.image}">
-<span>${s.name}</span>
+div.innerHTML = `
+<img src="${all[id][0]}">
+<span>${id}</span>
 `;
 
-div.onclick=()=>{
-viewer.style.display="flex";
-img.src=s.image;
-currentId=doc.id;
+div.onclick = ()=>{
+openStory(all[id]);
 };
 
 box.appendChild(div);
 
 });
 
-});
-
 }
 
-/* ================= DELETE ================= */
-let currentId=null;
+render();
 
-function deleteStory(){
+/* ================= VIEW STORY ================= */
+let index = 0;
+let current = [];
 
-if(!currentId || currentId !== userId){
-alert("Not allowed");
-return;
+function openStory(arr){
+current = arr;
+index = 0;
+
+viewer.style.display="flex";
+img.src = current[index];
 }
 
-db.collection("stories").doc(userId).delete();
+function nextStory(){
+index++;
 
+if(index >= current.length){
 viewer.style.display="none";
+}else{
+img.src = current[index];
+}
+}
+
+/* ================= DELETE OWN STORY ================= */
+function deleteMyStory(){
+
+if(all[userId]){
+delete all[userId];
+localStorage.setItem("stories", JSON.stringify(all));
+render();
+viewer.style.display="none";
+}
 
 }
 
