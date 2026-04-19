@@ -1,52 +1,240 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Home Page</title>
+  <title>Stories App</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial;
+      background: #fafafa;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: white;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+
+    .upload-box {
+      padding: 10px;
+      background: white;
+    }
+
+    .stories {
+      display: flex;
+      overflow-x: auto;
+      padding: 10px;
+      background: white;
+    }
+
+    .story {
+      margin-right: 12px;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .story img {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      border: 3px solid #ff004f;
+    }
+
+    .viewer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: black;
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .viewer img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      color: white;
+      font-size: 25px;
+      cursor: pointer;
+    }
+
+    .delete {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      color: white;
+      background: red;
+      padding: 10px;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
 
-  <h2>Welcome 🎉</h2>
-  <h3 id="user"></h3>
+<!-- Header -->
+<div class="header">
+  <h3>Stories</h3>
+  <img class="logo" src="YOUR_LOGO_URL_HERE">
+</div>
 
-  <button id="logout">Logout</button>
+<!-- Upload -->
+<div class="upload-box">
+  <input type="file" id="upload" multiple>
+</div>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<!-- Stories -->
+<div class="stories" id="stories"></div>
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBuhu2WM0jS55qnS59c87rtuVuF8TK-RkI",
-      authDomain: "stories-web-52ddd.firebaseapp.com",
-      projectId: "stories-web-52ddd",
-      storageBucket: "stories-web-52ddd.firebasestorage.app",
-      messagingSenderId: "649630516222",
-      appId: "1:649630516222:web:fc99a773dfa3414ceb76af",
-      measurementId: "G-YF48HZTSB7"
-    };
+<!-- Viewer -->
+<div class="viewer" id="viewer">
+  <span class="close" onclick="closeViewer()">X</span>
+  <img id="viewerImg">
+  <button class="delete" id="deleteBtn">Delete</button>
+</div>
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
-    const userText = document.getElementById("user");
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBuhu2WM0jS55qnS59c87rtuVuF8TK-RkI",
+  authDomain: "stories-web-52ddd.firebaseapp.com",
+  projectId: "stories-web-52ddd",
+  storageBucket: "stories-web-52ddd.appspot.com" // ✅ FIXED
+};
 
-    // ✅ Check user login
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        userText.innerText = "Logged in as: " + user.email;
-      } else {
-        // ❌ If not logged in → go back
-        window.location.href = "index.html";
-      }
-    });
+firebase.initializeApp(firebaseConfig);
 
-    // Logout
-    document.getElementById("logout").addEventListener("click", () => {
-      auth.signOut().then(() => {
-        window.location.href = "index.html";
-      });
-    });
-  </script>
+const auth = firebase.auth();
+const db = firebase.firestore();
+const storage = firebase.storage();
+
+let currentUser;
+let currentImages = [];
+let currentIndex = 0;
+let currentStoryId = "";
+
+// Auth check
+auth.onAuthStateChanged(user => {
+  if (!user) {
+    window.location.href = "index.html";
+  } else {
+    currentUser = user;
+    loadStories();
+  }
+});
+
+// Upload story
+document.getElementById("upload").addEventListener("change", async (e) => {
+  const files = e.target.files;
+  let urls = [];
+
+  for (let file of files) {
+    const ref = storage.ref("stories/" + currentUser.uid + "/" + file.name);
+    await ref.put(file);
+    const url = await ref.getDownloadURL();
+    urls.push(url);
+  }
+
+  await db.collection("stories").doc(currentUser.uid).set({
+    userId: currentUser.uid,
+    images: urls
+  });
+
+  alert("Story uploaded ✅");
+  loadStories();
+});
+
+// Load stories
+async function loadStories() {
+  const container = document.getElementById("stories");
+  container.innerHTML = "";
+
+  const snapshot = await db.collection("stories").get();
+
+  snapshot.forEach(doc => {
+    const data = doc.data();
+
+    const div = document.createElement("div");
+    div.className = "story";
+
+    const img = document.createElement("img");
+    img.src = data.images[0];
+
+    div.appendChild(img);
+    div.onclick = () => openStory(data.images, doc.id);
+
+    container.appendChild(div);
+  });
+}
+
+// Open story
+function openStory(images, id) {
+  currentImages = images;
+  currentIndex = 0;
+  currentStoryId = id;
+
+  document.getElementById("viewer").style.display = "flex";
+  showImage();
+}
+
+// Show image
+function showImage() {
+  document.getElementById("viewerImg").src = currentImages[currentIndex];
+
+  if (currentUser.uid === currentStoryId) {
+    document.getElementById("deleteBtn").style.display = "block";
+  } else {
+    document.getElementById("deleteBtn").style.display = "none";
+  }
+}
+
+// Next image
+document.getElementById("viewerImg").addEventListener("click", () => {
+  currentIndex++;
+
+  if (currentIndex < currentImages.length) {
+    showImage();
+  } else {
+    closeViewer();
+  }
+});
+
+// Close
+function closeViewer() {
+  document.getElementById("viewer").style.display = "none";
+}
+
+// Delete story
+document.getElementById("deleteBtn").addEventListener("click", async () => {
+  await db.collection("stories").doc(currentStoryId).delete();
+  alert("Deleted ✅");
+  closeViewer();
+  loadStories();
+});
+</script>
 
 </body>
 </html>
