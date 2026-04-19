@@ -27,7 +27,9 @@ background:linear-gradient(135deg,#ff6a00,#ee0979);
 color:#fff;
 padding:10px;
 border-radius:50%;
-cursor:pointer
+cursor:pointer;
+opacity:.5;
+pointer-events:none;
 }
 
 /* STORIES */
@@ -40,83 +42,48 @@ background:#fff
 }
 
 .story{text-align:center}
-
 .story img{
-width:72px;
-height:72px;
-border-radius:50%;
+width:72px;height:72px;border-radius:50%;
 padding:3px;
 background:conic-gradient(#f09433,#e6683c,#dc2743,#cc2366,#bc1888,#f09433);
 object-fit:cover
 }
-
-.story span{
-font-size:12px;
-margin-top:6px;
-display:block
-}
+.story span{font-size:12px;margin-top:6px;display:block}
 
 /* VIEWER */
 #viewer{
-display:none;
-position:fixed;
-top:0;left:0;
-width:100%;height:100%;
-background:#000;
-flex-direction:column;
-justify-content:center;
-align-items:center
+display:none;position:fixed;
+top:0;left:0;width:100%;height:100%;
+background:#000;flex-direction:column;
+justify-content:center;align-items:center
 }
 
 #progress{
-position:absolute;
-top:0;
-left:0;
-height:4px;
-background:#fff;
-width:0%
+position:absolute;top:0;left:0;height:4px;background:#fff;width:0%
 }
 
-#img{
-width:100%;
-max-height:85vh;
-object-fit:contain
-}
-
-#viewerName{
-color:#fff;
-margin-top:10px
-}
+#img{width:100%;max-height:85vh;object-fit:contain}
+#viewerName{color:#fff;margin-top:10px}
 
 #topBar{
-position:absolute;
-top:15px;
-right:15px
+position:absolute;top:15px;right:15px
 }
-
 #topBar button{
-background:red;
-color:#fff;
-border:none;
-padding:10px;
-border-radius:20px;
-margin-left:8px
+background:red;color:#fff;border:none;
+padding:10px;border-radius:20px;margin-left:8px
 }
 </style>
 </head>
 
 <body>
 
-<!-- HEADER -->
 <div class="header">
 <div><b>Stories</b></div>
-<div class="camera" onclick="file.click()">📸</div>
+<div id="cameraBtn" class="camera">📸</div>
 </div>
 
-<!-- STORIES -->
 <div id="stories" class="stories"></div>
 
-<!-- VIEWER -->
 <div id="viewer">
 <div id="progress"></div>
 
@@ -133,7 +100,7 @@ margin-left:8px
 
 <script>
 
-/* ================= FIREBASE CONFIG ================= */
+/* ================= FIREBASE ================= */
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
   authDomain: "stories-web-52ddd.firebaseapp.com",
@@ -150,31 +117,39 @@ const CLOUD = "dahg3tht7";
 const PRESET = "nipieidp";
 
 /* ================= VARIABLES ================= */
-let currentUser, userId, userName;
+let currentUser = null;
+let userId = null;
+let userName = null;
+
 let currentStory = null;
 let currentIndex = 0;
 let timer;
+
+const cameraBtn = document.getElementById("cameraBtn");
 
 /* ================= AUTH FIX ================= */
 let checkedOnce = false;
 
 auth.onAuthStateChanged(async user => {
 
-  // ⛔ FIRST TIME IGNORE (important fix)
   if (!user && !checkedOnce) {
     checkedOnce = true;
     return;
   }
 
-  // ❌ NOT LOGGED IN
   if (!user) {
     window.location.href = "index.html";
     return;
   }
 
-  // ✅ LOGGED IN
+  // ✅ USER READY
   currentUser = user;
   userId = user.uid;
+
+  // ✅ ENABLE CAMERA
+  cameraBtn.style.opacity = "1";
+  cameraBtn.style.pointerEvents = "auto";
+  cameraBtn.onclick = () => file.click();
 
   const ref = db.collection("stories").doc(userId);
   const snap = await ref.get();
@@ -195,7 +170,7 @@ auth.onAuthStateChanged(async user => {
 
 });
 
-/* ================= LOAD STORIES ================= */
+/* ================= LOAD ================= */
 function loadStories(){
   db.collection("stories")
   .orderBy("createdAt","desc")
@@ -210,6 +185,11 @@ function loadStories(){
 
 /* ================= UPLOAD ================= */
 file.onchange = async e => {
+
+  if (!currentUser) {
+    alert("Please wait...");
+    return;
+  }
 
   let files = [...e.target.files];
   if(files.length > 6){
@@ -226,10 +206,7 @@ file.onchange = async e => {
   const ref = db.collection("stories").doc(userId);
   let snap = await ref.get();
 
-  let old = [];
-  if(snap.exists && snap.data().images){
-    old = snap.data().images;
-  }
+  let old = snap.exists && snap.data().images ? snap.data().images : [];
 
   await ref.set({
     name: userName,
@@ -242,7 +219,6 @@ file.onchange = async e => {
 
 /* ================= CLOUDINARY ================= */
 async function uploadImage(file){
-
   let form = new FormData();
   form.append("file", file);
   form.append("upload_preset", PRESET);
@@ -258,13 +234,11 @@ async function uploadImage(file){
 
 /* ================= RENDER ================= */
 function render(stories){
-
   let c = document.getElementById("stories");
   c.innerHTML = "";
 
   stories.forEach(s=>{
-
-    if(!s.images || s.images.length === 0) return;
+    if(!s.images || s.images.length===0) return;
 
     let div = document.createElement("div");
     div.className = "story";
@@ -275,57 +249,45 @@ function render(stories){
     `;
 
     div.onclick = ()=>openStory(s);
-
     c.appendChild(div);
   });
-
 }
 
-/* ================= VIEW STORY ================= */
+/* ================= VIEW ================= */
 function openStory(s){
   currentStory = s;
   currentIndex = 0;
-
   viewer.style.display = "flex";
   viewerName.innerText = s.name;
-
   show();
 }
 
 function show(){
-
   if(currentIndex >= currentStory.images.length){
     viewer.style.display = "none";
     return;
   }
-
   img.src = currentStory.images[currentIndex];
   startProgress();
 }
 
-/* ================= PROGRESS ================= */
 function startProgress(){
-
-  let bar = progress;
-  bar.style.width = "0%";
-
   let width = 0;
-
+  progress.style.width = "0%";
   clearInterval(timer);
 
   timer = setInterval(()=>{
     width += 2;
-    bar.style.width = width + "%";
+    progress.style.width = width + "%";
 
     if(width >= 100){
       clearInterval(timer);
       currentIndex++;
       show();
     }
-  }, 60);
+  },60);
 }
 
-/* CLICK NEXT */
 viewer.onclick = ()=>{
   clearInterval(timer);
   currentIndex++;
@@ -344,8 +306,7 @@ function deleteOne(e){
   let updated = [...currentStory.images];
   updated.splice(currentIndex,1);
 
-  db.collection("stories").doc(userId)
-  .update({images:updated});
+  db.collection("stories").doc(userId).update({images:updated});
 
   currentStory.images = updated;
 
