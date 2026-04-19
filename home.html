@@ -2,9 +2,8 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stories App</title>
+<title>Stories</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -17,7 +16,6 @@ body{margin:0;font-family:sans-serif;background:#fafafa}
   justify-content:space-between;
   padding:14px;
   background:#fff;
-  box-shadow:0 2px 8px rgba(0,0,0,0.08);
 }
 
 .camera{
@@ -29,32 +27,16 @@ body{margin:0;font-family:sans-serif;background:#fafafa}
   cursor:pointer;
 }
 
-.stories{
-  display:flex;
-  overflow-x:auto;
-  padding:10px;
-  gap:12px;
-  background:#fff;
-}
+.stories{display:flex;overflow-x:auto;padding:10px;gap:12px;background:#fff}
 
-.story{
-  text-align:center;
-}
-
-.story img{
-  width:70px;
-  height:70px;
-  border-radius:50%;
-  border:3px solid orange;
-  object-fit:cover;
-}
+.story{text-align:center}
+.story img{width:70px;height:70px;border-radius:50%;border:3px solid orange;object-fit:cover}
 
 #viewer{
   display:none;
   position:fixed;
   top:0;left:0;
-  width:100%;
-  height:100%;
+  width:100%;height:100%;
   background:#000;
   color:#fff;
   justify-content:center;
@@ -62,11 +44,7 @@ body{margin:0;font-family:sans-serif;background:#fafafa}
   flex-direction:column;
 }
 
-#img{
-  width:100%;
-  max-height:85vh;
-  object-fit:contain;
-}
+#img{width:100%;max-height:85vh;object-fit:contain}
 </style>
 </head>
 
@@ -81,14 +59,13 @@ body{margin:0;font-family:sans-serif;background:#fafafa}
 
 <div id="viewer">
   <img id="img">
-  <div id="name"></div>
 </div>
 
 <input type="file" id="file" multiple accept="image/*" style="display:none">
 
 <script>
 
-/* FIREBASE */
+/* ================= FIREBASE ================= */
 const firebaseConfig = {
   apiKey: "AIzaSyD4ADNcYbQwY2Fmzsx6HPqVDyJemDf_Acs",
   authDomain: "ss-app-a0b1c.firebaseapp.com",
@@ -100,29 +77,36 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* CLOUDINARY */
+/* ================= CLOUDINARY ================= */
 const CLOUD = "dahg3tht7";
 const PRESET = "nipieidp";
 
-/* STATE */
+/* ================= STATE ================= */
 let user = null;
 let userId = null;
 let userName = null;
-let authLoaded = false;
 
-/* CAMERA (no login blocking click) */
+/* ================= CAMERA ALWAYS SAFE ================= */
 document.getElementById("cameraBtn").onclick = () => {
-  if (!authLoaded || !user) {
-    alert("Please login first");
+
+  if (!user) {
+    alert("Login first");
     return;
   }
+
   document.getElementById("file").click();
 };
 
-/* AUTH SAFE HANDLING */
+/* ================= STABLE AUTH FIX ================= */
+let authChecked = false;
+
 auth.onAuthStateChanged(async (u) => {
 
-  authLoaded = true;
+  // ignore first unstable trigger
+  if (!authChecked) {
+    authChecked = true;
+    return;
+  }
 
   if (!u) {
     window.location.href = "index.html";
@@ -149,91 +133,91 @@ auth.onAuthStateChanged(async (u) => {
   loadStories();
 });
 
-/* LOAD STORIES */
+/* ================= LOAD STORIES ================= */
 function loadStories(){
-  db.collection("stories").onSnapshot(snap => {
-    let arr = [];
-    snap.forEach(d => arr.push(d.data()));
+  db.collection("stories").onSnapshot(snap=>{
+    let arr=[];
+    snap.forEach(d=>arr.push(d.data()));
     render(arr);
   });
 }
 
-/* RENDER */
+/* ================= RENDER ================= */
 function render(data){
-  const box = document.getElementById("stories");
-  box.innerHTML = "";
+  const box=document.getElementById("stories");
+  box.innerHTML="";
 
-  data.forEach(s => {
-    if (!s.images || s.images.length === 0) return;
+  data.forEach(s=>{
+    if(!s.images || s.images.length===0) return;
 
-    let div = document.createElement("div");
-    div.className = "story";
+    let div=document.createElement("div");
+    div.className="story";
 
-    div.innerHTML = `
+    div.innerHTML=`
       <img src="${s.images[0]}">
       <div>${s.name}</div>
     `;
 
-    div.onclick = () => openStory(s);
+    div.onclick=()=>openStory(s);
     box.appendChild(div);
   });
 }
 
-/* STORY VIEW */
-let currentStory = null;
-let index = 0;
+/* ================= STORY VIEW ================= */
+let current=null;
+let index=0;
 
 function openStory(s){
-  currentStory = s;
-  index = 0;
-  viewer.style.display = "flex";
+  current=s;
+  index=0;
+  viewer.style.display="flex";
   show();
 }
 
 function show(){
-  if (index >= currentStory.images.length){
-    viewer.style.display = "none";
+  if(index>=current.images.length){
+    viewer.style.display="none";
     return;
   }
 
-  img.src = currentStory.images[index];
+  img.src=current.images[index];
 }
 
-/* next */
-viewer.onclick = () => {
+/* click next */
+viewer.onclick=()=>{
   index++;
   show();
 };
 
-/* UPLOAD */
-document.getElementById("file").onchange = async (e) => {
+/* ================= UPLOAD ================= */
+document.getElementById("file").onchange=async(e)=>{
 
-  if (!user) {
+  if(!user){
     alert("Login required");
     return;
   }
 
-  let files = [...e.target.files];
-  if (!files.length) return;
+  let files=[...e.target.files];
+  if(!files.length) return;
 
-  try {
+  try{
 
-    let urls = [];
+    let urls=[];
 
-    for (let f of files) {
+    for(let f of files){
 
-      let form = new FormData();
-      form.append("file", f);
-      form.append("upload_preset", PRESET);
+      let form=new FormData();
+      form.append("file",f);
+      form.append("upload_preset",PRESET);
 
-      let res = await fetch(
+      let res=await fetch(
         `https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`,
-        { method: "POST", body: form }
+        {method:"POST",body:form}
       );
 
-      let data = await res.json();
+      let data=await res.json();
 
-      if (!data.secure_url) {
+      if(!data.secure_url){
         alert("Upload failed");
         return;
       }
@@ -242,16 +226,16 @@ document.getElementById("file").onchange = async (e) => {
     }
 
     await db.collection("stories").doc(userId).set({
-      name: userName,
-      email: user.email,
-      images: urls
+      name:userName,
+      email:user.email,
+      images:urls
     });
 
     alert("Uploaded ✅");
 
-  } catch (err) {
+  }catch(err){
     console.error(err);
-    alert("Error uploading ❌");
+    alert("Error ❌");
   }
 };
 
