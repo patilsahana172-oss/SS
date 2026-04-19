@@ -1,282 +1,101 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stories Pro</title>
-
-<style>
-body{margin:0;font-family:system-ui;background:#fafafa}
-
-/* LOGIN */
-#login{
-display:flex;flex-direction:column;
-justify-content:center;align-items:center;
-height:100vh;gap:10px;
-}
-input,button{
-padding:10px;border-radius:8px;border:1px solid #ccc;
-}
-button{background:#ff4d6d;color:#fff;border:none}
-
-/* APP */
-#app{display:none}
-
-.header{
-display:flex;justify-content:space-between;
-padding:12px;background:#fff;
-box-shadow:0 2px 10px rgba(0,0,0,0.05);
-}
-
-.stories{
-display:flex;gap:12px;overflow-x:auto;
-padding:10px;background:#fff;
-}
-
-.story{
-text-align:center;
-}
-.story img{
-width:70px;height:70px;border-radius:50%;
-border:3px solid #ff4d6d;object-fit:cover;
-}
-.story span{font-size:12px}
-
-/* VIEWER */
-#viewer{
-display:none;position:fixed;inset:0;
-background:black;justify-content:center;
-align-items:center;flex-direction:column;
-}
-
-#viewer img{
-width:100%;max-height:85vh;
-object-fit:contain;
-}
-
-#top{
-position:absolute;top:15px;right:15px;
-}
-
-#loader{
-position:fixed;top:0;left:0;width:100%;
-background:#ff4d6d;color:#fff;
-text-align:center;padding:6px;
-display:none;
-}
-</style>
+  <title>Firebase Auth - Single Page</title>
 </head>
-
 <body>
 
-<div id="loader">Uploading...</div>
+  <h2>Firebase Auth Demo</h2>
 
-<!-- LOGIN -->
-<div id="login">
-<h2>Login</h2>
-<input id="mobile" placeholder="Mobile number">
-<input id="name" placeholder="Name">
-<button id="loginBtn">Enter</button>
-</div>
+  <!-- Form -->
+  <form>
+    <input type="email" id="email" placeholder="Enter Email" required><br><br>
+    <input type="password" id="password" placeholder="Enter Password" required><br><br>
 
-<!-- APP -->
-<div id="app">
-<div class="header">
-<b>Stories</b>
-<input type="file" id="file" multiple>
-</div>
+    <button id="signup-btn">Sign Up</button>
+    <button id="login-btn">Login</button>
+    <button id="logout-btn">Logout</button>
+  </form>
 
-<div class="stories" id="stories"></div>
-</div>
+  <h3 id="status">Status: Not Logged In</h3>
 
-<!-- VIEWER -->
-<div id="viewer">
-<div id="top">
-<button id="deleteBtn">Delete</button>
-</div>
-<img id="img">
-</div>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
-<script>
+  <script>
+    // Your Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBuhu2WM0jS55qnS59c87rtuVuF8TK-RkI",
+      authDomain: "stories-web-52ddd.firebaseapp.com",
+      projectId: "stories-web-52ddd",
+      storageBucket: "stories-web-52ddd.firebasestorage.app",
+      messagingSenderId: "649630516222",
+      appId: "1:649630516222:web:fc99a773dfa3414ceb76af",
+      measurementId: "G-YF48HZTSB7"
+    };
 
-/* ELEMENTS */
-const loginPage = document.getElementById("login");
-const appPage = document.getElementById("app");
-const storiesBox = document.getElementById("stories");
-const fileInput = document.getElementById("file");
-const viewer = document.getElementById("viewer");
-const img = document.getElementById("img");
-const loader = document.getElementById("loader");
-const loginBtn = document.getElementById("loginBtn");
-const deleteBtn = document.getElementById("deleteBtn");
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
 
-/* CONFIG */
-const CLOUD = "dsygezfli";
-const PRESET = "dsygezfli";
+    // Elements
+    const signupBtn = document.getElementById("signup-btn");
+    const loginBtn = document.getElementById("login-btn");
+    const logoutBtn = document.getElementById("logout-btn");
+    const status = document.getElementById("status");
 
-/* STATE */
-let userId = localStorage.getItem("userId");
-let userName = localStorage.getItem("userName");
-let data = JSON.parse(localStorage.getItem("stories") || "{}");
+    // SIGN UP
+    signupBtn.addEventListener("click", function(e) {
+      e.preventDefault();
 
-let current = [];
-let index = 0;
-let currentOwner = null;
-let timer;
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
 
-/* INIT */
-if(userId){
-startApp();
-}
+      auth.createUserWithEmailAndPassword(email, password)
+        .then(() => {
+          alert("User Signed Up ✅");
+        })
+        .catch(error => {
+          alert(error.message);
+        });
+    });
 
-/* LOGIN */
-loginBtn.onclick = () => {
-let mobile = document.getElementById("mobile").value;
-let name = document.getElementById("name").value;
+    // LOGIN
+    loginBtn.addEventListener("click", function(e) {
+      e.preventDefault();
 
-if(!mobile){
-alert("Enter mobile number");
-return;
-}
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
 
-localStorage.setItem("userId", mobile);
-localStorage.setItem("userName", name || "User");
+      auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+          alert("Login Success ✅");
+        })
+        .catch(error => {
+          alert(error.message);
+        });
+    });
 
-userId = mobile;
-userName = name;
+    // LOGOUT
+    logoutBtn.addEventListener("click", function(e) {
+      e.preventDefault();
 
-startApp();
-};
+      auth.signOut().then(() => {
+        alert("Logged Out ✅");
+      });
+    });
 
-/* START APP */
-function startApp(){
-loginPage.style.display = "none";
-appPage.style.display = "block";
-render();
-}
+    // AUTH STATE
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        status.innerText = "Logged in: " + user.email;
+      } else {
+        status.innerText = "Not Logged In";
+      }
+    });
 
-/* UPLOAD */
-fileInput.onchange = async (e)=>{
-
-let files = [...e.target.files];
-if(files.length === 0) return;
-
-loader.style.display="block";
-
-try{
-for(let f of files){
-
-let form = new FormData();
-form.append("file", f);
-form.append("upload_preset", PRESET);
-
-let res = await fetch(
-`https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`,
-{method:"POST", body:form}
-);
-
-let result = await res.json();
-
-if(!result.secure_url){
-alert("Upload failed. Check preset.");
-continue;
-}
-
-if(!data[userId]) data[userId] = [];
-data[userId].push(result.secure_url);
-
-}
-
-localStorage.setItem("stories", JSON.stringify(data));
-render();
-
-}catch(err){
-alert("Upload error");
-}
-
-loader.style.display="none";
-
-};
-
-/* RENDER */
-function render(){
-
-storiesBox.innerHTML="";
-
-Object.keys(data).forEach(id=>{
-
-if(!data[id] || data[id].length===0) return;
-
-let div = document.createElement("div");
-div.className="story";
-
-div.innerHTML = `
-<img src="${data[id][0]}">
-<span>${id}</span>
-`;
-
-div.onclick = ()=>openStory(data[id], id);
-
-storiesBox.appendChild(div);
-
-});
-
-}
-
-/* OPEN STORY */
-function openStory(arr, owner){
-current = arr;
-index = 0;
-currentOwner = owner;
-
-viewer.style.display="flex";
-showStory();
-}
-
-/* SHOW */
-function showStory(){
-img.src = current[index];
-
-clearTimeout(timer);
-
-timer = setTimeout(()=>{
-nextStory();
-},3000);
-}
-
-/* NEXT */
-function nextStory(){
-index++;
-
-if(index >= current.length){
-viewer.style.display="none";
-}else{
-showStory();
-}
-}
-
-viewer.onclick = nextStory;
-
-/* DELETE */
-deleteBtn.onclick = (e)=>{
-e.stopPropagation();
-
-if(currentOwner !== userId){
-alert("You can delete only your story");
-return;
-}
-
-data[userId].splice(index,1);
-
-if(data[userId].length === 0){
-delete data[userId];
-viewer.style.display="none";
-}
-
-localStorage.setItem("stories", JSON.stringify(data));
-render();
-};
-
-</script>
+  </script>
 
 </body>
 </html>
