@@ -27,6 +27,12 @@ body{margin:0;font-family:sans-serif;background:#fafafa}
   cursor:pointer;
 }
 
+.logout{
+  cursor:pointer;
+  font-size:14px;
+  color:red;
+}
+
 .stories{
   display:flex;
   overflow-x:auto;
@@ -67,7 +73,10 @@ body{margin:0;font-family:sans-serif;background:#fafafa}
 
 <div class="header">
   <div><b>Stories</b></div>
-  <div id="cameraBtn" class="camera">📸</div>
+  <div>
+    <span id="logout" class="logout">Logout</span>
+    <span id="cameraBtn" class="camera">📸</span>
+  </div>
 </div>
 
 <div id="stories" class="stories"></div>
@@ -81,7 +90,7 @@ body{margin:0;font-family:sans-serif;background:#fafafa}
 
 <script>
 
-/* ================= FIREBASE ================= */
+/* 🔥 FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyD4ADNcYbQwY2Fmzsx6HPqVDyJemDf_Acs",
   authDomain: "ss-app-a0b1c.firebaseapp.com",
@@ -93,44 +102,41 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* ================= CLOUDINARY ================= */
+/* 🌩 CLOUDINARY */
 const CLOUD = "dahg3tht7";
 const PRESET = "nipieidp";
 
-/* ================= STATE ================= */
+/* STATE */
 let currentUser = null;
 let userId = null;
 let userName = null;
-let authReady = false;
 
-/* ================= CAMERA (SAFE) ================= */
+const viewer = document.getElementById("viewer");
+const img = document.getElementById("img");
+
+/* LOGOUT */
+document.getElementById("logout").onclick = async () => {
+  await auth.signOut();
+  window.location.href = "index.html";
+};
+
+/* CAMERA */
 document.getElementById("cameraBtn").onclick = () => {
-
-  if (!authReady) {
-    alert("Please wait...");
-    return;
-  }
-
   if (!currentUser) {
     alert("Login first");
-    window.location.href = "index.html";
     return;
   }
-
   document.getElementById("file").click();
 };
 
-/* ================= AUTH FIX ================= */
+/* AUTH */
 auth.onAuthStateChanged(async (user) => {
-
-  authReady = true;
-  currentUser = user;
-
   if (!user) {
     window.location.href = "index.html";
     return;
   }
 
+  currentUser = user;
   userId = user.uid;
 
   const ref = db.collection("stories").doc(userId);
@@ -150,7 +156,7 @@ auth.onAuthStateChanged(async (user) => {
   loadStories();
 });
 
-/* ================= LOAD STORIES ================= */
+/* LOAD STORIES */
 function loadStories(){
   db.collection("stories").onSnapshot(snap => {
     let arr = [];
@@ -159,7 +165,7 @@ function loadStories(){
   });
 }
 
-/* ================= RENDER ================= */
+/* RENDER */
 function render(data){
   const box = document.getElementById("stories");
   box.innerHTML = "";
@@ -180,7 +186,7 @@ function render(data){
   });
 }
 
-/* ================= STORY VIEW ================= */
+/* STORY VIEW */
 let currentStory = null;
 let index = 0;
 
@@ -196,23 +202,17 @@ function show(){
     viewer.style.display = "none";
     return;
   }
-
   img.src = currentStory.images[index];
 }
 
-/* next */
+/* NEXT */
 viewer.onclick = () => {
   index++;
   show();
 };
 
-/* ================= UPLOAD ================= */
+/* UPLOAD */
 document.getElementById("file").onchange = async (e) => {
-
-  if (!currentUser) {
-    alert("Login required");
-    return;
-  }
 
   let files = [...e.target.files];
   if (!files.length) return;
@@ -234,25 +234,25 @@ document.getElementById("file").onchange = async (e) => {
 
       let data = await res.json();
 
-      if (!data.secure_url) {
-        alert("Upload failed");
-        return;
-      }
-
       urls.push(data.secure_url);
     }
 
-    await db.collection("stories").doc(userId).set({
+    const ref = db.collection("stories").doc(userId);
+    const snap = await ref.get();
+
+    const oldImages = snap.exists ? snap.data().images || [] : [];
+
+    await ref.set({
       name: userName,
       email: currentUser.email,
-      images: urls
+      images: [...oldImages, ...urls]
     });
 
     alert("Uploaded ✅");
 
   } catch (err) {
     console.error(err);
-    alert("Error uploading ❌");
+    alert("Upload failed ❌");
   }
 };
 
