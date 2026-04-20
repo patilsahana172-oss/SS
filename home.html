@@ -10,91 +10,60 @@
 
 <style>
 body{margin:0;font-family:sans-serif;background:#fafafa}
+#authPage{text-align:center;margin-top:100px}
+#homePage{display:none}
 
-.header{
-  display:flex;
-  justify-content:space-between;
-  padding:14px;
-  background:#fff;
-}
+.header{display:flex;justify-content:space-between;padding:14px;background:#fff}
+.camera{background:#ff3b6b;color:#fff;padding:10px;border-radius:50%}
+.logout{color:red;margin-right:10px;cursor:pointer}
 
-.camera{
-  font-size:22px;
-  background:#ff3b6b;
-  color:#fff;
-  padding:10px;
-  border-radius:50%;
-  cursor:pointer;
-}
-
-.logout{
-  cursor:pointer;
-  font-size:14px;
-  color:red;
-}
-
-.stories{
-  display:flex;
-  overflow-x:auto;
-  padding:10px;
-  gap:12px;
-  background:#fff;
-}
-
-.story{text-align:center}
-.story img{
-  width:70px;height:70px;
-  border-radius:50%;
-  border:3px solid orange;
-  object-fit:cover;
-}
+.stories{display:flex;overflow-x:auto;padding:10px;gap:12px}
+.story img{width:70px;height:70px;border-radius:50%;border:3px solid orange}
 
 #viewer{
-  display:none;
-  position:fixed;
-  top:0;left:0;
-  width:100%;height:100%;
-  background:#000;
-  color:#fff;
-  justify-content:center;
-  align-items:center;
-  flex-direction:column;
+display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+background:#000;justify-content:center;align-items:center
 }
-
-#img{
-  width:100%;
-  max-height:85vh;
-  object-fit:contain;
-}
+#img{width:100%;max-height:90vh}
 </style>
 </head>
 
 <body>
 
-<div class="header">
-  <div><b>Stories</b></div>
-  <div>
-    <span id="logout" class="logout">Logout</span>
-    <span id="cameraBtn" class="camera">📸</span>
-  </div>
+<div id="authPage">
+  <h2>Login / Signup</h2>
+  <input id="email" placeholder="Email"><br><br>
+  <input id="password" type="password" placeholder="Password"><br><br>
+  <button id="signup">Sign Up</button>
+  <button id="login">Login</button>
 </div>
 
-<div id="stories" class="stories"></div>
+<div id="homePage">
+  <div class="header">
+    <b>Stories</b>
+    <div>
+      <span id="logout" class="logout">Logout</span>
+      <span id="camera" class="camera">📸</span>
+    </div>
+  </div>
+
+  <div id="stories" class="stories"></div>
+</div>
 
 <div id="viewer">
   <img id="img">
-  <div id="name"></div>
 </div>
 
-<input type="file" id="file" multiple accept="image/*" style="display:none">
+<input type="file" id="file" multiple accept="image/*" hidden>
 
 <script>
 
-/* 🔥 FIREBASE */
+/* ✅ YOUR PROJECT (stories-web-52ddd) */
 const firebaseConfig = {
-  apiKey: "AIzaSyD4ADNcYbQwY2Fmzsx6HPqVDyJemDf_Acs",
-  authDomain: "ss-app-a0b1c.firebaseapp.com",
-  projectId: "ss-app-a0b1c"
+  apiKey: "AIzaSyBuhu2WM0jS55qnS59c87rtuVuF8TK-RkI",
+  authDomain: "stories-web-52ddd.firebaseapp.com",
+  projectId: "stories-web-52ddd",
+  storageBucket: "stories-web-52ddd.appspot.com"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -102,47 +71,35 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* 🌩 CLOUDINARY */
+/* CLOUDINARY */
 const CLOUD = "dahg3tht7";
 const PRESET = "nipieidp";
 
 /* STATE */
-let currentUser = null;
-let userId = null;
-let userName = null;
+let currentUser, userId, userName;
 
-const viewer = document.getElementById("viewer");
-const img = document.getElementById("img");
-
-/* LOGOUT */
-document.getElementById("logout").onclick = async () => {
-  await auth.signOut();
-  window.location.href = "index.html";
-};
-
-/* CAMERA */
-document.getElementById("cameraBtn").onclick = () => {
-  if (!currentUser) {
-    alert("Login first");
-    return;
-  }
-  document.getElementById("file").click();
-};
+const authPage = document.getElementById("authPage");
+const homePage = document.getElementById("homePage");
 
 /* AUTH */
-auth.onAuthStateChanged(async (user) => {
-  if (!user) {
-    window.location.href = "index.html";
+auth.onAuthStateChanged(async user => {
+
+  if (!user){
+    authPage.style.display = "block";
+    homePage.style.display = "none";
     return;
   }
 
   currentUser = user;
   userId = user.uid;
 
+  authPage.style.display = "none";
+  homePage.style.display = "block";
+
   const ref = db.collection("stories").doc(userId);
   const snap = await ref.get();
 
-  if (snap.exists && snap.data().name) {
+  if (snap.exists){
     userName = snap.data().name;
   } else {
     userName = prompt("Enter your name:");
@@ -156,6 +113,28 @@ auth.onAuthStateChanged(async (user) => {
   loadStories();
 });
 
+/* SIGNUP */
+signup.onclick = async () => {
+  try {
+    await auth.createUserWithEmailAndPassword(email.value, password.value);
+    alert("Signup success");
+  } catch (e){
+    alert(e.code + " : " + e.message);
+  }
+};
+
+/* LOGIN */
+login.onclick = async () => {
+  try {
+    await auth.signInWithEmailAndPassword(email.value, password.value);
+  } catch (e){
+    alert(e.code + " : " + e.message);
+  }
+};
+
+/* LOGOUT */
+logout.onclick = () => auth.signOut();
+
 /* LOAD STORIES */
 function loadStories(){
   db.collection("stories").onSnapshot(snap => {
@@ -167,93 +146,66 @@ function loadStories(){
 
 /* RENDER */
 function render(data){
-  const box = document.getElementById("stories");
-  box.innerHTML = "";
-
+  stories.innerHTML = "";
   data.forEach(s => {
     if (!s.images || s.images.length === 0) return;
 
     let div = document.createElement("div");
-    div.className = "story";
-
-    div.innerHTML = `
-      <img src="${s.images[0]}">
-      <div>${s.name}</div>
-    `;
-
+    div.innerHTML = `<img src="${s.images[0]}"><div>${s.name}</div>`;
     div.onclick = () => openStory(s);
-    box.appendChild(div);
+    stories.appendChild(div);
   });
 }
 
-/* STORY VIEW */
-let currentStory = null;
-let index = 0;
-
+/* VIEW */
+let currentStory, index=0;
 function openStory(s){
   currentStory = s;
   index = 0;
   viewer.style.display = "flex";
   show();
 }
-
 function show(){
-  if (index >= currentStory.images.length){
-    viewer.style.display = "none";
+  if(index >= currentStory.images.length){
+    viewer.style.display="none";
     return;
   }
   img.src = currentStory.images[index];
 }
+viewer.onclick = () => { index++; show(); };
 
-/* NEXT */
-viewer.onclick = () => {
-  index++;
-  show();
-};
+/* CAMERA */
+camera.onclick = () => file.click();
 
 /* UPLOAD */
-document.getElementById("file").onchange = async (e) => {
+file.onchange = async e => {
 
-  let files = [...e.target.files];
-  if (!files.length) return;
+  let urls = [];
 
-  try {
+  for (let f of [...e.target.files]){
+    let form = new FormData();
+    form.append("file", f);
+    form.append("upload_preset", PRESET);
 
-    let urls = [];
+    let res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`,
+      { method:"POST", body:form });
 
-    for (let f of files) {
-
-      let form = new FormData();
-      form.append("file", f);
-      form.append("upload_preset", PRESET);
-
-      let res = await fetch(
-        `https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`,
-        { method: "POST", body: form }
-      );
-
-      let data = await res.json();
-
-      urls.push(data.secure_url);
-    }
-
-    const ref = db.collection("stories").doc(userId);
-    const snap = await ref.get();
-
-    const oldImages = snap.exists ? snap.data().images || [] : [];
-
-    await ref.set({
-      name: userName,
-      email: currentUser.email,
-      images: [...oldImages, ...urls]
-    });
-
-    alert("Uploaded ✅");
-
-  } catch (err) {
-    console.error(err);
-    alert("Upload failed ❌");
+    let data = await res.json();
+    urls.push(data.secure_url);
   }
+
+  const ref = db.collection("stories").doc(userId);
+  const snap = await ref.get();
+
+  const old = snap.exists ? snap.data().images || [] : [];
+
+  await ref.set({
+    name: userName,
+    email: currentUser.email,
+    images: [...old, ...urls]
+  });
+
+  alert("Uploaded ✅");
 };
 
 </script>
