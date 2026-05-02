@@ -1,280 +1,121 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html><html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stories App</title>
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
-<style>
-body{margin:0;font-family:sans-serif;background:#fafafa}
-
-/* LOGIN */
-#authPage{text-align:center;margin-top:100px}
-
-/* HOME */
-#homePage{display:none}
-
-.header{
-  display:flex;
-  justify-content:space-between;
-  padding:14px;
-  background:#fff;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Public Photo Gallery</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }body {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #fdfbfb, #ebedee);
+  padding: 20px;
 }
 
-.camera{
-  background:#ff3b6b;
-  color:#fff;
-  padding:10px;
-  border-radius:50%;
-  cursor:pointer;
+.container {
+  max-width: 1200px;
+  margin: auto;
 }
 
-.logout{color:red;cursor:pointer;margin-right:10px}
-
-.stories{
-  display:flex;
-  overflow-x:auto;
-  padding:10px;
-  gap:12px;
+h1 {
+  text-align: center;
+  margin-bottom: 10px;
+  color: #333;
 }
 
-.story{text-align:center}
-.story img{
-  width:70px;height:70px;
-  border-radius:50%;
-  border:3px solid orange;
+p {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #666;
 }
 
-#viewer{
-  display:none;
-  position:fixed;
-  top:0;left:0;
-  width:100%;height:100%;
-  background:#000;
-  justify-content:center;
-  align-items:center;
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
 }
 
-#img{
-  width:100%;
-  max-height:90vh;
+.photo-card {
+  background: #fff;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease;
 }
-</style>
+
+.photo-card:hover {
+  transform: translateY(-8px);
+}
+
+.photo-card img {
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  display: block;
+}
+
+.caption {
+  padding: 15px;
+  text-align: center;
+  font-size: 16px;
+  color: #444;
+}
+
+footer {
+  text-align: center;
+  margin-top: 40px;
+  color: #777;
+}
+
+  </style>
 </head>
-
 <body>
+  <div class="container">
+    <h1>🌸 Public Photo Gallery</h1>
+    <p>Welcome to our shared photo collection hosted on GitHub Pages</p><div class="gallery" id="gallery"></div>
 
-<!-- LOGIN PAGE -->
-<div id="authPage">
-  <h2>Login / Signup</h2>
+<footer>
+  <p>Built with HTML, CSS & JavaScript | Hosted on GitHub Pages</p>
+</footer>
 
-  <input type="email" id="email" placeholder="Email"><br><br>
-  <input type="password" id="password" placeholder="Password"><br><br>
+  </div>  <script>
+    const photos = [
+      {
+        url: 'images/photo1.jpg',
+        caption: 'Beautiful Nature'
+      },
+      {
+        url: 'images/photo2.jpg',
+        caption: 'Sunset View'
+      },
+      {
+        url: 'images/photo3.jpg',
+        caption: 'Mountain Adventure'
+      },
+      {
+        url: 'images/photo4.jpg',
+        caption: 'Ocean Breeze'
+      },
+      {
+        url: 'images/photo5.jpg',
+        caption: 'City Lights'
+      }
+    ];
 
-  <button id="signup">Sign Up</button>
-  <button id="login">Login</button>
-</div>
+    const gallery = document.getElementById('gallery');
 
-<!-- HOME PAGE -->
-<div id="homePage">
-  <div class="header">
-    <div><b>Stories</b></div>
-    <div>
-      <span id="logout" class="logout">Logout</span>
-      <span id="camera" class="camera">📸</span>
-    </div>
-  </div>
+    photos.forEach(photo => {
+      const card = document.createElement('div');
+      card.className = 'photo-card';
 
-  <div id="stories" class="stories"></div>
-</div>
+      card.innerHTML = `
+        <img src="${photo.url}" alt="${photo.caption}">
+        <div class="caption">${photo.caption}</div>
+      `;
 
-<!-- VIEWER -->
-<div id="viewer">
-  <img id="img">
-</div>
-
-<input type="file" id="file" multiple accept="image/*" style="display:none">
-
-<script>
-
-/* 🔥 FIREBASE CONFIG */
-const firebaseConfig = {
-  apiKey: "AIzaSyD4ADNcYbQwY2Fmzsx6HPqVDyJemDf_Acs",
-  authDomain: "ss-app-a0b1c.firebaseapp.com",
-  projectId: "ss-app-a0b1c"
-};
-
-firebase.initializeApp(firebaseConfig);
-
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-/* 🌩 CLOUDINARY */
-const CLOUD = "dahg3tht7";
-const PRESET = "nipieidp";
-
-/* STATE */
-let currentUser, userId, userName;
-
-/* PAGE ELEMENTS */
-const authPage = document.getElementById("authPage");
-const homePage = document.getElementById("homePage");
-
-/* AUTH STATE */
-auth.onAuthStateChanged(async user => {
-
-  if (!user){
-    authPage.style.display = "block";
-    homePage.style.display = "none";
-    return;
-  }
-
-  currentUser = user;
-  userId = user.uid;
-
-  authPage.style.display = "none";
-  homePage.style.display = "block";
-
-  const ref = db.collection("stories").doc(userId);
-  const snap = await ref.get();
-
-  if (snap.exists){
-    userName = snap.data().name;
-  } else {
-    userName = prompt("Enter your name:");
-    await ref.set({
-      name: userName,
-      email: user.email,
-      images: []
+      gallery.appendChild(card);
     });
-  }
-
-  loadStories();
-});
-
-/* SIGNUP */
-signup.onclick = async () => {
-  try {
-    await auth.createUserWithEmailAndPassword(email.value, password.value);
-    alert("Signup success");
-  } catch (e){
-    alert(e.message);
-  }
-};
-
-/* LOGIN */
-login.onclick = async () => {
-  try {
-    await auth.signInWithEmailAndPassword(email.value, password.value);
-  } catch (e){
-    alert(e.message);
-  }
-};
-
-/* LOGOUT */
-logout.onclick = async () => {
-  await auth.signOut();
-};
-
-/* LOAD STORIES */
-function loadStories(){
-  db.collection("stories").onSnapshot(snap => {
-    let arr = [];
-    snap.forEach(d => arr.push(d.data()));
-    render(arr);
-  });
-}
-
-/* RENDER */
-function render(data){
-  stories.innerHTML = "";
-
-  data.forEach(s => {
-    if (!s.images || s.images.length === 0) return;
-
-    let div = document.createElement("div");
-    div.className = "story";
-
-    div.innerHTML = `
-      <img src="${s.images[0]}">
-      <div>${s.name}</div>
-    `;
-
-    div.onclick = () => openStory(s);
-    stories.appendChild(div);
-  });
-}
-
-/* VIEW STORY */
-let currentStory, index = 0;
-
-function openStory(s){
-  currentStory = s;
-  index = 0;
-  viewer.style.display = "flex";
-  show();
-}
-
-function show(){
-  if (index >= currentStory.images.length){
-    viewer.style.display = "none";
-    return;
-  }
-  img.src = currentStory.images[index];
-}
-
-viewer.onclick = () => {
-  index++;
-  show();
-};
-
-/* CAMERA */
-camera.onclick = () => {
-  if (!currentUser) return alert("Login first");
-  file.click();
-};
-
-/* UPLOAD */
-file.onchange = async e => {
-
-  let files = [...e.target.files];
-  if (!files.length) return;
-
-  let urls = [];
-
-  for (let f of files){
-    let form = new FormData();
-    form.append("file", f);
-    form.append("upload_preset", PRESET);
-
-    let res = await fetch(
-      `https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`,
-      { method: "POST", body: form }
-    );
-
-    let data = await res.json();
-    urls.push(data.secure_url);
-  }
-
-  const ref = db.collection("stories").doc(userId);
-  const snap = await ref.get();
-
-  const old = snap.exists ? snap.data().images || [] : [];
-
-  await ref.set({
-    name: userName,
-    email: currentUser.email,
-    images: [...old, ...urls]
-  });
-
-  alert("Uploaded ✅");
-};
-
-</script>
-
-</body>
+  </script></body>
 </html>
