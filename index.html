@@ -9,7 +9,7 @@
 body{
   margin:0;
   font-family:system-ui;
-  background:linear-gradient(135deg,#ffe4ec,#ffd6a5);
+  background:linear-gradient(135deg,#fff0f5,#ffe4ec,#ffd6a5);
 }
 
 /* HEADER */
@@ -23,11 +23,12 @@ header{
   box-shadow:0 5px 20px rgba(0,0,0,0.08);
 }
 
+/* LOGO */
 .logo{
   min-width:42px;
   height:42px;
   border-radius:50%;
-  background:#ff4d6d;
+  background:linear-gradient(45deg,#ff4d6d,#ffb3c1);
   color:white;
   display:flex;
   align-items:center;
@@ -35,7 +36,7 @@ header{
   font-weight:bold;
 }
 
-/* HEADER BUTTONS */
+/* TAB */
 .tab{
   border:none;
   padding:8px 12px;
@@ -50,30 +51,43 @@ header{
   color:white;
 }
 
-/* INVITATION */
+/* INVITATION (NEW PREMIUM DESIGN) */
 .invite{
   margin:15px;
-  padding:20px;
-  background:white;
-  border-radius:20px;
+  padding:25px;
+  background:linear-gradient(145deg,#ffffff,#fff5f8);
+  border-radius:25px;
   text-align:center;
-  box-shadow:0 10px 25px rgba(0,0,0,0.1);
+  box-shadow:0 15px 35px rgba(0,0,0,0.15);
+}
+
+.title{
+  font-size:18px;
+  color:#b3003c;
+  letter-spacing:2px;
 }
 
 .names{
-  font-size:28px;
+  font-size:32px;
   font-weight:900;
   color:#c4004c;
+  margin:10px 0;
+}
+
+.info{
+  font-size:14px;
+  color:#444;
+  margin-top:10px;
 }
 
 /* ADD BUTTON */
-.add-bar{
+.add{
   display:flex;
   justify-content:center;
   margin:10px;
 }
 
-.add-btn{
+.add button{
   background:#ff4d6d;
   color:white;
   border:none;
@@ -103,19 +117,19 @@ header{
 }
 
 /* DELETE IMAGE */
-.del-img{
+.del{
   position:absolute;
   top:5px;
   right:5px;
   background:red;
   color:white;
   border:none;
-  border-radius:50%;
   width:25px;
   height:25px;
+  border-radius:50%;
 }
 
-/* FLOAT BUTTON */
+/* FLOAT */
 .fab{
   position:fixed;
   bottom:20px;
@@ -156,14 +170,13 @@ header{
 
 <!-- 💌 INVITATION -->
 <div class="invite">
+  <div class="title">Wedding Invitation</div>
   <div class="names">Sammed ❤️ Sahana</div>
-  <p>Wedding Invitation 💖</p>
-  <h3>📅 June 22</h3>
-  <h3>📍 Gurukul Kalyan Mantap</h3>
+  <div class="info">📅 June 22 • 📍 Gurukul Kalyan Mantap</div>
 </div>
 
-<div class="add-bar">
-  <button class="add-btn" onclick="addSection()">+ Add Section</button>
+<div class="add">
+  <button onclick="addSection()">+ Add Section</button>
 </div>
 
 <div class="grid" id="grid"></div>
@@ -196,10 +209,11 @@ function renderHeader(){
       <button class="tab ${k===current?'active':''}" onclick="switchTab('${k}')">
         ${k}
       </button>
+
+      <span onclick="deleteSection('${k}')"
+        style="color:red;cursor:pointer;">❌</span>
     `;
   });
-
-  h.innerHTML+=`<button class="tab" onclick="addSection()">+ Add</button>`;
 }
 
 /* SWITCH */
@@ -219,6 +233,20 @@ function addSection(){
   render();
 }
 
+/* DELETE SECTION (FIXED) */
+function deleteSection(k){
+  let a=confirm("Delete "+k+"?");
+  if(!a) return;
+
+  let b=confirm("This will delete all images. Continue?");
+  if(!b) return;
+
+  delete data[k];
+  current=Object.keys(data)[0]||"";
+  save();
+  render();
+}
+
 /* RENDER */
 function render(){
   renderHeader();
@@ -230,7 +258,7 @@ function render(){
     g.innerHTML+=`
       <div class="card">
         <img src="${url}">
-        <button class="del-img" onclick="deleteImg('${url}')">❌</button>
+        <button class="del" onclick="deleteImg('${url}')">❌</button>
       </div>
     `;
   });
@@ -238,11 +266,9 @@ function render(){
 
 /* DELETE IMAGE */
 function deleteImg(url){
-  if(confirm("Delete this photo?")){
-    data[current]=data[current].filter(i=>i!==url);
-    save();
-    render();
-  }
+  data[current]=data[current].filter(i=>i!==url);
+  save();
+  render();
 }
 
 /* UPLOAD */
@@ -272,7 +298,7 @@ function save(){
   localStorage.setItem("weddingApp",JSON.stringify(data));
 }
 
-/* MUSIC */
+/* 🎵 FIXED MUSIC (AUTO ON FIRST TOUCH) */
 function toggleMusic(){
   if(!playing){
     music.play().catch(()=>{});
@@ -283,7 +309,7 @@ function toggleMusic(){
   }
 }
 
-/* AUTO START MUSIC ON FIRST CLICK */
+/* AUTO START MUSIC */
 document.addEventListener("click",()=>{
   if(!playing){
     music.play().catch(()=>{});
