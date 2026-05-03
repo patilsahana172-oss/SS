@@ -9,7 +9,7 @@
 body{
   margin:0;
   font-family:system-ui;
-  background:linear-gradient(135deg,#fff0f5,#ffe4ec,#ffd6a5);
+  background:linear-gradient(135deg,#ffe4ec,#ffd6a5);
 }
 
 /* HEADER */
@@ -23,7 +23,6 @@ header{
   box-shadow:0 5px 20px rgba(0,0,0,0.08);
 }
 
-/* LOGO */
 .logo{
   min-width:42px;
   height:42px;
@@ -51,48 +50,75 @@ header{
   color:white;
 }
 
-/* INVITATION (NEW PREMIUM DESIGN) */
+/* INVITATION */
 .invite{
   margin:15px;
-  padding:25px;
-  background:linear-gradient(145deg,#ffffff,#fff5f8);
+  padding:30px;
+  background:linear-gradient(145deg,#fff,#fff5f8);
   border-radius:25px;
   text-align:center;
+  position:relative;
+  overflow:hidden;
   box-shadow:0 15px 35px rgba(0,0,0,0.15);
 }
 
-.title{
+/* SNOW + SPARKLE */
+.snow::before,
+.snow::after{
+  content:"❄ ✨ ❄ ✨ ❄ ✨ ❄ ✨ ❄ ✨";
+  position:absolute;
+  width:200%;
   font-size:18px;
-  color:#b3003c;
-  letter-spacing:2px;
+  opacity:0.5;
+  animation:fall 6s linear infinite;
+}
+
+.snow::after{
+  animation-duration:9s;
+  opacity:0.3;
+}
+
+@keyframes fall{
+  0%{transform:translateY(-50px);}
+  100%{transform:translateY(350px);}
+}
+
+/* COUPLE */
+.couple{
+  display:flex;
+  justify-content:center;
+  gap:25px;
+  font-size:45px;
+  margin-bottom:10px;
+}
+
+.girl{
+  animation:girl 2s infinite alternate;
+}
+
+.boy{
+  animation:boy 2s infinite alternate;
+}
+
+@keyframes girl{
+  from{transform:translateY(0);}
+  to{transform:translateY(-12px) rotate(5deg);}
+}
+
+@keyframes boy{
+  from{transform:translateY(0);}
+  to{transform:translateY(-12px) rotate(-5deg);}
 }
 
 .names{
-  font-size:32px;
+  font-size:30px;
   font-weight:900;
   color:#c4004c;
-  margin:10px 0;
 }
 
 .info{
-  font-size:14px;
-  color:#444;
   margin-top:10px;
-}
-
-/* ADD BUTTON */
-.add{
-  display:flex;
-  justify-content:center;
-  margin:10px;
-}
-
-.add button{
-  background:#ff4d6d;
-  color:white;
-  border:none;
-  padding:10px 14px;
-  border-radius:20px;
+  color:#444;
 }
 
 /* GRID */
@@ -116,7 +142,6 @@ header{
   object-fit:cover;
 }
 
-/* DELETE IMAGE */
 .del{
   position:absolute;
   top:5px;
@@ -129,7 +154,7 @@ header{
   border-radius:50%;
 }
 
-/* FLOAT */
+/* FLOAT BUTTON */
 .fab{
   position:fixed;
   bottom:20px;
@@ -145,7 +170,7 @@ header{
   justify-content:center;
 }
 
-/* MUSIC BUTTON */
+/* MUSIC */
 .music{
   position:fixed;
   bottom:90px;
@@ -161,7 +186,6 @@ header{
 
 <body>
 
-<!-- 🎵 MUSIC -->
 <audio id="music" loop>
   <source src="https://cdn.pixabay.com/download/audio/2022/10/16/audio_d0c3f9d6b0.mp3?filename=romantic-110624.mp3">
 </audio>
@@ -170,13 +194,18 @@ header{
 
 <!-- 💌 INVITATION -->
 <div class="invite">
-  <div class="title">Wedding Invitation</div>
-  <div class="names">Sammed ❤️ Sahana</div>
-  <div class="info">📅 June 22 • 📍 Gurukul Kalyan Mantap</div>
-</div>
+  <div class="snow"></div>
 
-<div class="add">
-  <button onclick="addSection()">+ Add Section</button>
+  <div class="couple">
+    <div class="girl">👰‍♀️</div>
+    <div class="boy">🤵‍♂️</div>
+  </div>
+
+  <div class="names">Sammed ❤️ Sahana</div>
+  <div class="info">
+    Wedding Invitation 💖<br>
+    📅 June 22 • 📍 Gurukul Kalyan Mantap
+  </div>
 </div>
 
 <div class="grid" id="grid"></div>
@@ -209,11 +238,12 @@ function renderHeader(){
       <button class="tab ${k===current?'active':''}" onclick="switchTab('${k}')">
         ${k}
       </button>
-
       <span onclick="deleteSection('${k}')"
         style="color:red;cursor:pointer;">❌</span>
     `;
   });
+
+  h.innerHTML+=`<button class="tab" onclick="addSection()">+ Add</button>`;
 }
 
 /* SWITCH */
@@ -222,27 +252,31 @@ function switchTab(k){
   render();
 }
 
-/* ADD SECTION */
+/* ADD */
 function addSection(){
-  let name=prompt("Enter section name");
-  if(!name) return;
+  let n=prompt("Enter section name");
+  if(!n) return;
 
-  data[name.toLowerCase()]=[];
-  current=name.toLowerCase();
+  data[n.toLowerCase()]=[];
+  current=n.toLowerCase();
   save();
   render();
 }
 
-/* DELETE SECTION (FIXED) */
+/* DELETE SECTION */
 function deleteSection(k){
-  let a=confirm("Delete "+k+"?");
-  if(!a) return;
-
-  let b=confirm("This will delete all images. Continue?");
-  if(!b) return;
+  if(!confirm("Delete "+k+"?")) return;
+  if(!confirm("ALL photos will be deleted. Continue?")) return;
 
   delete data[k];
   current=Object.keys(data)[0]||"";
+  save();
+  render();
+}
+
+/* DELETE IMAGE */
+function delImg(url){
+  data[current]=data[current].filter(i=>i!==url);
   save();
   render();
 }
@@ -258,17 +292,10 @@ function render(){
     g.innerHTML+=`
       <div class="card">
         <img src="${url}">
-        <button class="del" onclick="deleteImg('${url}')">❌</button>
+        <button class="del" onclick="delImg('${url}')">❌</button>
       </div>
     `;
   });
-}
-
-/* DELETE IMAGE */
-function deleteImg(url){
-  data[current]=data[current].filter(i=>i!==url);
-  save();
-  render();
 }
 
 /* UPLOAD */
@@ -298,7 +325,7 @@ function save(){
   localStorage.setItem("weddingApp",JSON.stringify(data));
 }
 
-/* 🎵 FIXED MUSIC (AUTO ON FIRST TOUCH) */
+/* MUSIC */
 function toggleMusic(){
   if(!playing){
     music.play().catch(()=>{});
@@ -309,7 +336,7 @@ function toggleMusic(){
   }
 }
 
-/* AUTO START MUSIC */
+/* AUTO MUSIC START */
 document.addEventListener("click",()=>{
   if(!playing){
     music.play().catch(()=>{});
