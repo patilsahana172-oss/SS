@@ -1,170 +1,187 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SS Wedding Gallery</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SS Wedding Gallery</title>
 
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:linear-gradient(135deg,#fff0f5,#ffe4e6);
+}
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 20px;
-      background: linear-gradient(135deg, #fff0f5, #ffe4e1);
-    }
+header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:15px;
+  background:white;
+  position:sticky;
+  top:0;
+  box-shadow:0 2px 10px rgba(0,0,0,0.1);
+}
 
-    .container {
-      max-width: 1200px;
-      margin: auto;
-      text-align: center;
-    }
+.logo{
+  width:50px;
+  height:50px;
+  border-radius:50%;
+  background:#e91e63;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:white;
+  font-weight:bold;
+}
 
-    h1 {
-      color: #c2185b;
-    }
+h1{
+  font-size:20px;
+  margin:0;
+}
 
-    .upload-btn {
-      background: #e91e63;
-      color: white;
-      border: none;
-      padding: 14px 28px;
-      border-radius: 10px;
-      font-size: 18px;
-      cursor: pointer;
-      margin: 20px 0;
-    }
+.section-bar{
+  display:flex;
+  gap:10px;
+  padding:10px;
+  overflow-x:auto;
+}
 
-    .gallery {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 20px;
-      margin-top: 30px;
-    }
+.section{
+  padding:8px 15px;
+  border-radius:20px;
+  background:white;
+  cursor:pointer;
+  white-space:nowrap;
+}
 
-    .photo-card {
-      background: white;
-      border-radius: 15px;
-      overflow: hidden;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-    }
+.section.active{
+  background:#e91e63;
+  color:white;
+}
 
-    .photo-card img {
-      width: 100%;
-      height: 320px;
-      object-fit: cover;
-    }
+.upload-box{
+  padding:10px;
+  text-align:center;
+}
 
-    .photo-info {
-      padding: 10px;
-      color: #555;
-    }
+button{
+  padding:10px 20px;
+  border:none;
+  border-radius:10px;
+  background:#e91e63;
+  color:white;
+  cursor:pointer;
+}
 
-    #status {
-      margin: 15px 0;
-      color: #c2185b;
-      font-weight: bold;
-    }
-  </style>
+.gallery{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:10px;
+  padding:10px;
+}
+
+.card{
+  background:white;
+  border-radius:10px;
+  overflow:hidden;
+}
+
+img,video{
+  width:100%;
+  height:150px;
+  object-fit:cover;
+}
+</style>
 </head>
+
 <body>
-  <div class="container">
-    <h1>📸 SS Wedding Gallery</h1>
-    <p>Upload and share beautiful wedding memories with everyone.</p>
 
-    <input type="file" id="photoInput" accept="image/*" capture="environment" hidden>
-    <button class="upload-btn" onclick="document.getElementById('photoInput').click()">
-      Upload Photo
-    </button>
+<header>
+  <div class="logo">SS</div>
+  <h1>Wedding Gallery</h1>
+</header>
 
-    <div id="status"></div>
-    <div class="gallery" id="gallery"></div>
-  </div>
+<div class="section-bar" id="sections"></div>
 
-  <script>
-    // Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyCPVPeU7f8kBBJlcq-WURC2YT5rRQoYFVo",
-      authDomain: "ss-wedding-e527d.firebaseapp.com",
-      projectId: "ss-wedding-e527d",
-      storageBucket: "ss-wedding-e527d.firebasestorage.app",
-      messagingSenderId: "447258173537",
-      appId: "1:447258173537:web:65642f67ee1f95de100a20"
-    };
+<div class="upload-box">
+  <input type="file" id="file" accept="image/*,video/*" hidden />
+  <button onclick="document.getElementById('file').click()">Upload</button>
+</div>
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+<div class="gallery" id="gallery"></div>
 
-    // Cloudinary
-    const CLOUD_NAME = "dahg3tht7";
-    const UPLOAD_PRESET = "nipieidp";
+<script>
+const CLOUD_NAME = "dahg3tht7";
+const UPLOAD_PRESET = "nipieidp";
 
-    const photoInput = document.getElementById("photoInput");
-    const gallery = document.getElementById("gallery");
-    const statusDiv = document.getElementById("status");
+let activeSection = "haldi";
 
-    photoInput.addEventListener("change", async function () {
-      const file = this.files[0];
-      if (!file) return;
+let sections = ["haldi","mehendi","wedding","reception"];
 
-      statusDiv.textContent = "Uploading photo...";
+let data = JSON.parse(localStorage.getItem("weddingData")) || {};
 
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", UPLOAD_PRESET);
+function renderSections(){
+  let secDiv = document.getElementById("sections");
+  secDiv.innerHTML = "";
 
-      try {
-        const response = await fetch(
-          `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-          {
-            method: "POST",
-            body: formData
-          }
-        );
+  sections.forEach(s=>{
+    let div = document.createElement("div");
+    div.className = "section " + (activeSection===s?"active":"");
+    div.innerText = s;
+    div.onclick = ()=>{activeSection=s; renderSections(); renderGallery();}
+    secDiv.appendChild(div);
+  });
+}
 
-        const data = await response.json();
+function renderGallery(){
+  let g = document.getElementById("gallery");
+  g.innerHTML = "";
 
-        if (data.secure_url) {
-          await db.collection("photos").add({
-            imageUrl: data.secure_url,
-            uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
+  (data[activeSection]||[]).forEach(item=>{
+    let card = document.createElement("div");
+    card.className="card";
 
-          statusDiv.textContent = "Photo uploaded successfully!";
-          photoInput.value = "";
-        } else {
-          statusDiv.textContent = "Upload failed.";
-        }
-      } catch (error) {
-        console.error(error);
-        statusDiv.textContent = "Upload error.";
-      }
-    });
+    if(item.type==="image"){
+      card.innerHTML = `<img src="${item.url}" />`;
+    }else{
+      card.innerHTML = `<video controls src="${item.url}"></video>`;
+    }
 
-    db.collection("photos")
-      .orderBy("uploadedAt", "desc")
-      .onSnapshot((snapshot) => {
-        gallery.innerHTML = "";
+    g.appendChild(card);
+  });
+}
 
-        if (snapshot.empty) {
-          gallery.innerHTML = "<p>No photos uploaded yet.</p>";
-          return;
-        }
+document.getElementById("file").addEventListener("change", async function(e){
+  let file = e.target.files[0];
+  if(!file) return;
 
-        snapshot.forEach((doc) => {
-          const photo = doc.data();
+  let form = new FormData();
+  form.append("file", file);
+  form.append("upload_preset", UPLOAD_PRESET);
 
-          const card = document.createElement("div");
-          card.className = "photo-card";
-          card.innerHTML = `
-            <img src="${photo.imageUrl}" alt="Wedding Photo">
-            <div class="photo-info">Wedding Memory</div>
-          `;
-          gallery.appendChild(card);
-        });
-      });
-  </script>
+  let res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`,{
+    method:"POST",
+    body:form
+  });
+
+  let json = await res.json();
+
+  if(!data[activeSection]) data[activeSection]=[];
+
+  data[activeSection].push({
+    url:json.secure_url,
+    type: file.type.startsWith("video")?"video":"image"
+  });
+
+  localStorage.setItem("weddingData",JSON.stringify(data));
+
+  renderGallery();
+});
+
+renderSections();
+renderGallery();
+</script>
+
 </body>
 </html>
