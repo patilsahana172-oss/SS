@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sammed ❤️ Sahana Wedding App</title>
+<title>Sammed ❤️ Sahana Wedding</title>
 
 <style>
 body{
@@ -12,15 +12,17 @@ body{
   background:linear-gradient(135deg,#ffe0ec,#ffd6a5);
 }
 
-/* HEADER */
+/* HEADER PREMIUM */
 header{
+  position:sticky;
+  top:0;
   display:flex;
   justify-content:space-between;
   align-items:center;
   padding:12px;
   background:white;
-  position:sticky;
-  top:0;
+  box-shadow:0 5px 20px rgba(0,0,0,0.08);
+  z-index:10;
 }
 
 .logo{
@@ -30,24 +32,35 @@ header{
   background:#ff4d6d;
   color:white;
   display:flex;
-  justify-content:center;
   align-items:center;
+  justify-content:center;
   font-weight:bold;
 }
 
-/* INVITE */
+/* MUSIC BUTTON IN HEADER */
+.music-btn{
+  background:#111;
+  color:white;
+  border:none;
+  padding:8px 12px;
+  border-radius:20px;
+  font-size:12px;
+  cursor:pointer;
+}
+
+/* INVITE CARD */
 .invite{
   margin:15px;
-  padding:15px;
+  padding:18px;
   background:white;
-  border-radius:20px;
+  border-radius:18px;
   text-align:center;
   box-shadow:0 10px 25px rgba(0,0,0,0.1);
 }
 
 .names{
-  font-size:26px;
-  font-weight:800;
+  font-size:28px;
+  font-weight:900;
   color:#c4004c;
 }
 
@@ -96,21 +109,9 @@ header{
   background:#ff4d6d;
   color:white;
   display:flex;
-  justify-content:center;
   align-items:center;
+  justify-content:center;
   font-size:28px;
-}
-
-/* MUSIC BUTTON */
-.music{
-  position:fixed;
-  bottom:90px;
-  right:20px;
-  background:black;
-  color:white;
-  padding:10px;
-  border-radius:20px;
-  font-size:12px;
 }
 </style>
 </head>
@@ -124,7 +125,10 @@ header{
 
 <header>
   <div class="logo">SS</div>
-  <button onclick="addSection()">+ Section</button>
+
+  <button class="music-btn" onclick="toggleMusic()">
+    🎵 Music
+  </button>
 </header>
 
 <!-- 💌 INVITATION -->
@@ -141,12 +145,9 @@ header{
 <!-- GRID -->
 <div class="grid" id="grid"></div>
 
-<!-- INPUT -->
 <input type="file" id="file" multiple accept="image/*" hidden>
 
-<!-- BUTTONS -->
 <div class="fab" onclick="file.click()">+</div>
-<div class="music" onclick="startMusic()">🎵 Music</div>
 
 <script>
 const CLOUD_NAME="dahg3tht7";
@@ -159,7 +160,6 @@ let data = JSON.parse(localStorage.getItem("weddingApp")) || {
 };
 
 let current="haldi";
-let musicStarted=false;
 
 /* NAV */
 function renderNav(){
@@ -186,17 +186,6 @@ function renderNav(){
     b.appendChild(del);
     nav.appendChild(b);
   });
-}
-
-/* ADD SECTION */
-function addSection(){
-  let name=prompt("Enter section name");
-  if(!name) return;
-
-  data[name.toLowerCase()]=[];
-  current=name.toLowerCase();
-  save();
-  render();
 }
 
 /* RENDER */
@@ -238,18 +227,27 @@ function save(){
   localStorage.setItem("weddingApp",JSON.stringify(data));
 }
 
-/* 🎵 FAKE AUTOPLAY MUSIC */
-function startMusic(){
-  if(!musicStarted){
-    document.getElementById("music").play();
-    musicStarted=true;
+/* 🎵 MUSIC FIX */
+let music=document.getElementById("music");
+let playing=false;
+
+function toggleMusic(){
+  if(!playing){
+    music.play();
+    playing=true;
+  }else{
+    music.pause();
+    playing=false;
   }
 }
 
-/* AUTO START ON ANY ACTION */
-document.addEventListener("click",startMusic);
-document.addEventListener("touchstart",startMusic);
-document.addEventListener("scroll",startMusic);
+/* ALSO START ON FIRST TAP */
+document.addEventListener("click",()=>{
+  if(!playing){
+    music.play().catch(()=>{});
+    playing=true;
+  }
+},{once:true});
 
 render();
 </script>
