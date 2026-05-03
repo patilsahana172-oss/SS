@@ -1,60 +1,53 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>SS Wedding Gallery 💖</title>
 <style>
-body{margin:0;font-family:system-ui;background:linear-gradient(135deg,#fff0f6,#ffe5ec)}
-header{text-align:center;padding:24px;background:rgba(255,255,255,.85);backdrop-filter:blur(10px);position:sticky;top:0;z-index:10}
-header h1{margin:0;color:#c2185b}
-header p{margin:8px 0 0;color:#666}
+body{margin:0;font-family:system-ui;background:linear-gradient(135deg,#fff5f7,#ffe4ec,#fff0f5)}
+header{padding:18px;text-align:center;background:rgba(255,255,255,.85);backdrop-filter:blur(10px);position:sticky;top:0;z-index:10;box-shadow:0 4px 15px rgba(0,0,0,.08)}
+.logo{width:70px;height:70px;border-radius:50%;background:linear-gradient(45deg,#ff4d6d,#ffb3c1);margin:0 auto 10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:28px;font-weight:700}
+h1{margin:5px 0;color:#d6336c}
+.subtitle{color:#666;margin-bottom:10px}
 .section{padding:20px}
-.section h2{color:#b0004f}
+.section h2{color:#d6336c;text-align:center;margin-bottom:15px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px}
-.card{background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 8px 20px rgba(0,0,0,.08)}
-.card img{width:100%;height:240px;object-fit:cover}
-.invite{margin:20px;background:#fff;padding:30px;border-radius:24px;text-align:center;box-shadow:0 10px 25px rgba(0,0,0,.08)}
+.card{background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 8px 20px rgba(0,0,0,.08);transition:.3s}
+.card:hover{transform:translateY(-5px)}
+.card img{width:100%;height:220px;object-fit:cover}
+.empty{text-align:center;color:#888;padding:30px}
 </style>
 </head>
 <body>
 <header>
+  <div class="logo">SS</div>
   <h1>Sammed ❤️ Sahana</h1>
-  <p>Wedding Memories Gallery</p>
+  <div class="subtitle">Wedding Memories Gallery</div>
 </header>
-<div class="invite">
-  <h2>💌 You're Invited</h2>
-  <p>Join us in celebrating our special day</p>
-  <h3>📅 June 22</h3>
-  <h3>📍 Terdal, Gurukul Kalyan Mantap</h3>
-</div>
 <div id="gallery"></div>
 <script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';const firebaseConfig = { apiKey: 'AIzaSyCPVPeU7f8kBBJlcq-WURC2YT5rRQoYFVo', authDomain: 'ss-wedding-e527d.firebaseapp.com', projectId: 'ss-wedding-e527d', storageBucket: 'ss-wedding-e527d.firebasestorage.app', messagingSenderId: '447258173537', appId: '1:447258173537:web:03eafc5c74e93405100a20' };
-
-const app = initializeApp(firebaseConfig); const db = getFirestore(app);
-
-const sectionTitles = { haldi: 'Haldi 🌼', mehendi: 'Mehendi 💚', wedding: 'Wedding 💍', reception: 'Reception 🎉' };
-
-async function loadGallery(){ const snap = await getDoc(doc(db,'wedding','album')); if (!snap.exists()) return;
-
-const data = JSON.parse(snap.data().data || '{}'); const gallery = document.getElementById('gallery');
-
-Object.keys(data).forEach(key => { if (key === 'home' || !data[key]?.length) return;
-
-const section = document.createElement('div');
-section.className = 'section';
-section.innerHTML = `<h2>${sectionTitles[key] || key}</h2><div class="grid" id="${key}Grid"></div>`;
-gallery.appendChild(section);
-
-const grid = document.getElementById(`${key}Grid`);
-data[key].forEach(img => {
-  grid.innerHTML += `<div class="card"><img src="${img}" alt="Wedding memory"></div>`;
-});
-
-}); }
-
-loadGallery(); </script>
-
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+const firebaseConfig={apiKey:"AIzaSyCPVPeU7f8kBBJlcq-WURC2YT5rRQoYFVo",authDomain:"ss-wedding-e527d.firebaseapp.com",projectId:"ss-wedding-e527d",storageBucket:"ss-wedding-e527d.firebasestorage.app",messagingSenderId:"447258173537",appId:"1:447258173537:web:03eafc5c74e93405100a20",measurementId:"G-CE4B7TX35W"};
+const app=initializeApp(firebaseConfig);
+const db=getFirestore(app);
+async function loadGallery(){
+  const snap=await getDoc(doc(db,"wedding","album"));
+  let data={haldi:[],mehendi:[],wedding:[],reception:[]};
+  if(snap.exists()) data=JSON.parse(snap.data().data);
+  const gallery=document.getElementById('gallery');
+  gallery.innerHTML='';
+  Object.keys(data).forEach(section=>{
+    if(!data[section] || data[section].length===0) return;
+    const div=document.createElement('div');
+    div.className='section';
+    div.innerHTML=`<h2>${section.charAt(0).toUpperCase()+section.slice(1)} ✨</h2><div class="grid">${data[section].map(img=>`<div class="card"><img src="${img}" alt="${section}"></div>`).join('')}</div>`;
+    gallery.appendChild(div);
+  });
+  if(!gallery.innerHTML){gallery.innerHTML='<div class="empty">No photos uploaded yet 💕</div>';}
+}
+loadGallery();
+</script>
 </body>
 </html>
