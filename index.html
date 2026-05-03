@@ -1,165 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SS Wedding Gallery</title>
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SS Wedding Gallery</title>
 
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #fff0f5, #ffe4e1);
-            color: #333;
-        }
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
-        .container {
-            max-width: 1200px;
-            margin: auto;
-            padding: 20px;
-            text-align: center;
-        }
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: linear-gradient(135deg, #fff0f5, #ffe4e1);
+    }
 
-        h1 {
-            color: #c2185b;
-            margin-bottom: 10px;
-        }
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      text-align: center;
+    }
 
-        p {
-            margin-bottom: 25px;
-            color: #666;
-        }
+    h1 {
+      color: #c2185b;
+    }
 
-        .upload-btn {
-            background: #e91e63;
-            color: white;
-            border: none;
-            padding: 14px 28px;
-            font-size: 18px;
-            border-radius: 10px;
-            cursor: pointer;
-        }
+    .upload-btn {
+      background: #e91e63;
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 10px;
+      font-size: 18px;
+      cursor: pointer;
+      margin: 20px 0;
+    }
 
-        .upload-btn:hover {
-            background: #c2185b;
-        }
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-top: 30px;
+    }
 
-        #status {
-            margin: 20px 0;
-            font-weight: bold;
-            color: #c2185b;
-        }
+    .photo-card {
+      background: white;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    }
 
-        .gallery {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
-        }
+    .photo-card img {
+      width: 100%;
+      height: 320px;
+      object-fit: cover;
+    }
 
-        .photo-card {
-            background: white;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
-        }
+    .photo-info {
+      padding: 10px;
+      color: #555;
+    }
 
-        .photo-card img {
-            width: 100%;
-            height: 320px;
-            object-fit: cover;
-            display: block;
-        }
-
-        .photo-info {
-            padding: 12px;
-            font-size: 14px;
-            color: #555;
-        }
-    </style>
+    #status {
+      margin: 15px 0;
+      color: #c2185b;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📸 SS Wedding Gallery</h1>
-        <p>Upload and share beautiful wedding memories with everyone.</p>
+  <div class="container">
+    <h1>📸 SS Wedding Gallery</h1>
+    <p>Upload and share beautiful wedding memories with everyone.</p>
 
-        <input type="file" id="photoInput" accept="image/*" capture="environment" hidden>
-        <button class="upload-btn" onclick="document.getElementById('photoInput').click()">
-            Upload Photo
-        </button>
+    <input type="file" id="photoInput" accept="image/*" capture="environment" hidden>
+    <button class="upload-btn" onclick="document.getElementById('photoInput').click()">
+      Upload Photo
+    </button>
 
-        <div id="status"></div>
-        <div class="gallery" id="gallery"></div>
-    </div>
+    <div id="status"></div>
+    <div class="gallery" id="gallery"></div>
+  </div>
 
-    <script>
-        const CLOUD_NAME = "dahg3tht7";
-        const UPLOAD_PRESET = "nipieidp";
+  <script>
+    // Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyCPVPeU7f8kBBJlcq-WURC2YT5rRQoYFVo",
+      authDomain: "ss-wedding-e527d.firebaseapp.com",
+      projectId: "ss-wedding-e527d",
+      storageBucket: "ss-wedding-e527d.firebasestorage.app",
+      messagingSenderId: "447258173537",
+      appId: "1:447258173537:web:65642f67ee1f95de100a20"
+    };
 
-        const photoInput = document.getElementById("photoInput");
-        const gallery = document.getElementById("gallery");
-        const statusDiv = document.getElementById("status");
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-        // Load saved photos
-        function loadPhotos() {
-            const photos = JSON.parse(localStorage.getItem("weddingPhotos")) || [];
-            gallery.innerHTML = "";
+    // Cloudinary
+    const CLOUD_NAME = "dahg3tht7";
+    const UPLOAD_PRESET = "nipieidp";
 
-            photos.reverse().forEach(photoUrl => {
-                const card = document.createElement("div");
-                card.className = "photo-card";
-                card.innerHTML = `
-                    <img src="${photoUrl}" alt="Wedding Photo">
-                    <div class="photo-info">Wedding Memory</div>
-                `;
-                gallery.appendChild(card);
-            });
+    const photoInput = document.getElementById("photoInput");
+    const gallery = document.getElementById("gallery");
+    const statusDiv = document.getElementById("status");
+
+    photoInput.addEventListener("change", async function () {
+      const file = this.files[0];
+      if (!file) return;
+
+      statusDiv.textContent = "Uploading photo...";
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", UPLOAD_PRESET);
+
+      try {
+        const response = await fetch(
+          `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+          {
+            method: "POST",
+            body: formData
+          }
+        );
+
+        const data = await response.json();
+
+        if (data.secure_url) {
+          await db.collection("photos").add({
+            imageUrl: data.secure_url,
+            uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+
+          statusDiv.textContent = "Photo uploaded successfully!";
+          photoInput.value = "";
+        } else {
+          statusDiv.textContent = "Upload failed.";
+        }
+      } catch (error) {
+        console.error(error);
+        statusDiv.textContent = "Upload error.";
+      }
+    });
+
+    db.collection("photos")
+      .orderBy("uploadedAt", "desc")
+      .onSnapshot((snapshot) => {
+        gallery.innerHTML = "";
+
+        if (snapshot.empty) {
+          gallery.innerHTML = "<p>No photos uploaded yet.</p>";
+          return;
         }
 
-        // Upload photo to Cloudinary
-        photoInput.addEventListener("change", async function () {
-            const file = this.files[0];
-            if (!file) return;
+        snapshot.forEach((doc) => {
+          const photo = doc.data();
 
-            statusDiv.textContent = "Uploading photo...";
-
-            const formData = new FormData();
-            formData.append("file", file);
-            formData.append("upload_preset", UPLOAD_PRESET);
-
-            try {
-                const response = await fetch(
-                    `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-                    {
-                        method: "POST",
-                        body: formData
-                    }
-                );
-
-                const data = await response.json();
-
-                if (data.secure_url) {
-                    const photos = JSON.parse(localStorage.getItem("weddingPhotos")) || [];
-                    photos.push(data.secure_url);
-                    localStorage.setItem("weddingPhotos", JSON.stringify(photos));
-
-                    statusDiv.textContent = "Photo uploaded successfully!";
-                    loadPhotos();
-                } else {
-                    statusDiv.textContent = "Upload failed. Please try again.";
-                }
-            } catch (error) {
-                statusDiv.textContent = "Error uploading photo.";
-                console.error(error);
-            }
-
-            this.value = "";
+          const card = document.createElement("div");
+          card.className = "photo-card";
+          card.innerHTML = `
+            <img src="${photo.imageUrl}" alt="Wedding Photo">
+            <div class="photo-info">Wedding Memory</div>
+          `;
+          gallery.appendChild(card);
         });
-
-        loadPhotos();
-    </script>
+      });
+  </script>
 </body>
 </html>
