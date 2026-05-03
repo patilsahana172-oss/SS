@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sammed ❤️ Sahana Wedding</title>
+<title>Sammed ❤️ Sahana Wedding App</title>
 
 <style>
 body{
@@ -35,32 +35,32 @@ header{
   font-weight:bold;
 }
 
-/* INVITATION */
+/* INVITE */
 .invite{
   margin:15px;
+  padding:15px;
   background:white;
   border-radius:20px;
-  padding:20px;
   text-align:center;
   box-shadow:0 10px 25px rgba(0,0,0,0.1);
 }
 
 .names{
-  font-size:28px;
+  font-size:26px;
   font-weight:800;
-  color:#d1004c;
+  color:#c4004c;
 }
 
 /* NAV */
 .nav{
   display:flex;
-  overflow-x:auto;
   gap:10px;
+  overflow-x:auto;
   padding:10px;
 }
 
 .nav button{
-  padding:8px 14px;
+  padding:8px 12px;
   border:none;
   border-radius:20px;
   background:white;
@@ -98,29 +98,39 @@ header{
   display:flex;
   justify-content:center;
   align-items:center;
-  font-size:30px;
-  cursor:pointer;
+  font-size:28px;
+}
+
+/* MUSIC BUTTON */
+.music{
+  position:fixed;
+  bottom:90px;
+  right:20px;
+  background:black;
+  color:white;
+  padding:10px;
+  border-radius:20px;
+  font-size:12px;
 }
 </style>
 </head>
 
 <body>
 
-<!-- 🎵 FIXED MUSIC -->
-<audio id="music" autoplay loop>
-  <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" type="audio/mp3">
+<!-- 🎵 MUSIC -->
+<audio id="music" loop>
+  <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3">
 </audio>
 
 <header>
   <div class="logo">SS</div>
-  <button onclick="document.getElementById('file').click()">Upload</button>
+  <button onclick="addSection()">+ Section</button>
 </header>
 
 <!-- 💌 INVITATION -->
 <div class="invite">
-  <h2>💌 Wedding Invitation</h2>
   <div class="names">Sammed ❤️ Sahana</div>
-  <p>We invite you to celebrate our special day 💖</p>
+  <p>Wedding Invitation 💖</p>
   <h3>📅 June 22</h3>
   <h3>📍 Gurukul Kalyan Mantap, Terdal</h3>
 </div>
@@ -128,12 +138,15 @@ header{
 <!-- NAV -->
 <div class="nav" id="nav"></div>
 
-<!-- GALLERY -->
+<!-- GRID -->
 <div class="grid" id="grid"></div>
 
+<!-- INPUT -->
 <input type="file" id="file" multiple accept="image/*" hidden>
 
+<!-- BUTTONS -->
 <div class="fab" onclick="file.click()">+</div>
+<div class="music" onclick="startMusic()">🎵 Music</div>
 
 <script>
 const CLOUD_NAME="dahg3tht7";
@@ -146,7 +159,9 @@ let data = JSON.parse(localStorage.getItem("weddingApp")) || {
 };
 
 let current="haldi";
+let musicStarted=false;
 
+/* NAV */
 function renderNav(){
   let nav=document.getElementById("nav");
   nav.innerHTML="";
@@ -154,22 +169,18 @@ function renderNav(){
   Object.keys(data).forEach(k=>{
     let b=document.createElement("button");
     b.innerText=k;
-    if(k==current) b.classList.add("active");
+    if(k===current) b.classList.add("active");
 
     b.onclick=()=>{current=k;render();}
 
     let del=document.createElement("span");
     del.innerText=" ❌";
-    del.style.cursor="pointer";
-
     del.onclick=(e)=>{
       e.stopPropagation();
-      if(confirm("Delete "+k+"?")){
-        delete data[k];
-        current=Object.keys(data)[0]||"";
-        save();
-        render();
-      }
+      delete data[k];
+      current=Object.keys(data)[0]||"haldi";
+      save();
+      render();
     }
 
     b.appendChild(del);
@@ -177,17 +188,30 @@ function renderNav(){
   });
 }
 
+/* ADD SECTION */
+function addSection(){
+  let name=prompt("Enter section name");
+  if(!name) return;
+
+  data[name.toLowerCase()]=[];
+  current=name.toLowerCase();
+  save();
+  render();
+}
+
+/* RENDER */
 function render(){
   renderNav();
 
   let g=document.getElementById("grid");
   g.innerHTML="";
 
-  (data[current]||[]).forEach(img=>{
-    g.innerHTML+=`<div class="card"><img src="${img}"></div>`;
+  (data[current]||[]).forEach(url=>{
+    g.innerHTML+=`<div class="card"><img src="${url}"></div>`;
   });
 }
 
+/* UPLOAD */
 file.onchange=async e=>{
   let files=[...e.target.files];
 
@@ -209,9 +233,23 @@ file.onchange=async e=>{
   render();
 };
 
+/* SAVE */
 function save(){
   localStorage.setItem("weddingApp",JSON.stringify(data));
 }
+
+/* 🎵 FAKE AUTOPLAY MUSIC */
+function startMusic(){
+  if(!musicStarted){
+    document.getElementById("music").play();
+    musicStarted=true;
+  }
+}
+
+/* AUTO START ON ANY ACTION */
+document.addEventListener("click",startMusic);
+document.addEventListener("touchstart",startMusic);
+document.addEventListener("scroll",startMusic);
 
 render();
 </script>
