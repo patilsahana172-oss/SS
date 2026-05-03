@@ -1,4 +1,5 @@
-<!-- FILE 1: index.html (Admin Page) --><!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -37,75 +38,180 @@ header{display:flex;align-items:center;justify-content:space-between;padding:12p
 <div class="fab" onclick="document.getElementById('file').click()">+</div>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';const firebaseConfig = { apiKey: 'AIzaSyCPVPeU7f8kBBJlcq-WURC2YT5rRQoYFVo', authDomain: 'ss-wedding-e527d.firebaseapp.com', projectId: 'ss-wedding-e527d', storageBucket: 'ss-wedding-e527d.firebasestorage.app', messagingSenderId: '447258173537', appId: '1:447258173537:web:03eafc5c74e93405100a20' };
+import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-const app = initializeApp(firebaseConfig); const db = getFirestore(app); const CLOUD_NAME = 'dahg3tht7'; const UPLOAD_PRESET = 'nipieidp';
+const firebaseConfig = {
+  apiKey: 'AIzaSyCPVPeU7f8kBBJlcq-WURC2YT5rRQoYFVo',
+  authDomain: 'ss-wedding-e527d.firebaseapp.com',
+  projectId: 'ss-wedding-e527d',
+  storageBucket: 'ss-wedding-e527d.firebasestorage.app',
+  messagingSenderId: '447258173537',
+  appId: '1:447258173537:web:03eafc5c74e93405100a20'
+};
 
-let current = 'home'; let data = { home: [], haldi: [], mehendi: [], wedding: [], reception: [] };
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const CLOUD_NAME = 'dahg3tht7';
+const UPLOAD_PRESET = 'nipieidp';
 
-const sectionTitles = { home: 'Invitation', haldi: 'Haldi 🌼', mehendi: 'Mehendi 💚', wedding: 'Wedding 💍', reception: 'Reception 🎉' };
+let current = 'home';
+let data = {
+  home: [],
+  haldi: [],
+  mehendi: [],
+  wedding: [],
+  reception: []
+};
 
-async function saveData(){ await setDoc(doc(db,'wedding','album'), { data: JSON.stringify(data) }); }
+const sectionTitles = {
+  home: 'Invitation',
+  haldi: 'Haldi 🌼',
+  mehendi: 'Mehendi 💚',
+  wedding: 'Wedding 💍',
+  reception: 'Reception 🎉'
+};
 
-async function loadData(){ const snap = await getDoc(doc(db,'wedding','album')); if (snap.exists() && snap.data().data) { data = JSON.parse(snap.data().data); } renderAll(); }
-
-function renderNav(){ const nav = document.getElementById('nav'); nav.innerHTML = ''; Object.keys(data).forEach(key => { const btn = document.createElement('button'); btn.textContent = sectionTitles[key] || key; btn.className = key === current ? 'active' : ''; btn.onclick = () => showPage(key); nav.appendChild(btn); }); }
-
-function renderPages(){ const pages = document.getElementById('pages'); pages.innerHTML = '';
-
-Object.keys(data).forEach(key => { const page = document.createElement('div'); page.className = page ${key === current ? 'active' : ''}; page.id = key;
-
-if (key === 'home') {
-  page.innerHTML = `
-    <div class="envelope">
-      <h1>💌 Sammed ❤️ Sahana</h1>
-      <p>With joy in our hearts, we invite you to celebrate our wedding.</p>
-      <h2>📅 June 22</h2>
-      <h3>📍 Terdal, Gurukul Kalyan Mantap</h3>
-      <p>Join us for love, laughter, and happily ever after ✨</p>
-    </div>`;
-} else {
-  page.innerHTML = `
-    <h2>${sectionTitles[key] || key}</h2>
-    <div class="section-actions">
-      <button class="upload-btn" onclick="showPage('${key}');document.getElementById('file').click()">Upload Photos</button>
-      <button class="add-btn" onclick="deleteSection('${key}')">Delete Section</button>
-    </div>
-    <div class="grid" id="${key}Grid"></div>`;
-}
-pages.appendChild(page);
-
-}); }
-
-function renderGallery(){ Object.keys(data).forEach(key => { const grid = document.getElementById(${key}Grid); if (!grid) return; grid.innerHTML = ''; data[key].forEach((img, index) => { grid.innerHTML +=  <div class="card"> <img src="${img}" alt="Wedding photo" /> <button class="delete-photo" onclick="deleteImage('${key}',${index})">×</button> </div>; }); }); }
-
-function renderAll(){ renderNav(); renderPages(); renderGallery(); }
-
-window.showPage = function(page){ current = page; document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); document.getElementById(page)?.classList.add('active'); document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active')); [...document.querySelectorAll('.nav button')].find(b => b.textContent === (sectionTitles[page] || page))?.classList.add('active'); };
-
-window.addSection = async function(){ const name = prompt('Enter new section name'); if (!name) return; const key = name.toLowerCase().replace(/\s+/g,''); if (data[key]) return alert('Section already exists'); data[key] = []; sectionTitles[key] = name; current = key; await saveData(); renderAll(); };
-
-window.deleteSection = async function(section){ if (['home','haldi','mehendi','wedding','reception'].includes(section)) { alert('Default sections cannot be deleted.'); return; } if (!confirm('Delete this section?')) return; if (!confirm('Are you sure? This will delete all photos in this section.')) return; delete data[section]; delete sectionTitles[section]; current = 'home'; await saveData(); renderAll(); };
-
-window.deleteImage = async function(section,index){ if (!confirm('Delete this photo?')) return; data[section].splice(index,1); await saveData(); renderGallery(); };
-
-document.getElementById('file').onchange = async e => { const files = [...e.target.files]; if (!files.length || current === 'home') return;
-
-for (const file of files) { const form = new FormData(); form.append('file', file); form.append('upload_preset', UPLOAD_PRESET);
-
-const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-  method: 'POST',
-  body: form
-});
-
-const json = await res.json();
-if (json.secure_url) data[current].push(json.secure_url);
-
+async function saveData(){
+  await setDoc(doc(db,'wedding','album'), { data: JSON.stringify(data) });
 }
 
-await saveData(); renderGallery(); e.target.value = ''; };
+async function loadData(){
+  const snap = await getDoc(doc(db,'wedding','album'));
+  if (snap.exists() && snap.data().data) {
+    data = JSON.parse(snap.data().data);
+  }
+  renderAll();
+}
 
-loadData(); </script>
+function renderNav(){
+  const nav = document.getElementById('nav');
+  nav.innerHTML = '';
+  Object.keys(data).forEach(key => {
+    const btn = document.createElement('button');
+    btn.textContent = sectionTitles[key] || key;
+    btn.className = key === current ? 'active' : '';
+    btn.onclick = () => showPage(key);
+    nav.appendChild(btn);
+  });
+}
 
+function renderPages(){
+  const pages = document.getElementById('pages');
+  pages.innerHTML = '';
+
+  Object.keys(data).forEach(key => {
+    const page = document.createElement('div');
+    page.className = `page ${key === current ? 'active' : ''}`;
+    page.id = key;
+
+    if (key === 'home') {
+      page.innerHTML = `
+        <div class="envelope">
+          <h1>💌 Sammed ❤️ Sahana</h1>
+          <p>With joy in our hearts, we invite you to celebrate our wedding.</p>
+          <h2>📅 June 22</h2>
+          <h3>📍 Terdal, Gurukul Kalyan Mantap</h3>
+          <p>Join us for love, laughter, and happily ever after ✨</p>
+        </div>`;
+    } else {
+      page.innerHTML = `
+        <h2>${sectionTitles[key] || key}</h2>
+        <div class="section-actions">
+          <button class="upload-btn" onclick="showPage('${key}');document.getElementById('file').click()">Upload Photos</button>
+          <button class="add-btn" onclick="deleteSection('${key}')">Delete Section</button>
+        </div>
+        <div class="grid" id="${key}Grid"></div>`;
+    }
+    pages.appendChild(page);
+  });
+}
+
+function renderGallery(){
+  Object.keys(data).forEach(key => {
+    const grid = document.getElementById(`${key}Grid`);
+    if (!grid) return;
+    grid.innerHTML = '';
+    data[key].forEach((img, index) => {
+      grid.innerHTML += `
+        <div class="card">
+          <img src="${img}" alt="Wedding photo" />
+          <button class="delete-photo" onclick="deleteImage('${key}',${index})">×</button>
+        </div>`;
+    });
+  });
+}
+
+function renderAll(){
+  renderNav();
+  renderPages();
+  renderGallery();
+}
+
+window.showPage = function(page){
+  current = page;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(page)?.classList.add('active');
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  [...document.querySelectorAll('.nav button')].find(b => b.textContent === (sectionTitles[page] || page))?.classList.add('active');
+};
+
+window.addSection = async function(){
+  const name = prompt('Enter new section name');
+  if (!name) return;
+  const key = name.toLowerCase().replace(/\s+/g,'');
+  if (data[key]) return alert('Section already exists');
+  data[key] = [];
+  sectionTitles[key] = name;
+  current = key;
+  await saveData();
+  renderAll();
+};
+
+window.deleteSection = async function(section){
+  if (['home','haldi','mehendi','wedding','reception'].includes(section)) {
+    alert('Default sections cannot be deleted.');
+    return;
+  }
+  if (!confirm('Delete this section?')) return;
+  if (!confirm('Are you sure? This will delete all photos in this section.')) return;
+  delete data[section];
+  delete sectionTitles[section];
+  current = 'home';
+  await saveData();
+  renderAll();
+};
+
+window.deleteImage = async function(section,index){
+  if (!confirm('Delete this photo?')) return;
+  data[section].splice(index,1);
+  await saveData();
+  renderGallery();
+};
+
+document.getElementById('file').onchange = async e => {
+  const files = [...e.target.files];
+  if (!files.length || current === 'home') return;
+
+  for (const file of files) {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('upload_preset', UPLOAD_PRESET);
+
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+      method: 'POST',
+      body: form
+    });
+
+    const json = await res.json();
+    if (json.secure_url) data[current].push(json.secure_url);
+  }
+
+  await saveData();
+  renderGallery();
+  e.target.value = '';
+};
+
+loadData();
+</script>
 </body>
 </html>
