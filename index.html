@@ -3,33 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sammed ❤️ Sahana Wedding</title>
+<title>Wedding App 💖</title>
 
 <style>
 body{
   margin:0;
   font-family:system-ui;
-  background:linear-gradient(135deg,#ffe0ec,#ffd6a5);
+  background:linear-gradient(135deg,#ffe4ec,#ffd6a5);
 }
 
-/* HEADER PREMIUM */
+/* HEADER NAV BAR */
 header{
-  position:sticky;
-  top:0;
   display:flex;
-  justify-content:space-between;
   align-items:center;
-  padding:12px;
+  gap:10px;
+  padding:10px;
   background:white;
+  overflow-x:auto;
+  white-space:nowrap;
   box-shadow:0 5px 20px rgba(0,0,0,0.08);
-  z-index:10;
 }
 
+/* LOGO */
 .logo{
-  width:45px;
-  height:45px;
+  min-width:42px;
+  height:42px;
   border-radius:50%;
-  background:#ff4d6d;
+  background:linear-gradient(45deg,#ff4d6d,#ffb3c1);
   color:white;
   display:flex;
   align-items:center;
@@ -37,23 +37,33 @@ header{
   font-weight:bold;
 }
 
-/* MUSIC BUTTON IN HEADER */
-.music-btn{
-  background:#111;
-  color:white;
+/* BUTTONS */
+.tab{
   border:none;
   padding:8px 12px;
   border-radius:20px;
-  font-size:12px;
+  background:#f5f5f5;
   cursor:pointer;
+  font-size:13px;
 }
 
-/* INVITE CARD */
+.tab.active{
+  background:#ff4d6d;
+  color:white;
+}
+
+/* MUSIC BUTTON */
+.music{
+  background:black;
+  color:white;
+}
+
+/* INVITE */
 .invite{
   margin:15px;
   padding:18px;
   background:white;
-  border-radius:18px;
+  border-radius:20px;
   text-align:center;
   box-shadow:0 10px 25px rgba(0,0,0,0.1);
 }
@@ -64,27 +74,6 @@ header{
   color:#c4004c;
 }
 
-/* NAV */
-.nav{
-  display:flex;
-  gap:10px;
-  overflow-x:auto;
-  padding:10px;
-}
-
-.nav button{
-  padding:8px 12px;
-  border:none;
-  border-radius:20px;
-  background:white;
-  cursor:pointer;
-}
-
-.nav button.active{
-  background:#ff4d6d;
-  color:white;
-}
-
 /* GRID */
 .grid{
   display:grid;
@@ -93,56 +82,54 @@ header{
   padding:10px;
 }
 
-.card img{
-  width:100%;
-  border-radius:12px;
+.card{
+  border-radius:15px;
+  overflow:hidden;
+  box-shadow:0 8px 20px rgba(0,0,0,0.15);
 }
 
-/* FLOAT BUTTON */
+.card img{
+  width:100%;
+  height:170px;
+  object-fit:cover;
+}
+
+/* FLOAT UPLOAD */
 .fab{
   position:fixed;
   bottom:20px;
   right:20px;
-  width:55px;
-  height:55px;
+  width:60px;
+  height:60px;
   border-radius:50%;
   background:#ff4d6d;
   color:white;
+  font-size:28px;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:28px;
 }
 </style>
 </head>
 
 <body>
 
-<!-- 🎵 MUSIC -->
 <audio id="music" loop>
-  <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3">
+  <source src="https://cdn.pixabay.com/download/audio/2022/10/16/audio_d0c3f9d6b0.mp3?filename=romantic-110624.mp3">
 </audio>
 
-<header>
-  <div class="logo">SS</div>
+<!-- HEADER WITH EVERYTHING -->
+<header id="header"></header>
 
-  <button class="music-btn" onclick="toggleMusic()">
-    🎵 Music
-  </button>
-</header>
-
-<!-- 💌 INVITATION -->
+<!-- INVITE -->
 <div class="invite">
   <div class="names">Sammed ❤️ Sahana</div>
   <p>Wedding Invitation 💖</p>
   <h3>📅 June 22</h3>
-  <h3>📍 Gurukul Kalyan Mantap, Terdal</h3>
+  <h3>📍 Gurukul Kalyan Mantap</h3>
 </div>
 
-<!-- NAV -->
-<div class="nav" id="nav"></div>
-
-<!-- GRID -->
+<!-- GALLERY -->
 <div class="grid" id="grid"></div>
 
 <input type="file" id="file" multiple accept="image/*" hidden>
@@ -160,37 +147,53 @@ let data = JSON.parse(localStorage.getItem("weddingApp")) || {
 };
 
 let current="haldi";
+let music=document.getElementById("music");
+let playing=false;
 
-/* NAV */
-function renderNav(){
-  let nav=document.getElementById("nav");
-  nav.innerHTML="";
+/* HEADER BUILD */
+function renderHeader(){
+  let h=document.getElementById("header");
+  h.innerHTML="";
 
+  // logo
+  h.innerHTML+=`<div class="logo">SS</div>`;
+
+  // tabs
   Object.keys(data).forEach(k=>{
-    let b=document.createElement("button");
-    b.innerText=k;
-    if(k===current) b.classList.add("active");
-
-    b.onclick=()=>{current=k;render();}
-
-    let del=document.createElement("span");
-    del.innerText=" ❌";
-    del.onclick=(e)=>{
-      e.stopPropagation();
-      delete data[k];
-      current=Object.keys(data)[0]||"haldi";
-      save();
-      render();
-    }
-
-    b.appendChild(del);
-    nav.appendChild(b);
+    h.innerHTML+=`
+      <button class="tab ${k===current?'active':''}" onclick="switchTab('${k}')">
+        ${k}
+      </button>
+    `;
   });
+
+  // add section
+  h.innerHTML+=`<button class="tab" onclick="addSection()">+ Add</button>`;
+
+  // music
+  h.innerHTML+=`<button class="tab music" onclick="toggleMusic()">🎵</button>`;
+}
+
+/* SWITCH */
+function switchTab(k){
+  current=k;
+  render();
+}
+
+/* ADD SECTION */
+function addSection(){
+  let name=prompt("Enter section name");
+  if(!name) return;
+
+  data[name.toLowerCase()]=[];
+  current=name.toLowerCase();
+  save();
+  render();
 }
 
 /* RENDER */
 function render(){
-  renderNav();
+  renderHeader();
 
   let g=document.getElementById("grid");
   g.innerHTML="";
@@ -227,13 +230,10 @@ function save(){
   localStorage.setItem("weddingApp",JSON.stringify(data));
 }
 
-/* 🎵 MUSIC FIX */
-let music=document.getElementById("music");
-let playing=false;
-
+/* MUSIC */
 function toggleMusic(){
   if(!playing){
-    music.play();
+    music.play().catch(()=>{});
     playing=true;
   }else{
     music.pause();
@@ -241,7 +241,7 @@ function toggleMusic(){
   }
 }
 
-/* ALSO START ON FIRST TAP */
+/* AUTO START MUSIC ON FIRST CLICK */
 document.addEventListener("click",()=>{
   if(!playing){
     music.play().catch(()=>{});
