@@ -12,7 +12,7 @@ body{
   background:linear-gradient(135deg,#ffe4ec,#ffd6a5);
 }
 
-/* HEADER NAV BAR */
+/* HEADER */
 header{
   display:flex;
   align-items:center;
@@ -20,16 +20,14 @@ header{
   padding:10px;
   background:white;
   overflow-x:auto;
-  white-space:nowrap;
   box-shadow:0 5px 20px rgba(0,0,0,0.08);
 }
 
-/* LOGO */
 .logo{
   min-width:42px;
   height:42px;
   border-radius:50%;
-  background:linear-gradient(45deg,#ff4d6d,#ffb3c1);
+  background:#ff4d6d;
   color:white;
   display:flex;
   align-items:center;
@@ -37,14 +35,14 @@ header{
   font-weight:bold;
 }
 
-/* BUTTONS */
+/* HEADER BUTTONS */
 .tab{
   border:none;
   padding:8px 12px;
   border-radius:20px;
   background:#f5f5f5;
   cursor:pointer;
-  font-size:13px;
+  white-space:nowrap;
 }
 
 .tab.active{
@@ -52,16 +50,10 @@ header{
   color:white;
 }
 
-/* MUSIC BUTTON */
-.music{
-  background:black;
-  color:white;
-}
-
-/* INVITE */
+/* INVITATION */
 .invite{
   margin:15px;
-  padding:18px;
+  padding:20px;
   background:white;
   border-radius:20px;
   text-align:center;
@@ -74,6 +66,21 @@ header{
   color:#c4004c;
 }
 
+/* ADD BUTTON */
+.add-bar{
+  display:flex;
+  justify-content:center;
+  margin:10px;
+}
+
+.add-btn{
+  background:#ff4d6d;
+  color:white;
+  border:none;
+  padding:10px 14px;
+  border-radius:20px;
+}
+
 /* GRID */
 .grid{
   display:grid;
@@ -83,6 +90,7 @@ header{
 }
 
 .card{
+  position:relative;
   border-radius:15px;
   overflow:hidden;
   box-shadow:0 8px 20px rgba(0,0,0,0.15);
@@ -94,7 +102,20 @@ header{
   object-fit:cover;
 }
 
-/* FLOAT UPLOAD */
+/* DELETE IMAGE */
+.del-img{
+  position:absolute;
+  top:5px;
+  right:5px;
+  background:red;
+  color:white;
+  border:none;
+  border-radius:50%;
+  width:25px;
+  height:25px;
+}
+
+/* FLOAT BUTTON */
 .fab{
   position:fixed;
   bottom:20px;
@@ -109,19 +130,31 @@ header{
   align-items:center;
   justify-content:center;
 }
+
+/* MUSIC BUTTON */
+.music{
+  position:fixed;
+  bottom:90px;
+  right:20px;
+  background:black;
+  color:white;
+  padding:10px;
+  border-radius:20px;
+  font-size:12px;
+}
 </style>
 </head>
 
 <body>
 
+<!-- 🎵 MUSIC -->
 <audio id="music" loop>
   <source src="https://cdn.pixabay.com/download/audio/2022/10/16/audio_d0c3f9d6b0.mp3?filename=romantic-110624.mp3">
 </audio>
 
-<!-- HEADER WITH EVERYTHING -->
 <header id="header"></header>
 
-<!-- INVITE -->
+<!-- 💌 INVITATION -->
 <div class="invite">
   <div class="names">Sammed ❤️ Sahana</div>
   <p>Wedding Invitation 💖</p>
@@ -129,17 +162,18 @@ header{
   <h3>📍 Gurukul Kalyan Mantap</h3>
 </div>
 
-<!-- GALLERY -->
+<div class="add-bar">
+  <button class="add-btn" onclick="addSection()">+ Add Section</button>
+</div>
+
 <div class="grid" id="grid"></div>
 
 <input type="file" id="file" multiple accept="image/*" hidden>
 
 <div class="fab" onclick="file.click()">+</div>
+<div class="music" onclick="toggleMusic()">🎵 Music</div>
 
 <script>
-const CLOUD_NAME="dahg3tht7";
-const UPLOAD_PRESET="nipieidp";
-
 let data = JSON.parse(localStorage.getItem("weddingApp")) || {
   haldi:[],
   mehendi:[],
@@ -150,15 +184,13 @@ let current="haldi";
 let music=document.getElementById("music");
 let playing=false;
 
-/* HEADER BUILD */
+/* HEADER */
 function renderHeader(){
   let h=document.getElementById("header");
   h.innerHTML="";
 
-  // logo
   h.innerHTML+=`<div class="logo">SS</div>`;
 
-  // tabs
   Object.keys(data).forEach(k=>{
     h.innerHTML+=`
       <button class="tab ${k===current?'active':''}" onclick="switchTab('${k}')">
@@ -167,11 +199,7 @@ function renderHeader(){
     `;
   });
 
-  // add section
   h.innerHTML+=`<button class="tab" onclick="addSection()">+ Add</button>`;
-
-  // music
-  h.innerHTML+=`<button class="tab music" onclick="toggleMusic()">🎵</button>`;
 }
 
 /* SWITCH */
@@ -199,8 +227,22 @@ function render(){
   g.innerHTML="";
 
   (data[current]||[]).forEach(url=>{
-    g.innerHTML+=`<div class="card"><img src="${url}"></div>`;
+    g.innerHTML+=`
+      <div class="card">
+        <img src="${url}">
+        <button class="del-img" onclick="deleteImg('${url}')">❌</button>
+      </div>
+    `;
   });
+}
+
+/* DELETE IMAGE */
+function deleteImg(url){
+  if(confirm("Delete this photo?")){
+    data[current]=data[current].filter(i=>i!==url);
+    save();
+    render();
+  }
 }
 
 /* UPLOAD */
@@ -210,9 +252,9 @@ file.onchange=async e=>{
   for(let f of files){
     let form=new FormData();
     form.append("file",f);
-    form.append("upload_preset",UPLOAD_PRESET);
+    form.append("upload_preset","nipieidp");
 
-    let res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,{
+    let res=await fetch("https://api.cloudinary.com/v1_1/dahg3tht7/image/upload",{
       method:"POST",
       body:form
     });
