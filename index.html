@@ -1,67 +1,70 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>SS Wedding App 💖</title><style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sammed ❤️ Sahana Wedding</title>
+
+<style>
 body{
   margin:0;
   font-family:system-ui;
-  background: linear-gradient(135deg,#ffe0ec,#ffd6a5,#ffcad4);
+  background:linear-gradient(135deg,#ffe0ec,#ffd6a5);
 }
 
 /* HEADER */
 header{
   display:flex;
-  align-items:center;
   justify-content:space-between;
+  align-items:center;
   padding:12px;
-  background:rgba(255,255,255,0.6);
-  backdrop-filter: blur(10px);
+  background:white;
   position:sticky;
   top:0;
-  z-index:10;
 }
 
 .logo{
-  width:48px;
-  height:48px;
+  width:45px;
+  height:45px;
   border-radius:50%;
-  background:linear-gradient(45deg,#ff4d6d,#ffb3c1);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-weight:bold;
-  color:white;
-}
-
-.title{
-  font-weight:700;
-}
-
-.upload-btn{
   background:#ff4d6d;
   color:white;
-  border:none;
-  padding:8px 12px;
-  border-radius:10px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-weight:bold;
+}
+
+/* INVITATION */
+.invite{
+  margin:15px;
+  background:white;
+  border-radius:20px;
+  padding:20px;
+  text-align:center;
+  box-shadow:0 10px 25px rgba(0,0,0,0.1);
+}
+
+.names{
+  font-size:28px;
+  font-weight:800;
+  color:#d1004c;
 }
 
 /* NAV */
 .nav{
   display:flex;
+  overflow-x:auto;
   gap:10px;
   padding:10px;
-  overflow-x:auto;
-  background:rgba(255,255,255,0.4);
 }
 
 .nav button{
   padding:8px 14px;
-  border-radius:20px;
   border:none;
+  border-radius:20px;
   background:white;
   cursor:pointer;
-  white-space:nowrap;
 }
 
 .nav button.active{
@@ -69,42 +72,17 @@ header{
   color:white;
 }
 
-/* SECTIONS */
-.page{
-  display:none;
-  padding:15px;
-}
-
-.page.active{
-  display:block;
-}
-
-/* ENVELOPE */
-.envelope{
-  background:white;
-  padding:20px;
-  border-radius:20px;
-  text-align:center;
-  box-shadow:0 10px 25px rgba(0,0,0,0.1);
-}
-
-/* GALLERY */
+/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(2,1fr);
   gap:10px;
+  padding:10px;
 }
 
-.card{
-  background:white;
-  border-radius:12px;
-  overflow:hidden;
-}
-
-img{
+.card img{
   width:100%;
-  height:150px;
-  object-fit:cover;
+  border-radius:12px;
 }
 
 /* FLOAT BUTTON */
@@ -112,97 +90,131 @@ img{
   position:fixed;
   bottom:20px;
   right:20px;
-  width:60px;
-  height:60px;
+  width:55px;
+  height:55px;
   border-radius:50%;
   background:#ff4d6d;
   color:white;
-  font-size:30px;
   display:flex;
-  align-items:center;
   justify-content:center;
+  align-items:center;
+  font-size:30px;
   cursor:pointer;
 }
-</style></head><body><header>
+</style>
+</head>
+
+<body>
+
+<!-- 🎵 FIXED MUSIC -->
+<audio id="music" autoplay loop>
+  <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" type="audio/mp3">
+</audio>
+
+<header>
   <div class="logo">SS</div>
-  <div class="title">Wedding App 💖</div>
-  <button class="upload-btn" onclick="file.click()">Upload</button>
-</header><!-- NAV --><div class="nav">
-  <button class="active" onclick="showPage('home')">Invite</button>
-  <button onclick="showPage('haldi')">Haldi</button>
-  <button onclick="showPage('mehendi')">Mehendi</button>
-  <button onclick="showPage('wedding')">Wedding</button>
-  <button onclick="showPage('reception')">Reception</button>
-</div><!-- HOME --><div id="home" class="page active">
-  <div class="envelope">
-    <h2>💌 Sammed ❤️ Sahana</h2>
-    <p>We invite you to celebrate our wedding 💖</p>
-    <h3>📅 June 22</h3>
-    <h3>📍 Terdal - Gurukul Kalyan Mantap</h3>
-  </div>
-</div><!-- HALDI --><div id="haldi" class="page">
-  <h3>Haldi Moments 🌼</h3>
-  <div class="grid" id="haldiGrid"></div>
-</div><!-- MEHENDI --><div id="mehendi" class="page">
-  <h3>Mehendi 💚</h3>
-  <div class="grid" id="mehendiGrid"></div>
-</div><!-- WEDDING --><div id="wedding" class="page">
-  <h3>Wedding 💍</h3>
-  <div class="grid" id="weddingGrid"></div>
-</div><!-- RECEPTION --><div id="reception" class="page">
-  <h3>Reception 🎉</h3>
-  <div class="grid" id="receptionGrid"></div>
-</div><input type="file" id="file" hidden accept="image/*" /><div class="fab" onclick="file.click()">+</div><script>
+  <button onclick="document.getElementById('file').click()">Upload</button>
+</header>
+
+<!-- 💌 INVITATION -->
+<div class="invite">
+  <h2>💌 Wedding Invitation</h2>
+  <div class="names">Sammed ❤️ Sahana</div>
+  <p>We invite you to celebrate our special day 💖</p>
+  <h3>📅 June 22</h3>
+  <h3>📍 Gurukul Kalyan Mantap, Terdal</h3>
+</div>
+
+<!-- NAV -->
+<div class="nav" id="nav"></div>
+
+<!-- GALLERY -->
+<div class="grid" id="grid"></div>
+
+<input type="file" id="file" multiple accept="image/*" hidden>
+
+<div class="fab" onclick="file.click()">+</div>
+
+<script>
 const CLOUD_NAME="dahg3tht7";
 const UPLOAD_PRESET="nipieidp";
 
-let current="haldi";
-
-let data = JSON.parse(localStorage.getItem("weddingAll")) || {
-  haldi:[], mehendi:[], wedding:[], reception:[]
+let data = JSON.parse(localStorage.getItem("weddingApp")) || {
+  haldi:[],
+  mehendi:[],
+  wedding:[]
 };
 
-function showPage(page){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById(page).classList.add('active');
+let current="haldi";
 
-  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
-  event.target.classList.add('active');
+function renderNav(){
+  let nav=document.getElementById("nav");
+  nav.innerHTML="";
 
-  current = page;
-  render();
+  Object.keys(data).forEach(k=>{
+    let b=document.createElement("button");
+    b.innerText=k;
+    if(k==current) b.classList.add("active");
+
+    b.onclick=()=>{current=k;render();}
+
+    let del=document.createElement("span");
+    del.innerText=" ❌";
+    del.style.cursor="pointer";
+
+    del.onclick=(e)=>{
+      e.stopPropagation();
+      if(confirm("Delete "+k+"?")){
+        delete data[k];
+        current=Object.keys(data)[0]||"";
+        save();
+        render();
+      }
+    }
+
+    b.appendChild(del);
+    nav.appendChild(b);
+  });
 }
 
 function render(){
-  for(let key in data){
-    let box=document.getElementById(key+"Grid");
-    if(!box) continue;
+  renderNav();
 
-    box.innerHTML="";
-    data[key].forEach(img=>{
-      box.innerHTML += `<div class='card'><img src='${img}'/></div>`;
-    });
-  }
+  let g=document.getElementById("grid");
+  g.innerHTML="";
+
+  (data[current]||[]).forEach(img=>{
+    g.innerHTML+=`<div class="card"><img src="${img}"></div>`;
+  });
 }
 
 file.onchange=async e=>{
-  let f=e.target.files[0];
-  let form=new FormData();
-  form.append("file",f);
-  form.append("upload_preset",UPLOAD_PRESET);
+  let files=[...e.target.files];
 
-  let res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,{
-    method:"POST",body:form
-  });
+  for(let f of files){
+    let form=new FormData();
+    form.append("file",f);
+    form.append("upload_preset",UPLOAD_PRESET);
 
-  let j=await res.json();
+    let res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,{
+      method:"POST",
+      body:form
+    });
 
-  data[current].push(j.secure_url);
-  localStorage.setItem("weddingAll",JSON.stringify(data));
+    let j=await res.json();
+    data[current].push(j.secure_url);
+  }
 
+  save();
   render();
 };
 
+function save(){
+  localStorage.setItem("weddingApp",JSON.stringify(data));
+}
+
 render();
-</script></body>
+</script>
+
+</body>
 </html>
