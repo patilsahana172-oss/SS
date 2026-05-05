@@ -13,31 +13,69 @@
 body{
   margin:0;
   font-family:Inter;
-  background:linear-gradient(180deg,#07070b,#0f0f1a);
+  background:#050507;
   color:white;
+  overflow-x:hidden;
 }
 
-/* 🌸 TOP HEADER */
+/* 🎬 TEASER INTRO (NEW IMPORTANT PART) */
+#teaser{
+  position:fixed;
+  inset:0;
+  background:black;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  z-index:99999;
+}
+
+.teaser-title{
+  font-family:'Playfair Display';
+  font-size:2.2rem;
+  opacity:0;
+  animation:fadeIn 2s ease forwards;
+}
+
+.teaser-sub{
+  margin-top:10px;
+  color:#fda4af;
+  opacity:0;
+  animation:fadeIn 2s ease 1.5s forwards;
+}
+
+.teaser-line{
+  margin-top:12px;
+  font-size:14px;
+  opacity:0;
+  animation:fadeIn 2s ease 2.2s forwards;
+  color:#fff;
+}
+
+@keyframes fadeIn{
+  from{opacity:0;transform:scale(1.2)}
+  to{opacity:1;transform:scale(1)}
+}
+
+/* 🌸 MAIN APP */
 header{
   padding:14px;
   text-align:center;
   font-family:'Playfair Display';
   font-size:20px;
   background:rgba(0,0,0,0.6);
-  backdrop-filter:blur(10px);
   position:sticky;
   top:0;
   z-index:10;
 }
 
-/* 💖 SOFT HERO */
+/* HERO */
 .hero{
   margin:12px;
   height:180px;
   border-radius:18px;
   background:url('https://images.unsplash.com/photo-1523438097201-512ae7d59c0b?q=80') center/cover;
   position:relative;
-  overflow:hidden;
 }
 
 .hero::after{
@@ -52,10 +90,9 @@ header{
   bottom:12px;
   left:12px;
   font-family:'Playfair Display';
-  font-size:18px;
 }
 
-/* 💌 INVITATION */
+/* INVITE */
 .invite{
   margin:12px;
   padding:18px;
@@ -63,22 +100,20 @@ header{
   background:linear-gradient(135deg,#fff,#ffe4e6);
   color:#111;
   text-align:center;
-  box-shadow:0 15px 40px rgba(255,0,80,0.2);
 }
 
 .invite h1{
   font-family:'Playfair Display';
   color:#e11d48;
-  margin-bottom:6px;
 }
 
-/* 🌸 NAV */
+/* NAV */
 .nav{
   display:flex;
   gap:10px;
   padding:10px;
   overflow-x:auto;
-  background:rgba(0,0,0,0.8);
+  background:rgba(0,0,0,0.85);
   position:sticky;
   top:0;
   z-index:9;
@@ -90,17 +125,13 @@ header{
   border-radius:999px;
   background:#1c1c2a;
   color:white;
-  font-weight:600;
-  white-space:nowrap;
-  transition:.3s;
 }
 
 .nav button.active{
   background:#e11d48;
-  transform:scale(1.05);
 }
 
-/* 📄 PAGE */
+/* PAGE */
 .page{display:none}
 .page.active{display:block;animation:fade .4s ease}
 
@@ -109,15 +140,14 @@ header{
   to{opacity:1;transform:translateY(0)}
 }
 
-/* 💖 SECTION TITLE */
+/* TITLE */
 .title{
   padding:10px 12px;
-  font-family:'Playfair Display';
-  font-size:18px;
   color:#fda4af;
+  font-family:'Playfair Display';
 }
 
-/* 📸 GRID */
+/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(2,1fr);
@@ -129,17 +159,12 @@ header{
   .grid{grid-template-columns:repeat(3,1fr);}
 }
 
-/* 🎀 CARD */
+/* CARD */
 .card{
   border-radius:14px;
   overflow:hidden;
-  cursor:pointer;
-  transition:.3s;
   box-shadow:0 10px 25px rgba(0,0,0,0.5);
-}
-
-.card:hover{
-  transform:scale(1.03);
+  cursor:pointer;
 }
 
 .card img{
@@ -148,7 +173,7 @@ header{
   object-fit:cover;
 }
 
-/* 💫 POPUP */
+/* POPUP */
 .popup{
   position:fixed;
   inset:0;
@@ -163,48 +188,33 @@ header{
   max-width:92%;
   border-radius:12px;
 }
-
-/* 🌸 SMALL ANIMATION */
-.floating{
-  position:fixed;
-  width:8px;
-  height:8px;
-  background:pink;
-  border-radius:50%;
-  opacity:0.6;
-  animation:floatUp 6s linear infinite;
-}
-
-@keyframes floatUp{
-  from{transform:translateY(100vh)}
-  to{transform:translateY(-10vh)}
-}
 </style>
 </head>
 
 <body>
 
+<!-- 🎬 TEASER INTRO -->
+<div id="teaser">
+  <div class="teaser-title">Sammed ❤️ Sahana</div>
+  <div class="teaser-sub">A Love Story</div>
+  <div class="teaser-line">Coming Soon… June 22 💍</div>
+</div>
+
+<!-- MAIN APP -->
 <header>💍 Sammed ❤️ Sahana</header>
 
-<!-- HERO -->
 <div class="hero">
-  <div class="hero-text">Our Beautiful Love Story ✨</div>
+  <div class="hero-text">Our Cinematic Love Story ✨</div>
 </div>
 
-<!-- INVITE -->
 <div class="invite">
   <h1>Wedding Invitation 💖</h1>
-  <p>Sammed & Sahana</p>
-  <p>📅 June 22 | 📍 Terdal</p>
+  <p>June 22 | Terdal</p>
 </div>
 
-<!-- NAV -->
 <div class="nav" id="nav"></div>
-
-<!-- CONTENT -->
 <div id="content"></div>
 
-<!-- MUSIC -->
 <audio id="music" loop>
   <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3">
 </audio>
@@ -221,14 +231,7 @@ const app = initializeApp({
 
 const db=getFirestore(app);
 
-let data={
-  home:[],
-  haldi:[],
-  mehendi:[],
-  wedding:[],
-  reception:[]
-};
-
+let data={home:[],haldi:[],mehendi:[],wedding:[],reception:[]};
 let current="home";
 
 const titles={
@@ -239,24 +242,21 @@ const titles={
   reception:"Reception 🎉"
 };
 
-/* LOAD */
 async function load(){
   const snap=await getDoc(doc(db,"wedding","album"));
-
   if(snap.exists() && snap.data()?.data){
     data=JSON.parse(snap.data().data);
   }
 
   render();
 
+  // 🎬 TEASER EXIT
   setTimeout(()=>{
+    document.getElementById("teaser").style.display="none";
     document.getElementById("music").play();
-  },1500);
-
-  createFlowers();
+  },3500);
 }
 
-/* NAV */
 function nav(){
   const n=document.getElementById("nav");
   n.innerHTML="";
@@ -275,7 +275,6 @@ function nav(){
   });
 }
 
-/* CONTENT */
 function content(){
   const c=document.getElementById("content");
   c.innerHTML="";
@@ -285,7 +284,7 @@ function content(){
     d.className=`page ${k===current?'active':''}`;
 
     d.innerHTML=`
-      <div class="title">✨ ${titles[k]}</div>
+      <div class="title">${titles[k]}</div>
 
       <div class="grid">
         ${(data[k]||[]).map(i=>`
@@ -300,13 +299,11 @@ function content(){
   });
 }
 
-/* RENDER */
 function render(){
   nav();
   content();
 }
 
-/* POPUP */
 window.openImg=(src)=>{
   const d=document.createElement("div");
   d.className="popup";
@@ -314,17 +311,6 @@ window.openImg=(src)=>{
   d.onclick=()=>d.remove();
   document.body.appendChild(d);
 };
-
-/* 🌸 FLOATING LOVE EFFECT */
-function createFlowers(){
-  for(let i=0;i<12;i++){
-    const s=document.createElement("div");
-    s.className="floating";
-    s.style.left=Math.random()*100+"vw";
-    s.style.animationDuration=(4+Math.random()*4)+"s";
-    document.body.appendChild(s);
-  }
-}
 
 load();
 </script>
