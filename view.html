@@ -3,107 +3,152 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SS Wedding 💖</title>
+<title>Sammed ❤️ Sahana</title>
 
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Inter:wght@300;500;600&display=swap');
+
+:root{
+  --pink:#e11d48;
+  --soft:#fff1f2;
+}
+
+*{box-sizing:border-box}
+
 body{
   margin:0;
-  font-family:system-ui;
+  font-family:Inter;
   background:linear-gradient(135deg,#fff1f2,#ffe4e6);
   color:#1e293b;
+  overflow-x:hidden;
 }
 
-/* HEADER */
-header{
-  text-align:center;
-  padding:14px;
-  font-weight:800;
-  background:rgba(255,255,255,0.7);
-  backdrop-filter:blur(10px);
-  position:sticky;
-  top:0;
-}
-
-/* NAV */
-.nav{
-  display:flex;
-  overflow-x:auto;
-  gap:10px;
-  padding:10px;
-}
-
-.nav button{
-  border:none;
-  padding:10px 16px;
-  border-radius:999px;
-  background:white;
-  font-weight:600;
-  white-space:nowrap;
-}
-
-.nav button.active{
-  background:#e11d48;
-  color:white;
-}
-
-/* PAGE */
-.page{
-  display:none;
-  padding:12px;
-}
-
-.page.active{
-  display:block;
-}
-
-/* HERO */
+/* ✨ HERO */
 .hero{
-  height:75vh;
-  border-radius:20px;
-  overflow:hidden;
-  position:relative;
+  height:100vh;
   background:url('https://images.unsplash.com/photo-1519741497674-611481863552?q=80') center/cover;
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
 .hero::after{
   content:"";
   position:absolute;
   inset:0;
-  background:rgba(0,0,0,0.5);
+  background:rgba(0,0,0,0.55);
 }
 
 .hero-content{
-  position:absolute;
-  bottom:20px;
-  left:20px;
+  position:relative;
+  text-align:center;
   color:white;
+  animation:fadeUp 1.2s ease;
+}
+
+.hero h1{
+  font-family:'Playfair Display';
+  font-size:3rem;
+  margin:0;
+}
+
+.hero p{
+  margin-top:10px;
+  opacity:0.9;
+}
+
+/* NAV */
+.nav{
+  position:sticky;
+  top:0;
+  display:flex;
+  gap:10px;
+  padding:12px;
+  overflow-x:auto;
+  background:rgba(255,255,255,0.7);
+  backdrop-filter:blur(12px);
+  z-index:10;
+}
+
+.nav button{
+  border:none;
+  padding:10px 18px;
+  border-radius:999px;
+  background:white;
+  font-weight:600;
+  white-space:nowrap;
+  cursor:pointer;
+  transition:.3s;
+}
+
+.nav button.active{
+  background:linear-gradient(135deg,#e11d48,#fb7185);
+  color:white;
+}
+
+/* PAGE */
+.page{
+  display:none;
+  padding:20px;
+}
+
+.page.active{
+  display:block;
+  animation:fadeUp .6s ease;
 }
 
 /* GRID */
 .grid{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
-  gap:10px;
+  grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
+  gap:14px;
 }
 
+/* ✨ CARD */
 .card{
-  border-radius:16px;
+  border-radius:18px;
   overflow:hidden;
+  position:relative;
   cursor:pointer;
+  box-shadow:0 10px 25px rgba(0,0,0,0.1);
+  transition:.4s;
   background:white;
 }
 
 .card img{
   width:100%;
-  height:200px;
+  height:220px;
   object-fit:cover;
+  transition:.5s;
+}
+
+.card:hover img{
+  transform:scale(1.1);
+}
+
+.card::after{
+  content:"✨ View";
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,0.35);
+  color:white;
+  opacity:0;
+  transition:.3s;
+}
+
+.card:hover::after{
+  opacity:1;
 }
 
 /* POPUP */
 .popup{
   position:fixed;
   inset:0;
-  background:black;
+  background:rgba(0,0,0,0.9);
   display:flex;
   align-items:center;
   justify-content:center;
@@ -112,41 +157,90 @@ header{
 
 .popup img{
   max-width:90%;
-  border-radius:10px;
+  border-radius:18px;
+}
+
+/* ANIMATION */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(20px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* FLOAT HEARTS */
+.heart{
+  position:fixed;
+  bottom:0;
+  font-size:18px;
+  animation:floatUp 6s linear;
+}
+
+@keyframes floatUp{
+  from{transform:translateY(0);opacity:1}
+  to{transform:translateY(-100vh);opacity:0}
+}
+
+/* MUSIC BUTTON */
+.music{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  width:55px;
+  height:55px;
+  border-radius:50%;
+  border:none;
+  background:linear-gradient(135deg,#e11d48,#fb7185);
+  color:white;
+  font-size:20px;
+  z-index:20;
 }
 </style>
 </head>
 
 <body>
 
-<header>Sammed ❤️ Sahana</header>
+<!-- 💖 HERO -->
+<div class="hero">
+  <div class="hero-content">
+    <h1>Sammed ❤️ Sahana</h1>
+    <p>Wedding Invitation 💍 | June 22</p>
+  </div>
+</div>
 
+<!-- NAV -->
 <div class="nav" id="nav"></div>
+
+<!-- PAGES -->
 <div id="pages"></div>
+
+<!-- MUSIC -->
+<audio id="music" loop>
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3">
+</audio>
+<button class="music" onclick="toggleMusic()">🎶</button>
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 const app = initializeApp({
-  apiKey: "AIzaSyCPVPeU7f8kBBJlcq-WURC2YT5rRQoYFVo",
-  authDomain: "ss-wedding-e527d.firebaseapp.com",
-  projectId: "ss-wedding-e527d"
+  apiKey:"AIzaSyCPVPeU7f8kBBJlcq-WURC2YT5rRQoYFVo",
+  authDomain:"ss-wedding-e527d.firebaseapp.com",
+  projectId:"ss-wedding-e527d"
 });
 
 const db = getFirestore(app);
 
-let data = {
-  home: [],
-  haldi: [],
-  mehendi: [],
-  wedding: [],
-  reception: []
+let data={
+  home:[],
+  haldi:[],
+  mehendi:[],
+  wedding:[],
+  reception:[]
 };
 
-let current = "home";
+let current="home";
 
-const titles = {
+const titles={
   home:"Invitation",
   haldi:"Haldi 🌼",
   mehendi:"Mehendi 💚",
@@ -154,33 +248,20 @@ const titles = {
   reception:"Reception 🎉"
 };
 
-/* ✅ SAFE LOAD */
+/* LOAD */
 async function load(){
-  try{
-    const snap = await getDoc(doc(db,'wedding','album'));
+  const snap=await getDoc(doc(db,"wedding","album"));
 
-    if(snap.exists() && snap.data()?.data){
-      data = JSON.parse(snap.data().data);
-    }
-
-    // safety fix
-    Object.keys(data).forEach(k=>{
-      if(!Array.isArray(data[k])) data[k] = [];
-    });
-
-    renderNav();
-    renderPages();
-
-  }catch(err){
-    console.log("Load error:", err);
-    renderNav();
-    renderPages();
+  if(snap.exists() && snap.data()?.data){
+    data=JSON.parse(snap.data().data);
   }
+
+  render();
 }
 
 /* NAV */
 function renderNav(){
-  const nav = document.getElementById("nav");
+  const nav=document.getElementById("nav");
   nav.innerHTML="";
 
   Object.keys(data).forEach(k=>{
@@ -190,8 +271,7 @@ function renderNav(){
 
     b.onclick=()=>{
       current=k;
-      renderNav();
-      renderPages();
+      render();
     };
 
     nav.appendChild(b);
@@ -209,18 +289,13 @@ function renderPages(){
 
     if(k==="home"){
       div.innerHTML=`
-        <div class="hero">
-          <div class="hero-content">
-            <h1>Sammed ❤️ Sahana</h1>
-            <p>Wedding Invitation 💖</p>
-          </div>
-        </div>
+        <h2 style="text-align:center">💖 Our Memories</h2>
       `;
     }else{
       div.innerHTML=`
         <div class="grid">
           ${(data[k]||[]).map(img=>`
-            <div class="card" onclick="showImage('${img}')">
+            <div class="card" onclick="openImg('${img}')">
               <img src="${img}">
             </div>
           `).join("")}
@@ -232,8 +307,14 @@ function renderPages(){
   });
 }
 
-/* IMAGE POPUP */
-window.showImage=function(src){
+/* RENDER */
+function render(){
+  renderNav();
+  renderPages();
+}
+
+/* IMAGE */
+window.openImg=(src)=>{
   const d=document.createElement("div");
   d.className="popup";
   d.innerHTML=`<img src="${src}">`;
@@ -241,7 +322,20 @@ window.showImage=function(src){
   document.body.appendChild(d);
 };
 
-/* START */
+/* MUSIC */
+const music=document.getElementById("music");
+window.toggleMusic=()=>music.paused?music.play():music.pause();
+
+/* FLOAT HEARTS */
+setInterval(()=>{
+  const e=document.createElement("div");
+  e.className="heart";
+  e.innerHTML="💖";
+  e.style.left=Math.random()*100+"%";
+  document.body.appendChild(e);
+  setTimeout(()=>e.remove(),6000);
+},2000);
+
 load();
 </script>
 
