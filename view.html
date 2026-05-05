@@ -13,16 +13,16 @@
 body{
   margin:0;
   font-family:Inter;
-  background:radial-gradient(circle at top,#1a1a2e,#0b0b0f);
+  background:#0b0b0f;
   color:white;
 }
 
 /* HEADER */
 header{
-  padding:16px;
+  padding:14px;
   text-align:center;
   font-family:'Playfair Display';
-  font-size:20px;
+  font-size:18px;
   background:rgba(0,0,0,0.6);
   backdrop-filter:blur(10px);
   position:sticky;
@@ -30,31 +30,106 @@ header{
   z-index:10;
 }
 
-/* HERO CARD (HOME) */
-.hero{
-  margin:16px;
-  padding:24px;
-  border-radius:22px;
-  background:linear-gradient(135deg,#ffffff,#ffe4e6);
-  color:#111;
-  text-align:center;
-  box-shadow:0 20px 50px rgba(255,0,80,0.2);
+/* NAV */
+.nav{
+  display:flex;
+  gap:10px;
+  padding:10px;
+  overflow-x:auto;
+  background:rgba(0,0,0,0.75);
+  position:sticky;
+  top:55px;
+  z-index:9;
 }
 
-.hero h1{
+.nav button{
+  border:none;
+  padding:10px 14px;
+  border-radius:999px;
+  background:#1f1f2b;
+  color:white;
+  font-weight:600;
+  white-space:nowrap;
+}
+
+.nav button.active{
+  background:#e11d48;
+}
+
+/* PAGES */
+.page{display:none}
+.page.active{display:block}
+
+/* 💍 GRAND INVITATION */
+.invite-hero{
+  margin:12px;
+  height:340px;
+  border-radius:22px;
+  position:relative;
+  overflow:hidden;
+  background:url('https://images.unsplash.com/photo-1523438097201-512ae7d59c0b?q=80') center/cover;
+  box-shadow:0 25px 70px rgba(0,0,0,0.7);
+}
+
+.invite-hero .overlay{
+  position:absolute;
+  inset:0;
+  background:linear-gradient(to top,rgba(0,0,0,0.85),rgba(0,0,0,0.3));
+}
+
+.invite-content{
+  position:absolute;
+  bottom:18px;
+  left:16px;
+  right:16px;
+  animation:fadeUp 1s ease;
+}
+
+.tag{
+  display:inline-block;
+  padding:6px 12px;
+  border-radius:999px;
+  font-size:11px;
+  background:rgba(255,255,255,0.15);
+  backdrop-filter:blur(10px);
+  margin-bottom:10px;
+}
+
+.invite-content h1{
   font-family:'Playfair Display';
-  color:#e11d48;
+  font-size:26px;
   margin:0;
 }
 
-/* SECTION GRID (UNIFIED STYLE) */
-.section-title{
-  padding:10px 16px;
-  font-size:18px;
-  font-weight:700;
-  color:#fda4af;
+.line{
+  font-size:13px;
+  opacity:0.9;
+  margin:6px 0 10px;
 }
 
+.details{
+  font-size:13px;
+  opacity:0.9;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+
+.quote{
+  margin-top:10px;
+  font-size:12px;
+  font-style:italic;
+  opacity:0.8;
+}
+
+/* SECTION TITLE */
+.title{
+  padding:10px 14px;
+  color:#fda4af;
+  font-weight:700;
+}
+
+/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(2,1fr);
@@ -66,14 +141,13 @@ header{
   .grid{grid-template-columns:repeat(3,1fr);}
 }
 
-/* CARD STYLE (USED EVERYWHERE SAME LOOK) */
+/* IMAGE CARD */
 .card{
   border-radius:16px;
   overflow:hidden;
-  position:relative;
   cursor:pointer;
-  box-shadow:0 10px 25px rgba(0,0,0,0.4);
   transition:.3s;
+  box-shadow:0 10px 25px rgba(0,0,0,0.5);
 }
 
 .card:hover{
@@ -84,58 +158,6 @@ header{
   width:100%;
   height:170px;
   object-fit:cover;
-  display:block;
-}
-
-/* NAV */
-.nav{
-  display:flex;
-  gap:10px;
-  padding:10px;
-  overflow-x:auto;
-  background:rgba(0,0,0,0.7);
-  position:sticky;
-  top:60px;
-  z-index:9;
-}
-
-.nav button{
-  border:none;
-  padding:10px 14px;
-  border-radius:999px;
-  background:#1f1f2b;
-  color:white;
-  white-space:nowrap;
-  font-weight:600;
-}
-
-.nav button.active{
-  background:#e11d48;
-}
-
-/* PAGE SYSTEM */
-.page{
-  display:none;
-  animation:fade .5s ease;
-}
-
-.page.active{
-  display:block;
-}
-
-@keyframes fade{
-  from{opacity:0;transform:translateY(10px)}
-  to{opacity:1;transform:translateY(0)}
-}
-
-/* INVITATION CARD */
-.invite{
-  margin:16px;
-  padding:18px;
-  border-radius:18px;
-  background:linear-gradient(135deg,#fff,#ffe4e6);
-  color:#111;
-  text-align:center;
 }
 
 /* POPUP */
@@ -154,15 +176,10 @@ header{
   border-radius:12px;
 }
 
-/* BACK BUTTON */
-.back{
-  margin:10px 12px;
-  padding:10px;
-  border:none;
-  border-radius:10px;
-  background:#e11d48;
-  color:white;
-  font-weight:600;
+/* ANIMATION */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(15px)}
+  to{opacity:1;transform:translateY(0)}
 }
 </style>
 </head>
@@ -171,10 +188,8 @@ header{
 
 <header>💍 Sammed ❤️ Sahana</header>
 
-<!-- NAV -->
 <div class="nav" id="nav"></div>
 
-<!-- CONTENT -->
 <div id="content"></div>
 
 <!-- MUSIC -->
@@ -205,7 +220,7 @@ let data={
 let current="home";
 
 const titles={
-  home:"Home 💌",
+  home:"Home",
   haldi:"Haldi 🌼",
   mehendi:"Mehendi 💚",
   wedding:"Wedding 💍",
@@ -215,16 +230,11 @@ const titles={
 /* LOAD */
 async function load(){
   const snap=await getDoc(doc(db,"wedding","album"));
-
   if(snap.exists() && snap.data()?.data){
     data=JSON.parse(snap.data().data);
   }
-
   render();
-
-  setTimeout(()=>{
-    document.getElementById("music").play();
-  },1500);
+  setTimeout(()=>document.getElementById("music").play(),1500);
 }
 
 /* NAV */
@@ -251,43 +261,44 @@ function content(){
   const c=document.getElementById("content");
   c.innerHTML="";
 
-  /* HOME */
-  const home=document.createElement("div");
-  home.className=`page ${current==='home'?'active':''}`;
-
-  home.innerHTML=`
-    <div class="hero">
-      <h1>Sammed ❤️ Sahana</h1>
-      <p>Our Love Story 💍</p>
-    </div>
-
-    <div class="invite">
-      <h3>Wedding Invitation</h3>
-      <p>📅 June 22</p>
-      <p>📍 Terdal</p>
-    </div>
-  `;
-
-  c.appendChild(home);
-
-  /* SECTIONS */
   Object.keys(data).forEach(k=>{
-    if(k==="home") return;
-
     const d=document.createElement("div");
     d.className=`page ${current===k?'active':''}`;
 
-    d.innerHTML=`
-      <div class="section-title">${titles[k]}</div>
+    if(k==="home"){
+      d.innerHTML=`
+        <div class="invite-hero">
+          <div class="overlay"></div>
 
-      <div class="grid">
-        ${(data[k]||[]).map(i=>`
-          <div class="card" onclick="openImg('${i}')">
-            <img src="${i}">
+          <div class="invite-content">
+            <div class="tag">💌 WEDDING INVITATION</div>
+            <h1>Sammed ❤️ Sahana</h1>
+            <p class="line">Two hearts • One story • Forever begins</p>
+
+            <div class="details">
+              <div>📅 June 22, 2026</div>
+              <div>📍 Terdal</div>
+            </div>
+
+            <div class="quote">
+              “A love written by destiny, celebrated with hearts together.”
+            </div>
           </div>
-        `).join("")}
-      </div>
-    `;
+        </div>
+      `;
+    } else {
+      d.innerHTML=`
+        <div class="title">${titles[k]} Moments</div>
+
+        <div class="grid">
+          ${(data[k]||[]).map(i=>`
+            <div class="card" onclick="openImg('${i}')">
+              <img src="${i}">
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
 
     c.appendChild(d);
   });
@@ -299,7 +310,7 @@ function render(){
   content();
 }
 
-/* IMAGE POPUP */
+/* IMAGE */
 window.openImg=(src)=>{
   const d=document.createElement("div");
   d.className="popup";
