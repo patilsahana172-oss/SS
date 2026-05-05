@@ -6,58 +6,208 @@
 <title>SS Wedding 💖</title>
 
 <style>
-:root{--primary:#e11d48;--secondary:#fb7185;}
-body{margin:0;font-family:system-ui;background:#fff1f2;color:#333}
+:root{
+  --primary:#e11d48;
+  --secondary:#fb7185;
+  --bg:#fff1f2;
+  --text:#1e293b;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:system-ui;
+  background:linear-gradient(135deg,#fff1f2,#ffe4e6);
+  color:var(--text);
+}
 
 /* 💌 ENVELOPE */
-#envelope{position:fixed;inset:0;background:linear-gradient(135deg,#e11d48,#fb7185);display:flex;justify-content:center;align-items:center;z-index:9999}
-.letter{background:white;padding:30px;border-radius:12px;cursor:pointer;font-weight:bold;transition:.6s}
-.letter.open{transform:scale(8);opacity:0}
+#envelope{
+  position:fixed;
+  inset:0;
+  background:linear-gradient(135deg,#e11d48,#fb7185);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
+}
 
-/* 🎬 HERO */
-.hero{height:100vh;background:url('https://images.unsplash.com/photo-1519741497674-611481863552?q=80') center/cover;position:relative}
-.overlay{position:absolute;inset:0;background:rgba(0,0,0,.5)}
-.hero-content{position:absolute;bottom:40px;left:20px;color:white}
+.letter{
+  background:white;
+  padding:30px 40px;
+  border-radius:16px;
+  font-weight:700;
+  cursor:pointer;
+  transition:.5s;
+  box-shadow:0 20px 50px rgba(0,0,0,.2);
+}
+
+.letter.open{
+  transform:scale(10);
+  opacity:0;
+}
+
+/* HEADER */
+header{
+  text-align:center;
+  padding:14px;
+  font-weight:800;
+  font-size:1.2rem;
+  background:rgba(255,255,255,0.6);
+  backdrop-filter:blur(12px);
+  position:sticky;
+  top:0;
+  z-index:5;
+}
 
 /* NAV */
-.nav{display:flex;overflow:auto;gap:10px;padding:10px}
-.nav button{padding:8px 14px;border:none;border-radius:999px;background:white}
-.nav button.active{background:linear-gradient(135deg,#e11d48,#fb7185);color:white}
+.nav{
+  display:flex;
+  gap:10px;
+  overflow-x:auto;
+  padding:12px;
+}
+
+.nav button{
+  border:none;
+  padding:10px 16px;
+  border-radius:999px;
+  background:white;
+  font-weight:600;
+  white-space:nowrap;
+  transition:.3s;
+}
+
+.nav button.active{
+  background:linear-gradient(135deg,var(--primary),var(--secondary));
+  color:white;
+}
+
+/* PAGE */
+.page{
+  display:none;
+  padding:16px;
+}
+
+.page.active{
+  display:block;
+  animation:fade .4s ease;
+}
+
+@keyframes fade{
+  from{opacity:0;transform:translateY(10px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* HERO */
+.hero{
+  height:80vh;
+  border-radius:24px;
+  overflow:hidden;
+  position:relative;
+  background:url('https://images.unsplash.com/photo-1519741497674-611481863552?q=80') center/cover;
+}
+
+.hero::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(to top,rgba(0,0,0,.6),transparent);
+}
+
+.hero-content{
+  position:absolute;
+  bottom:25px;
+  left:20px;
+  color:white;
+}
+
+.hero h1{
+  margin:0;
+  font-size:2rem;
+}
 
 /* GRID */
-.grid{column-count:2;column-gap:10px;padding:10px}
-.card{margin-bottom:10px;border-radius:12px;overflow:hidden;cursor:pointer}
-.card img{width:100%}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:12px;
+}
 
-/* SLIDESHOW */
-#slideshow{height:60vh}
-#slideshow img{width:100%;height:100%;object-fit:cover}
+/* CARD */
+.card{
+  position:relative;
+  border-radius:16px;
+  overflow:hidden;
+  cursor:pointer;
+  box-shadow:0 8px 20px rgba(0,0,0,.1);
+}
 
-/* TIMELINE */
-.timeline{padding:15px}
-.timeline div{background:white;margin:10px 0;padding:10px;border-radius:10px}
+.card img{
+  width:100%;
+  height:220px;
+  object-fit:cover;
+  transition:.4s;
+}
 
-/* MUSIC BTN */
-.music-btn{position:fixed;bottom:20px;left:20px;width:50px;height:50px;border:none;border-radius:50%;background:#e11d48;color:white}
+.card:hover img{
+  transform:scale(1.08);
+}
 
-/* FLOAT */
-@keyframes float{0%{transform:translateY(0)}100%{transform:translateY(-100vh)}}
+.card::after{
+  content:"💖 View";
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,0.35);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:white;
+  opacity:0;
+  transition:.3s;
+}
+
+.card:hover::after{
+  opacity:1;
+}
+
+/* FLOAT HEARTS */
+@keyframes float{
+  0%{transform:translateY(0);opacity:1}
+  100%{transform:translateY(-100vh);opacity:0}
+}
+
+/* MUSIC BUTTON */
+.music-btn{
+  position:fixed;
+  bottom:18px;
+  left:18px;
+  width:52px;
+  height:52px;
+  border:none;
+  border-radius:50%;
+  background:linear-gradient(135deg,var(--primary),var(--secondary));
+  color:white;
+  font-size:20px;
+  z-index:10;
+}
 </style>
 </head>
 
 <body>
 
+<!-- 💌 ENVELOPE -->
 <div id="envelope">
   <div class="letter" onclick="openInvite()">💌 Open Invitation</div>
 </div>
 
-<header style="text-align:center;padding:10px;font-weight:bold;">
-Sammed ❤️ Sahana
-</header>
+<header>Sammed ❤️ Sahana</header>
 
 <div class="nav" id="nav"></div>
 <div id="pages"></div>
 
+<!-- 🎶 MUSIC -->
 <audio id="bgMusic" loop>
   <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3" type="audio/mpeg">
 </audio>
@@ -72,6 +222,7 @@ const app = initializeApp({
   authDomain:'ss-wedding-e527d.firebaseapp.com',
   projectId:'ss-wedding-e527d'
 });
+
 const db = getFirestore(app);
 
 let data = {};
@@ -82,28 +233,20 @@ const titles = {
   haldi:'Haldi 🌼',
   mehendi:'Mehendi 💚',
   wedding:'Wedding 💍',
-  reception:'Reception 🎉',
-  slideshow:'Highlights 🎥',
-  lovestory:'Our Story 💞'
+  reception:'Reception 🎉'
 };
 
-/* LOAD FIXED */
+/* LOAD */
 async function load(){
   const snap = await getDoc(doc(db,'wedding','album'));
 
   if(snap.exists() && snap.data().data){
     data = JSON.parse(snap.data().data);
-  } else {
-    data = {home:[], haldi:[], mehendi:[], wedding:[], reception:[]};
   }
 
-  /* ensure sections */
   ['home','haldi','mehendi','wedding','reception'].forEach(k=>{
     if(!data[k]) data[k]=[];
   });
-
-  if(!data.slideshow) data.slideshow=[];
-  if(!data.lovestory) data.lovestory=[];
 
   render();
 }
@@ -112,6 +255,7 @@ async function load(){
 function renderNav(){
   const nav=document.getElementById("nav");
   nav.innerHTML="";
+
   Object.keys(data).forEach(k=>{
     const b=document.createElement("button");
     b.textContent=titles[k]||k;
@@ -128,35 +272,17 @@ function renderPages(){
 
   Object.keys(data).forEach(k=>{
     const div=document.createElement("div");
-    div.style.display = k===current ? "block":"none";
+    div.className = `page ${k===current?'active':''}`;
 
     if(k==="home"){
       div.innerHTML=`
       <div class="hero">
-        <div class="overlay"></div>
         <div class="hero-content">
           <h1>Sammed ❤️ Sahana</h1>
-          <button onclick="openMap()">📍 Location</button>
-          <button onclick="shareInvite()">💌 Share</button>
+          <p>📅 June 22 | 📍 Terdal</p>
         </div>
       </div>`;
-    }
-
-    else if(k==="slideshow"){
-      div.innerHTML=`<div id="slideshow"></div>`;
-    }
-
-    else if(k==="lovestory"){
-      div.innerHTML=`
-      <div class="timeline">
-        <div>💖 First Meet</div>
-        <div>🌸 Fell in Love</div>
-        <div>💍 Engaged</div>
-        <div>👰 Wedding</div>
-      </div>`;
-    }
-
-    else{
+    } else {
       div.innerHTML=`
       <div class="grid">
         ${data[k].map(i=>`
@@ -171,45 +297,28 @@ function renderPages(){
   });
 }
 
-/* PAGE SWITCH */
-window.showPage = function(p){
+/* SWITCH */
+window.showPage=function(p){
   current=p;
   renderNav();
   renderPages();
-  if(p==="slideshow") startSlide();
 };
 
-/* SLIDESHOW FIXED */
-let index=0;
-let slideInterval;
-
-function startSlide(){
-  clearInterval(slideInterval);
-  const box=document.getElementById("slideshow");
-
-  slideInterval=setInterval(()=>{
-    if(!data.slideshow.length) return;
-    box.innerHTML=`<img src="${data.slideshow[index]}">`;
-    index=(index+1)%data.slideshow.length;
-  },2500);
-}
-
-/* IMAGE VIEW */
+/* IMAGE POPUP */
 window.showImage=function(src){
   const d=document.createElement("div");
-  d.style="position:fixed;inset:0;background:black;display:flex;align-items:center;justify-content:center;";
-  d.innerHTML=`<img src="${src}" style="max-width:90%">`;
+  d.style=`
+    position:fixed;
+    inset:0;
+    background:black;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:999;
+  `;
+  d.innerHTML=`<img src="${src}" style="max-width:90%;border-radius:20px">`;
   d.onclick=()=>d.remove();
   document.body.appendChild(d);
-};
-
-/* MAP */
-window.openMap=()=>window.open("https://maps.google.com/?q=Terdal Gurukul Kalyan Mantap");
-
-/* SHARE */
-window.shareInvite=()=>{
-  const text="💖 Sammed & Sahana Wedding 💍 Join us!";
-  window.open(`https://wa.me/?text=${encodeURIComponent(text+" "+location.href)}`);
 };
 
 /* MUSIC */
@@ -223,14 +332,19 @@ window.openInvite=()=>{
   setTimeout(()=>document.getElementById("envelope").remove(),600);
 };
 
-/* FLOAT OPTIMIZED */
+/* FLOAT HEARTS */
 setInterval(()=>{
   const e=document.createElement("div");
   e.innerHTML="💖";
-  e.style=`position:fixed;bottom:0;left:${Math.random()*100}%;animation:float 5s linear;`;
+  e.style=`
+    position:fixed;
+    bottom:0;
+    left:${Math.random()*100}%;
+    animation:float 6s linear;
+  `;
   document.body.appendChild(e);
-  setTimeout(()=>e.remove(),5000);
-},1500);
+  setTimeout(()=>e.remove(),6000);
+},2000);
 
 load();
 </script>
