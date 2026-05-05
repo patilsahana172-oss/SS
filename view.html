@@ -13,19 +13,17 @@
 body{
   margin:0;
   font-family:Inter;
+  background:#000;
   color:#fff;
-  background:black;
   overflow-x:hidden;
 }
 
-/* 🎬 TEASER INTRO */
+/* 🎬 CINEMATIC TEASER */
 #intro{
   position:fixed;
   inset:0;
   z-index:9999;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  overflow:hidden;
   background:black;
 }
 
@@ -33,31 +31,39 @@ body{
   width:100%;
   height:100%;
   object-fit:cover;
-  filter:brightness(0.5);
+  filter:brightness(0.45) contrast(1.1);
+  transform:scale(1.05);
 }
 
+/* cinematic overlay */
+#intro::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(circle at center, transparent 20%, rgba(0,0,0,0.7) 80%),
+    linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+}
+
+/* TEXT ANIMATION */
 .intro-text{
   position:absolute;
+  bottom:18%;
+  width:100%;
   text-align:center;
+  z-index:2;
   animation:fadeUp 2s ease;
 }
 
 .intro-text h1{
   font-family:'Playfair Display';
   font-size:26px;
+  letter-spacing:1px;
 }
 
 .intro-text p{
   color:#ff4d6d;
-}
-
-.skip{
-  margin-top:10px;
-  padding:8px 14px;
-  border:none;
-  border-radius:20px;
-  background:#ff4d6d;
-  color:white;
+  margin-top:6px;
 }
 
 /* HEADER */
@@ -65,7 +71,8 @@ header{
   padding:14px;
   text-align:center;
   font-family:'Playfair Display';
-  background:rgba(0,0,0,0.7);
+  background:rgba(0,0,0,0.6);
+  backdrop-filter:blur(12px);
   position:sticky;
   top:0;
   z-index:10;
@@ -102,11 +109,13 @@ header{
   padding:16px;
   border-radius:16px;
   background:rgba(255,255,255,0.05);
-  border:1px solid rgba(255,255,255,0.1);
+  backdrop-filter:blur(14px);
+  border:1px solid rgba(255,255,255,0.08);
   text-align:center;
 }
 
 .invite h2{
+  margin:0;
   color:#ff4d6d;
   font-family:'Playfair Display';
 }
@@ -128,12 +137,11 @@ header{
   padding:10px 14px;
   border-radius:999px;
   background:transparent;
-  color:#bbb;
+  color:#aaa;
 }
 
 .nav button.active{
   color:#fff;
-  font-weight:600;
 }
 
 /* PAGE */
@@ -153,6 +161,7 @@ header{
   gap:10px;
 }
 
+/* CARD */
 .card{
   border-radius:14px;
   overflow:hidden;
@@ -181,9 +190,9 @@ header{
   border-radius:16px;
 }
 
-/* ANIM */
+/* ANIMATION */
 @keyframes fadeUp{
-  from{opacity:0;transform:translateY(20px)}
+  from{opacity:0;transform:translateY(30px)}
   to{opacity:1;transform:translateY(0)}
 }
 </style>
@@ -191,7 +200,7 @@ header{
 
 <body>
 
-<!-- 🎬 TEASER -->
+<!-- 🎬 AUTO CINEMATIC TEASER -->
 <div id="intro">
   <video id="video" autoplay muted playsinline>
     <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4">
@@ -200,31 +209,23 @@ header{
   <div class="intro-text">
     <h1>💍 A Love Story Begins</h1>
     <p>Sammed ❤️ Sahana</p>
-    <button class="skip" onclick="skip()">Enter ▶</button>
   </div>
 </div>
 
-<!-- HEADER -->
 <header>💍 Sammed ❤️ Sahana</header>
 
-<!-- HERO -->
 <div class="hero">
-  <div class="hero-text">Our Wedding Journey ✨</div>
+  <div class="hero-text">Wedding Journey ✨</div>
 </div>
 
-<!-- INVITE -->
 <div class="invite">
   <h2>Wedding Invitation 💖</h2>
   <p>June 22 • Terdal</p>
 </div>
 
-<!-- NAV -->
 <div class="nav" id="nav"></div>
-
-<!-- CONTENT -->
 <div id="content"></div>
 
-<!-- MUSIC -->
 <audio id="music" loop>
   <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3">
 </audio>
@@ -239,9 +240,9 @@ const app = initializeApp({
   projectId:"ss-wedding-e527d"
 });
 
-const db = getFirestore(app);
+const db=getFirestore(app);
 
-let data = {home:[],haldi:[],mehendi:[],wedding:[],reception:[]};
+let data={home:[],haldi:[],mehendi:[],wedding:[],reception:[]};
 let current="home";
 
 const titles={
@@ -252,7 +253,7 @@ const titles={
   reception:"Reception 🎉"
 };
 
-function label(k){return titles[k]||k}
+const label=k=>titles[k]||k;
 
 /* LOAD */
 async function load(){
@@ -262,6 +263,16 @@ async function load(){
   }
 
   render();
+
+  /* 🎬 AUTO TEASER EXIT */
+  setTimeout(()=>{
+    document.getElementById("intro").style.opacity="0";
+    document.getElementById("intro").style.transition="1.5s";
+    setTimeout(()=>{
+      document.getElementById("intro").style.display="none";
+      document.getElementById("music").play();
+    },1500);
+  },4500);
 }
 
 /* NAV */
@@ -311,19 +322,13 @@ function render(){
   content();
 }
 
-/* IMAGE */
+/* IMAGE POPUP */
 window.openImg=(src)=>{
   const d=document.createElement("div");
   d.className="popup";
   d.innerHTML=`<img src="${src}">`;
   d.onclick=()=>d.remove();
   document.body.appendChild(d);
-};
-
-/* TEASER SKIP */
-window.skip=function(){
-  document.getElementById("intro").style.display="none";
-  document.getElementById("music").play();
 };
 
 load();
