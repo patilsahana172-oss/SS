@@ -6,46 +6,11 @@
 <title>SS Wedding 💖</title>
 
 <style>
-:root{
-  --primary:#e11d48;
-  --secondary:#fb7185;
-  --bg:#fff1f2;
-  --text:#1e293b;
-}
-
-*{box-sizing:border-box}
-
 body{
   margin:0;
   font-family:system-ui;
   background:linear-gradient(135deg,#fff1f2,#ffe4e6);
-  color:var(--text);
-}
-
-/* 💌 ENVELOPE */
-#envelope{
-  position:fixed;
-  inset:0;
-  background:linear-gradient(135deg,#e11d48,#fb7185);
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  z-index:9999;
-}
-
-.letter{
-  background:white;
-  padding:30px 40px;
-  border-radius:16px;
-  font-weight:700;
-  cursor:pointer;
-  transition:.5s;
-  box-shadow:0 20px 50px rgba(0,0,0,.2);
-}
-
-.letter.open{
-  transform:scale(10);
-  opacity:0;
+  color:#1e293b;
 }
 
 /* HEADER */
@@ -53,20 +18,18 @@ header{
   text-align:center;
   padding:14px;
   font-weight:800;
-  font-size:1.2rem;
-  background:rgba(255,255,255,0.6);
-  backdrop-filter:blur(12px);
+  background:rgba(255,255,255,0.7);
+  backdrop-filter:blur(10px);
   position:sticky;
   top:0;
-  z-index:5;
 }
 
 /* NAV */
 .nav{
   display:flex;
-  gap:10px;
   overflow-x:auto;
-  padding:12px;
+  gap:10px;
+  padding:10px;
 }
 
 .nav button{
@@ -76,34 +39,27 @@ header{
   background:white;
   font-weight:600;
   white-space:nowrap;
-  transition:.3s;
 }
 
 .nav button.active{
-  background:linear-gradient(135deg,var(--primary),var(--secondary));
+  background:#e11d48;
   color:white;
 }
 
 /* PAGE */
 .page{
   display:none;
-  padding:16px;
+  padding:12px;
 }
 
 .page.active{
   display:block;
-  animation:fade .4s ease;
-}
-
-@keyframes fade{
-  from{opacity:0;transform:translateY(10px)}
-  to{opacity:1;transform:translateY(0)}
 }
 
 /* HERO */
 .hero{
-  height:80vh;
-  border-radius:24px;
+  height:75vh;
+  border-radius:20px;
   overflow:hidden;
   position:relative;
   background:url('https://images.unsplash.com/photo-1519741497674-611481863552?q=80') center/cover;
@@ -113,154 +69,131 @@ header{
   content:"";
   position:absolute;
   inset:0;
-  background:linear-gradient(to top,rgba(0,0,0,.6),transparent);
+  background:rgba(0,0,0,0.5);
 }
 
 .hero-content{
   position:absolute;
-  bottom:25px;
+  bottom:20px;
   left:20px;
   color:white;
-}
-
-.hero h1{
-  margin:0;
-  font-size:2rem;
 }
 
 /* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
-  gap:12px;
+  gap:10px;
 }
 
-/* CARD */
 .card{
-  position:relative;
   border-radius:16px;
   overflow:hidden;
   cursor:pointer;
-  box-shadow:0 8px 20px rgba(0,0,0,.1);
+  background:white;
 }
 
 .card img{
   width:100%;
-  height:220px;
+  height:200px;
   object-fit:cover;
-  transition:.4s;
 }
 
-.card:hover img{
-  transform:scale(1.08);
-}
-
-.card::after{
-  content:"💖 View";
-  position:absolute;
+/* POPUP */
+.popup{
+  position:fixed;
   inset:0;
-  background:rgba(0,0,0,0.35);
+  background:black;
   display:flex;
   align-items:center;
   justify-content:center;
-  color:white;
-  opacity:0;
-  transition:.3s;
+  z-index:999;
 }
 
-.card:hover::after{
-  opacity:1;
-}
-
-/* FLOAT HEARTS */
-@keyframes float{
-  0%{transform:translateY(0);opacity:1}
-  100%{transform:translateY(-100vh);opacity:0}
-}
-
-/* MUSIC BUTTON */
-.music-btn{
-  position:fixed;
-  bottom:18px;
-  left:18px;
-  width:52px;
-  height:52px;
-  border:none;
-  border-radius:50%;
-  background:linear-gradient(135deg,var(--primary),var(--secondary));
-  color:white;
-  font-size:20px;
-  z-index:10;
+.popup img{
+  max-width:90%;
+  border-radius:10px;
 }
 </style>
 </head>
 
 <body>
 
-<!-- 💌 ENVELOPE -->
-<div id="envelope">
-  <div class="letter" onclick="openInvite()">💌 Open Invitation</div>
-</div>
-
 <header>Sammed ❤️ Sahana</header>
 
 <div class="nav" id="nav"></div>
 <div id="pages"></div>
-
-<!-- 🎶 MUSIC -->
-<audio id="bgMusic" loop>
-  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3" type="audio/mpeg">
-</audio>
-<button class="music-btn" onclick="toggleMusic()">🎶</button>
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 const app = initializeApp({
-  apiKey:'AIzaSyCPVPeU7f8kBBJlcq-WURC2YT5rRQoYFVo',
-  authDomain:'ss-wedding-e527d.firebaseapp.com',
-  projectId:'ss-wedding-e527d'
+  apiKey: "AIzaSyCPVPeU7f8kBBJlcq-WURC2YT5rRQoYFVo",
+  authDomain: "ss-wedding-e527d.firebaseapp.com",
+  projectId: "ss-wedding-e527d"
 });
 
 const db = getFirestore(app);
 
-let data = {};
-let current = 'home';
-
-const titles = {
-  home:'Invitation',
-  haldi:'Haldi 🌼',
-  mehendi:'Mehendi 💚',
-  wedding:'Wedding 💍',
-  reception:'Reception 🎉'
+let data = {
+  home: [],
+  haldi: [],
+  mehendi: [],
+  wedding: [],
+  reception: []
 };
 
-/* LOAD */
+let current = "home";
+
+const titles = {
+  home:"Invitation",
+  haldi:"Haldi 🌼",
+  mehendi:"Mehendi 💚",
+  wedding:"Wedding 💍",
+  reception:"Reception 🎉"
+};
+
+/* ✅ SAFE LOAD */
 async function load(){
-  const snap = await getDoc(doc(db,'wedding','album'));
+  try{
+    const snap = await getDoc(doc(db,'wedding','album'));
 
-  if(snap.exists() && snap.data().data){
-    data = JSON.parse(snap.data().data);
+    if(snap.exists() && snap.data()?.data){
+      data = JSON.parse(snap.data().data);
+    }
+
+    // safety fix
+    Object.keys(data).forEach(k=>{
+      if(!Array.isArray(data[k])) data[k] = [];
+    });
+
+    renderNav();
+    renderPages();
+
+  }catch(err){
+    console.log("Load error:", err);
+    renderNav();
+    renderPages();
   }
-
-  ['home','haldi','mehendi','wedding','reception'].forEach(k=>{
-    if(!data[k]) data[k]=[];
-  });
-
-  render();
 }
 
 /* NAV */
 function renderNav(){
-  const nav=document.getElementById("nav");
+  const nav = document.getElementById("nav");
   nav.innerHTML="";
 
   Object.keys(data).forEach(k=>{
     const b=document.createElement("button");
     b.textContent=titles[k]||k;
     if(k===current) b.classList.add("active");
-    b.onclick=()=>showPage(k);
+
+    b.onclick=()=>{
+      current=k;
+      renderNav();
+      renderPages();
+    };
+
     nav.appendChild(b);
   });
 }
@@ -272,80 +205,43 @@ function renderPages(){
 
   Object.keys(data).forEach(k=>{
     const div=document.createElement("div");
-    div.className = `page ${k===current?'active':''}`;
+    div.className=`page ${k===current?'active':''}`;
 
     if(k==="home"){
       div.innerHTML=`
-      <div class="hero">
-        <div class="hero-content">
-          <h1>Sammed ❤️ Sahana</h1>
-          <p>📅 June 22 | 📍 Terdal</p>
-        </div>
-      </div>`;
-    } else {
-      div.innerHTML=`
-      <div class="grid">
-        ${data[k].map(i=>`
-          <div class="card" onclick="showImage('${i}')">
-            <img src="${i}">
+        <div class="hero">
+          <div class="hero-content">
+            <h1>Sammed ❤️ Sahana</h1>
+            <p>Wedding Invitation 💖</p>
           </div>
-        `).join("")}
-      </div>`;
+        </div>
+      `;
+    }else{
+      div.innerHTML=`
+        <div class="grid">
+          ${(data[k]||[]).map(img=>`
+            <div class="card" onclick="showImage('${img}')">
+              <img src="${img}">
+            </div>
+          `).join("")}
+        </div>
+      `;
     }
 
     pages.appendChild(div);
   });
 }
 
-/* SWITCH */
-window.showPage=function(p){
-  current=p;
-  renderNav();
-  renderPages();
-};
-
 /* IMAGE POPUP */
 window.showImage=function(src){
   const d=document.createElement("div");
-  d.style=`
-    position:fixed;
-    inset:0;
-    background:black;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    z-index:999;
-  `;
-  d.innerHTML=`<img src="${src}" style="max-width:90%;border-radius:20px">`;
+  d.className="popup";
+  d.innerHTML=`<img src="${src}">`;
   d.onclick=()=>d.remove();
   document.body.appendChild(d);
 };
 
-/* MUSIC */
-const music=document.getElementById("bgMusic");
-window.toggleMusic=()=>music.paused?music.play():music.pause();
-
-/* ENVELOPE */
-window.openInvite=()=>{
-  document.querySelector(".letter").classList.add("open");
-  music.play();
-  setTimeout(()=>document.getElementById("envelope").remove(),600);
-};
-
-/* FLOAT HEARTS */
-setInterval(()=>{
-  const e=document.createElement("div");
-  e.innerHTML="💖";
-  e.style=`
-    position:fixed;
-    bottom:0;
-    left:${Math.random()*100}%;
-    animation:float 6s linear;
-  `;
-  document.body.appendChild(e);
-  setTimeout(()=>e.remove(),6000);
-},2000);
-
+/* START */
 load();
 </script>
 
