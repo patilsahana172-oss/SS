@@ -3,112 +3,69 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sammed ❤️ Sahana | Blockbuster Wedding</title>
+<title>Sammed ❤️ Sahana</title>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Inter:wght@300;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:wght@500;700&display=swap');
 
 *{box-sizing:border-box}
 
 body{
   margin:0;
   font-family:Inter;
-  background:#050507;
-  color:white;
+  color:#fff;
   overflow-x:hidden;
+
+  background:
+    radial-gradient(circle at 10% 20%, rgba(255,77,109,0.18), transparent 35%),
+    radial-gradient(circle at 90% 30%, rgba(124,58,237,0.18), transparent 40%),
+    radial-gradient(circle at 50% 90%, rgba(255,255,255,0.05), transparent 45%),
+    linear-gradient(180deg,#07070a,#0b0c10,#07070a);
 }
 
-/* 🎬 BLOCKBUSTER TEASER */
-#teaser{
+/* FLOAT GLOW */
+body::before,
+body::after{
+  content:"";
   position:fixed;
-  inset:0;
-  background:black;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  flex-direction:column;
-  z-index:99999;
-  overflow:hidden;
+  width:280px;
+  height:280px;
+  border-radius:50%;
+  filter:blur(120px);
+  opacity:.35;
+  z-index:-1;
 }
 
-.flash{
-  position:absolute;
-  inset:0;
-  background:white;
-  opacity:0;
-  animation:flash 3.5s ease;
-}
+body::before{background:#ff4d6d;top:15%;left:-100px}
+body::after{background:#7c3aed;bottom:10%;right:-100px}
 
-@keyframes flash{
-  0%{opacity:1}
-  12%{opacity:0}
-  100%{opacity:0}
-}
-
-.studio{
-  font-size:14px;
-  letter-spacing:4px;
-  color:#fda4af;
-  opacity:0;
-  animation:fadeUp 1s ease forwards;
-}
-
-.title{
-  font-family:'Playfair Display';
-  font-size:2.4rem;
-  margin-top:12px;
-  opacity:0;
-  transform:scale(1.4);
-  animation:zoom 1.4s ease 1.2s forwards;
-  text-align:center;
-}
-
-.tag{
-  margin-top:10px;
-  font-size:13px;
-  opacity:0;
-  animation:fadeUp 1.2s ease 2.2s forwards;
-  color:#ffffffaa;
-}
-
-.release{
-  margin-top:16px;
-  font-size:12px;
-  letter-spacing:2px;
-  opacity:0;
-  color:#e11d48;
-  animation:fadeUp 1.2s ease 3s forwards;
-}
-
-@keyframes fadeUp{
-  from{opacity:0;transform:translateY(10px)}
-  to{opacity:1;transform:translateY(0)}
-}
-
-@keyframes zoom{
-  from{opacity:0;transform:scale(1.5)}
-  to{opacity:1;transform:scale(1)}
-}
-
-/* 🌸 HEADER */
+/* HEADER */
 header{
   padding:14px;
   text-align:center;
   font-family:'Playfair Display';
-  font-size:20px;
-  background:rgba(0,0,0,0.6);
+  font-weight:600;
+
+  background:rgba(255,255,255,0.04);
+  backdrop-filter:blur(18px);
+
+  border-bottom:1px solid rgba(255,255,255,0.06);
+
   position:sticky;
   top:0;
   z-index:10;
 }
 
-/* 💍 HERO */
+/* HERO */
 .hero{
-  margin:12px;
-  height:180px;
-  border-radius:18px;
-  background:url('https://images.unsplash.com/photo-1523438097201-512ae7d59c0b?q=80') center/cover;
+  margin:14px;
+  height:190px;
+  border-radius:20px;
+  overflow:hidden;
   position:relative;
+
+  background:url('https://images.unsplash.com/photo-1523438097201-512ae7d59c0b?q=80')
+  center/cover;
 }
 
 .hero::after{
@@ -120,24 +77,29 @@ header{
 
 .hero-text{
   position:absolute;
-  bottom:12px;
-  left:12px;
+  bottom:14px;
+  left:14px;
   font-family:'Playfair Display';
 }
 
-/* 💌 INVITE */
+/* INVITE */
 .invite{
-  margin:12px;
+  margin:14px;
   padding:18px;
-  border-radius:16px;
-  background:linear-gradient(135deg,#fff,#ffe4e6);
-  color:#111;
+  border-radius:20px;
+
+  background:rgba(255,255,255,0.05);
+  backdrop-filter:blur(18px);
+
+  border:1px solid rgba(255,255,255,0.08);
+
   text-align:center;
 }
 
-.invite h1{
+.invite h2{
+  margin:0;
+  color:#ff4d6d;
   font-family:'Playfair Display';
-  color:#e11d48;
 }
 
 /* NAV */
@@ -146,7 +108,10 @@ header{
   gap:10px;
   padding:10px;
   overflow-x:auto;
-  background:rgba(0,0,0,0.85);
+
+  background:rgba(255,255,255,0.03);
+  backdrop-filter:blur(16px);
+
   position:sticky;
   top:0;
   z-index:9;
@@ -156,18 +121,42 @@ header{
   border:none;
   padding:10px 14px;
   border-radius:999px;
-  background:#1c1c2a;
-  color:white;
-  font-weight:600;
+
+  background:transparent;
+  color:rgba(255,255,255,0.7);
+
+  font-size:13px;
+  white-space:nowrap;
+  transition:.3s;
 }
 
 .nav button.active{
-  background:#e11d48;
+  color:#fff;
+  font-weight:600;
+  position:relative;
+}
+
+.nav button.active::after{
+  content:"";
+  position:absolute;
+  bottom:-6px;
+  left:25%;
+  width:50%;
+  height:2px;
+  background:#ff4d6d;
+  border-radius:10px;
 }
 
 /* PAGE */
-.page{display:none}
-.page.active{display:block;animation:fade .4s ease}
+.page{
+  display:none;
+  padding:12px;
+}
+
+.page.active{
+  display:block;
+  animation:fade .35s ease;
+}
 
 @keyframes fade{
   from{opacity:0;transform:translateY(10px)}
@@ -175,10 +164,10 @@ header{
 }
 
 /* TITLE */
-.title-sec{
-  padding:10px 12px;
-  color:#fda4af;
-  font-family:'Playfair Display';
+.title{
+  font-size:13px;
+  margin:10px 4px;
+  color:rgba(255,255,255,0.6);
 }
 
 /* GRID */
@@ -186,24 +175,35 @@ header{
   display:grid;
   grid-template-columns:repeat(2,1fr);
   gap:10px;
-  padding:12px;
-}
-
-@media(min-width:600px){
-  .grid{grid-template-columns:repeat(3,1fr);}
 }
 
 /* CARD */
 .card{
-  border-radius:14px;
+  border-radius:16px;
   overflow:hidden;
-  box-shadow:0 10px 25px rgba(0,0,0,0.5);
-  cursor:pointer;
+
+  background:rgba(255,255,255,0.04);
+  backdrop-filter:blur(14px);
+
+  border:1px solid rgba(255,255,255,0.08);
+
+  transform:translateY(15px);
+  opacity:0;
+  animation:cardIn .4s forwards;
+}
+
+.card:nth-child(1){animation-delay:.05s}
+.card:nth-child(2){animation-delay:.1s}
+.card:nth-child(3){animation-delay:.15s}
+.card:nth-child(4){animation-delay:.2s}
+
+@keyframes cardIn{
+  to{transform:translateY(0);opacity:1}
 }
 
 .card img{
   width:100%;
-  height:170px;
+  height:165px;
   object-fit:cover;
 }
 
@@ -211,7 +211,7 @@ header{
 .popup{
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,0.95);
+  background:rgba(0,0,0,0.92);
   display:flex;
   align-items:center;
   justify-content:center;
@@ -220,31 +220,34 @@ header{
 
 .popup img{
   max-width:92%;
-  border-radius:12px;
+  border-radius:18px;
+  animation:zoom .2s ease;
+}
+
+@keyframes zoom{
+  from{transform:scale(0.9)}
+  to{transform:scale(1)}
+}
+
+/* MOBILE */
+@media(max-width:480px){
+  .grid{grid-template-columns:1fr 1fr}
+  .card img{height:150px}
 }
 </style>
 </head>
 
 <body>
 
-<!-- 🎬 TEASER -->
-<div id="teaser">
-  <div class="flash"></div>
-  <div class="studio">A LOVE PRODUCTION</div>
-  <div class="title">SAMMED ❤️ SAHANA</div>
-  <div class="tag">FROM TWO HEARTS… ONE DESTINY</div>
-  <div class="release">WEDDING BLOCKBUSTER • JUNE 22</div>
-</div>
-
 <header>💍 Sammed ❤️ Sahana</header>
 
 <div class="hero">
-  <div class="hero-text">Cinematic Love Story ✨</div>
+  <div class="hero-text">Our Wedding Story ✨</div>
 </div>
 
 <div class="invite">
-  <h1>Wedding Invitation 💖</h1>
-  <p>June 22 | Terdal</p>
+  <h2>Wedding Invitation 💖</h2>
+  <p>June 22 • Terdal</p>
 </div>
 
 <div class="nav" id="nav"></div>
@@ -269,20 +272,20 @@ const db=getFirestore(app);
 let data={home:[],haldi:[],mehendi:[],wedding:[],reception:[]};
 let current="home";
 
-/* SAFE LABEL FIX (IMPORTANT) */
 const titles={
-  home:"Home 💖",
+  home:"Home",
   haldi:"Haldi 🌼",
   mehendi:"Mehendi 💚",
   wedding:"Wedding 💍",
   reception:"Reception 🎉"
 };
 
-const safeTitle = (k)=> titles[k] || k;
+const safe=(k)=>titles[k]||k;
 
 /* LOAD */
 async function load(){
   const snap=await getDoc(doc(db,"wedding","album"));
+
   if(snap.exists() && snap.data()?.data){
     data=JSON.parse(snap.data().data);
   }
@@ -290,15 +293,8 @@ async function load(){
   render();
 
   setTimeout(()=>{
-    document.getElementById("teaser").style.transition="1s";
-    document.getElementById("teaser").style.opacity="0";
-
-    setTimeout(()=>{
-      document.getElementById("teaser").style.display="none";
-      document.getElementById("music").play();
-    },1000);
-
-  },3800);
+    document.getElementById("music").play();
+  },1500);
 }
 
 /* NAV */
@@ -308,7 +304,7 @@ function nav(){
 
   Object.keys(data).forEach(k=>{
     const b=document.createElement("button");
-    b.textContent=safeTitle(k);
+    b.textContent=safe(k);
 
     if(k===current) b.classList.add("active");
 
@@ -331,7 +327,7 @@ function content(){
     d.className=`page ${k===current?'active':''}`;
 
     d.innerHTML=`
-      <div class="title-sec">✨ ${safeTitle(k)}</div>
+      <div class="title">${safe(k)}</div>
 
       <div class="grid">
         ${(data[k]||[]).map(i=>`
@@ -351,6 +347,7 @@ function render(){
   content();
 }
 
+/* POPUP */
 window.openImg=(src)=>{
   const d=document.createElement("div");
   d.className="popup";
@@ -363,4 +360,4 @@ load();
 </script>
 
 </body>
-</html>p
+</html>
