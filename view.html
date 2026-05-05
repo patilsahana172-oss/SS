@@ -19,42 +19,16 @@ body{
 
 /* HEADER */
 header{
-  padding:16px;
+  padding:14px;
   text-align:center;
-  font-family:'Playfair Display';
   font-weight:700;
-  background:rgba(0,0,0,0.85);
+  background:rgba(0,0,0,0.8);
   position:sticky;
   top:0;
   z-index:10;
 }
 
-/* 💖 GRAND HERO HEADER (NEW ADDITION) */
-.hero-banner{
-  margin:12px;
-  height:160px;
-  border-radius:18px;
-  background:url('https://images.unsplash.com/photo-1523438097201-512ae7d59c0b?q=80') center/cover;
-  position:relative;
-  overflow:hidden;
-}
-
-.hero-banner::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:linear-gradient(to top,rgba(0,0,0,0.8),transparent);
-}
-
-.hero-banner h2{
-  position:absolute;
-  bottom:12px;
-  left:12px;
-  font-family:'Playfair Display';
-  font-size:18px;
-}
-
-/* STORY GRID HOME */
+/* STORY CARDS HOME */
 .story-grid{
   display:grid;
   grid-template-columns:1fr;
@@ -63,13 +37,13 @@ header{
 }
 
 .story-card{
-  height:150px;
+  height:140px;
   border-radius:18px;
   position:relative;
   overflow:hidden;
   cursor:pointer;
+  transform:scale(1);
   transition:.3s;
-  box-shadow:0 10px 30px rgba(0,0,0,0.5);
 }
 
 .story-card:hover{
@@ -80,7 +54,7 @@ header{
   width:100%;
   height:100%;
   object-fit:cover;
-  filter:brightness(0.65);
+  filter:brightness(0.6);
 }
 
 .story-title{
@@ -91,7 +65,7 @@ header{
   font-weight:700;
 }
 
-/* SECTION */
+/* FULL SECTION */
 .section{
   display:none;
   padding:10px;
@@ -99,7 +73,7 @@ header{
 
 .section.active{
   display:block;
-  animation:fade .4s ease;
+  animation:fade .5s ease;
 }
 
 @keyframes fade{
@@ -107,22 +81,7 @@ header{
   to{opacity:1;transform:translateY(0)}
 }
 
-/* BACK BUTTON (IMPROVED) */
-.back{
-  position:sticky;
-  top:60px;
-  width:100%;
-  padding:12px;
-  background:rgba(0,0,0,0.85);
-  border:none;
-  color:white;
-  font-weight:600;
-  text-align:left;
-  border-radius:10px;
-  margin-bottom:10px;
-}
-
-/* IMAGE GRID (CINEMATIC CARDS) */
+/* IMAGE GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(2,1fr);
@@ -130,29 +89,35 @@ header{
 }
 
 .card{
-  border-radius:16px;
+  border-radius:14px;
   overflow:hidden;
   cursor:pointer;
-  transition:.3s;
-  box-shadow:0 10px 25px rgba(0,0,0,0.5);
-}
-
-.card:hover{
-  transform:scale(1.03);
 }
 
 .card img{
   width:100%;
   height:160px;
   object-fit:cover;
-  filter:contrast(1.1) brightness(0.9);
+}
+
+/* TOP BACK BUTTON */
+.back{
+  position:sticky;
+  top:60px;
+  padding:10px;
+  background:rgba(0,0,0,0.8);
+  border:none;
+  color:white;
+  width:100%;
+  text-align:left;
+  font-weight:600;
 }
 
 /* POPUP */
 .popup{
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,0.95);
+  background:black;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -163,11 +128,6 @@ header{
   max-width:92%;
   border-radius:12px;
 }
-
-/* MOBILE */
-@media(min-width:600px){
-  .grid{grid-template-columns:repeat(3,1fr);}
-}
 </style>
 </head>
 
@@ -175,12 +135,7 @@ header{
 
 <header>💍 Sammed ❤️ Sahana</header>
 
-<!-- CINEMATIC BANNER -->
-<div class="hero-banner">
-  <h2>Our Love Story ✨</h2>
-</div>
-
-<!-- HOME -->
+<!-- HOME STORIES -->
 <div id="home" class="story-grid"></div>
 
 <!-- SECTIONS -->
@@ -228,10 +183,12 @@ async function load(){
 
   renderHome();
 
-  setTimeout(()=>document.getElementById("music").play(),1200);
+  setTimeout(()=>{
+    document.getElementById("music").play();
+  },1500);
 }
 
-/* HOME STORY UI (YOUR ORIGINAL IDEA, ENHANCED) */
+/* HOME STORY UI */
 function renderHome(){
   const home=document.getElementById("home");
   home.innerHTML="";
@@ -244,7 +201,7 @@ function renderHome(){
     div.onclick=()=>openSection(k);
 
     div.innerHTML=`
-      <img src="${data[k][0] || 'https://images.unsplash.com/photo-1523438097201-512ae7d59c0b?q=80'}">
+      <img src="${data[k][0] || ''}">
       <div class="story-title">${titles[k]}</div>
     `;
 
@@ -263,8 +220,7 @@ function openSection(key){
   wrap.className="section active";
 
   wrap.innerHTML=`
-    <button class="back" onclick="goBack()">← Back to Story</button>
-
+    <button class="back" onclick="goBack()">← Back</button>
     <div class="grid">
       ${(data[key]||[]).map(i=>`
         <div class="card" onclick="openImg('${i}')">
@@ -283,7 +239,7 @@ window.goBack=function(){
   document.getElementById("home").style.display="grid";
 };
 
-/* POPUP */
+/* IMAGE */
 window.openImg=function(src){
   const d=document.createElement("div");
   d.className="popup";
