@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sammed ❤️ Sahana</title>
+<title>Sammed ❤️ Sahana | Blockbuster Wedding</title>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Inter:wght@300;500;600&display=swap');
@@ -18,7 +18,7 @@ body{
   overflow-x:hidden;
 }
 
-/* 🎬 TEASER INTRO (NEW IMPORTANT PART) */
+/* 🎬 BLOCKBUSTER TEASER */
 #teaser{
   position:fixed;
   inset:0;
@@ -28,36 +28,69 @@ body{
   justify-content:center;
   flex-direction:column;
   z-index:99999;
+  overflow:hidden;
 }
 
-.teaser-title{
-  font-family:'Playfair Display';
-  font-size:2.2rem;
+.flash{
+  position:absolute;
+  inset:0;
+  background:white;
   opacity:0;
-  animation:fadeIn 2s ease forwards;
+  animation:flash 3.5s ease;
 }
 
-.teaser-sub{
-  margin-top:10px;
+@keyframes flash{
+  0%{opacity:1}
+  12%{opacity:0}
+  100%{opacity:0}
+}
+
+.studio{
+  font-size:14px;
+  letter-spacing:4px;
   color:#fda4af;
   opacity:0;
-  animation:fadeIn 2s ease 1.5s forwards;
+  animation:fadeUp 1s ease forwards;
 }
 
-.teaser-line{
+.title{
+  font-family:'Playfair Display';
+  font-size:2.4rem;
   margin-top:12px;
-  font-size:14px;
   opacity:0;
-  animation:fadeIn 2s ease 2.2s forwards;
-  color:#fff;
+  transform:scale(1.4);
+  animation:zoom 1.4s ease 1.2s forwards;
+  text-align:center;
 }
 
-@keyframes fadeIn{
-  from{opacity:0;transform:scale(1.2)}
+.tag{
+  margin-top:10px;
+  font-size:13px;
+  opacity:0;
+  animation:fadeUp 1.2s ease 2.2s forwards;
+  color:#ffffffaa;
+}
+
+.release{
+  margin-top:16px;
+  font-size:12px;
+  letter-spacing:2px;
+  opacity:0;
+  color:#e11d48;
+  animation:fadeUp 1.2s ease 3s forwards;
+}
+
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(10px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+@keyframes zoom{
+  from{opacity:0;transform:scale(1.5)}
   to{opacity:1;transform:scale(1)}
 }
 
-/* 🌸 MAIN APP */
+/* 🌸 HEADER */
 header{
   padding:14px;
   text-align:center;
@@ -69,7 +102,7 @@ header{
   z-index:10;
 }
 
-/* HERO */
+/* 💍 HERO */
 .hero{
   margin:12px;
   height:180px;
@@ -92,7 +125,7 @@ header{
   font-family:'Playfair Display';
 }
 
-/* INVITE */
+/* 💌 INVITE */
 .invite{
   margin:12px;
   padding:18px;
@@ -125,6 +158,7 @@ header{
   border-radius:999px;
   background:#1c1c2a;
   color:white;
+  font-weight:600;
 }
 
 .nav button.active{
@@ -141,7 +175,7 @@ header{
 }
 
 /* TITLE */
-.title{
+.title-sec{
   padding:10px 12px;
   color:#fda4af;
   font-family:'Playfair Display';
@@ -193,18 +227,19 @@ header{
 
 <body>
 
-<!-- 🎬 TEASER INTRO -->
+<!-- 🎬 TEASER -->
 <div id="teaser">
-  <div class="teaser-title">Sammed ❤️ Sahana</div>
-  <div class="teaser-sub">A Love Story</div>
-  <div class="teaser-line">Coming Soon… June 22 💍</div>
+  <div class="flash"></div>
+  <div class="studio">A LOVE PRODUCTION</div>
+  <div class="title">SAMMED ❤️ SAHANA</div>
+  <div class="tag">FROM TWO HEARTS… ONE DESTINY</div>
+  <div class="release">WEDDING BLOCKBUSTER • JUNE 22</div>
 </div>
 
-<!-- MAIN APP -->
 <header>💍 Sammed ❤️ Sahana</header>
 
 <div class="hero">
-  <div class="hero-text">Our Cinematic Love Story ✨</div>
+  <div class="hero-text">Cinematic Love Story ✨</div>
 </div>
 
 <div class="invite">
@@ -234,6 +269,7 @@ const db=getFirestore(app);
 let data={home:[],haldi:[],mehendi:[],wedding:[],reception:[]};
 let current="home";
 
+/* SAFE LABEL FIX (IMPORTANT) */
 const titles={
   home:"Home 💖",
   haldi:"Haldi 🌼",
@@ -242,6 +278,9 @@ const titles={
   reception:"Reception 🎉"
 };
 
+const safeTitle = (k)=> titles[k] || k;
+
+/* LOAD */
 async function load(){
   const snap=await getDoc(doc(db,"wedding","album"));
   if(snap.exists() && snap.data()?.data){
@@ -250,20 +289,27 @@ async function load(){
 
   render();
 
-  // 🎬 TEASER EXIT
   setTimeout(()=>{
-    document.getElementById("teaser").style.display="none";
-    document.getElementById("music").play();
-  },3500);
+    document.getElementById("teaser").style.transition="1s";
+    document.getElementById("teaser").style.opacity="0";
+
+    setTimeout(()=>{
+      document.getElementById("teaser").style.display="none";
+      document.getElementById("music").play();
+    },1000);
+
+  },3800);
 }
 
+/* NAV */
 function nav(){
   const n=document.getElementById("nav");
   n.innerHTML="";
 
   Object.keys(data).forEach(k=>{
     const b=document.createElement("button");
-    b.textContent=titles[k];
+    b.textContent=safeTitle(k);
+
     if(k===current) b.classList.add("active");
 
     b.onclick=()=>{
@@ -275,6 +321,7 @@ function nav(){
   });
 }
 
+/* CONTENT */
 function content(){
   const c=document.getElementById("content");
   c.innerHTML="";
@@ -284,7 +331,7 @@ function content(){
     d.className=`page ${k===current?'active':''}`;
 
     d.innerHTML=`
-      <div class="title">${titles[k]}</div>
+      <div class="title-sec">✨ ${safeTitle(k)}</div>
 
       <div class="grid">
         ${(data[k]||[]).map(i=>`
@@ -316,4 +363,4 @@ load();
 </script>
 
 </body>
-</html>
+</html>p
