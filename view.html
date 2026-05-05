@@ -19,129 +19,116 @@ body{
 
 /* HEADER */
 header{
-  padding:14px;
+  padding:16px;
   text-align:center;
   font-family:'Playfair Display';
-  font-size:18px;
-  background:rgba(0,0,0,0.6);
-  backdrop-filter:blur(10px);
+  font-weight:700;
+  background:rgba(0,0,0,0.85);
   position:sticky;
   top:0;
   z-index:10;
 }
 
-/* NAV */
-.nav{
-  display:flex;
-  gap:10px;
-  padding:10px;
-  overflow-x:auto;
-  background:rgba(0,0,0,0.75);
-  position:sticky;
-  top:55px;
-  z-index:9;
-}
-
-.nav button{
-  border:none;
-  padding:10px 14px;
-  border-radius:999px;
-  background:#1f1f2b;
-  color:white;
-  font-weight:600;
-  white-space:nowrap;
-}
-
-.nav button.active{
-  background:#e11d48;
-}
-
-/* PAGES */
-.page{display:none}
-.page.active{display:block}
-
-/* 💍 GRAND INVITATION */
-.invite-hero{
+/* 💖 GRAND HERO HEADER (NEW ADDITION) */
+.hero-banner{
   margin:12px;
-  height:340px;
-  border-radius:22px;
+  height:160px;
+  border-radius:18px;
+  background:url('https://images.unsplash.com/photo-1523438097201-512ae7d59c0b?q=80') center/cover;
   position:relative;
   overflow:hidden;
-  background:url('https://images.unsplash.com/photo-1523438097201-512ae7d59c0b?q=80') center/cover;
-  box-shadow:0 25px 70px rgba(0,0,0,0.7);
 }
 
-.invite-hero .overlay{
+.hero-banner::after{
+  content:"";
   position:absolute;
   inset:0;
-  background:linear-gradient(to top,rgba(0,0,0,0.85),rgba(0,0,0,0.3));
+  background:linear-gradient(to top,rgba(0,0,0,0.8),transparent);
 }
 
-.invite-content{
+.hero-banner h2{
   position:absolute;
-  bottom:18px;
-  left:16px;
-  right:16px;
-  animation:fadeUp 1s ease;
-}
-
-.tag{
-  display:inline-block;
-  padding:6px 12px;
-  border-radius:999px;
-  font-size:11px;
-  background:rgba(255,255,255,0.15);
-  backdrop-filter:blur(10px);
-  margin-bottom:10px;
-}
-
-.invite-content h1{
+  bottom:12px;
+  left:12px;
   font-family:'Playfair Display';
-  font-size:26px;
-  margin:0;
+  font-size:18px;
 }
 
-.line{
-  font-size:13px;
-  opacity:0.9;
-  margin:6px 0 10px;
+/* STORY GRID HOME */
+.story-grid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:14px;
+  padding:14px;
 }
 
-.details{
-  font-size:13px;
-  opacity:0.9;
-  display:flex;
-  flex-direction:column;
-  gap:4px;
+.story-card{
+  height:150px;
+  border-radius:18px;
+  position:relative;
+  overflow:hidden;
+  cursor:pointer;
+  transition:.3s;
+  box-shadow:0 10px 30px rgba(0,0,0,0.5);
 }
 
-.quote{
-  margin-top:10px;
-  font-size:12px;
-  font-style:italic;
-  opacity:0.8;
+.story-card:hover{
+  transform:scale(1.02);
 }
 
-/* SECTION TITLE */
-.title{
-  padding:10px 14px;
-  color:#fda4af;
+.story-card img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  filter:brightness(0.65);
+}
+
+.story-title{
+  position:absolute;
+  bottom:12px;
+  left:12px;
+  font-size:18px;
   font-weight:700;
 }
 
-/* GRID */
+/* SECTION */
+.section{
+  display:none;
+  padding:10px;
+}
+
+.section.active{
+  display:block;
+  animation:fade .4s ease;
+}
+
+@keyframes fade{
+  from{opacity:0;transform:translateY(10px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* BACK BUTTON (IMPROVED) */
+.back{
+  position:sticky;
+  top:60px;
+  width:100%;
+  padding:12px;
+  background:rgba(0,0,0,0.85);
+  border:none;
+  color:white;
+  font-weight:600;
+  text-align:left;
+  border-radius:10px;
+  margin-bottom:10px;
+}
+
+/* IMAGE GRID (CINEMATIC CARDS) */
 .grid{
   display:grid;
   grid-template-columns:repeat(2,1fr);
   gap:10px;
-  padding:12px;
 }
 
-@media(min-width:600px){
-  .grid{grid-template-columns:repeat(3,1fr);}
-}
-
-/* IMAGE CARD */
 .card{
   border-radius:16px;
   overflow:hidden;
@@ -156,8 +143,9 @@ header{
 
 .card img{
   width:100%;
-  height:170px;
+  height:160px;
   object-fit:cover;
+  filter:contrast(1.1) brightness(0.9);
 }
 
 /* POPUP */
@@ -176,10 +164,9 @@ header{
   border-radius:12px;
 }
 
-/* ANIMATION */
-@keyframes fadeUp{
-  from{opacity:0;transform:translateY(15px)}
-  to{opacity:1;transform:translateY(0)}
+/* MOBILE */
+@media(min-width:600px){
+  .grid{grid-template-columns:repeat(3,1fr);}
 }
 </style>
 </head>
@@ -188,9 +175,16 @@ header{
 
 <header>💍 Sammed ❤️ Sahana</header>
 
-<div class="nav" id="nav"></div>
+<!-- CINEMATIC BANNER -->
+<div class="hero-banner">
+  <h2>Our Love Story ✨</h2>
+</div>
 
-<div id="content"></div>
+<!-- HOME -->
+<div id="home" class="story-grid"></div>
+
+<!-- SECTIONS -->
+<div id="sections"></div>
 
 <!-- MUSIC -->
 <audio id="music" loop>
@@ -217,10 +211,7 @@ let data={
   reception:[]
 };
 
-let current="home";
-
 const titles={
-  home:"Home",
   haldi:"Haldi 🌼",
   mehendi:"Mehendi 💚",
   wedding:"Wedding 💍",
@@ -230,88 +221,70 @@ const titles={
 /* LOAD */
 async function load(){
   const snap=await getDoc(doc(db,"wedding","album"));
+
   if(snap.exists() && snap.data()?.data){
     data=JSON.parse(snap.data().data);
   }
-  render();
-  setTimeout(()=>document.getElementById("music").play(),1500);
+
+  renderHome();
+
+  setTimeout(()=>document.getElementById("music").play(),1200);
 }
 
-/* NAV */
-function nav(){
-  const n=document.getElementById("nav");
-  n.innerHTML="";
+/* HOME STORY UI (YOUR ORIGINAL IDEA, ENHANCED) */
+function renderHome(){
+  const home=document.getElementById("home");
+  home.innerHTML="";
 
   Object.keys(data).forEach(k=>{
-    const b=document.createElement("button");
-    b.textContent=titles[k];
-    if(k===current) b.classList.add("active");
+    if(k==="home") return;
 
-    b.onclick=()=>{
-      current=k;
-      render();
-    };
+    const div=document.createElement("div");
+    div.className="story-card";
+    div.onclick=()=>openSection(k);
 
-    n.appendChild(b);
+    div.innerHTML=`
+      <img src="${data[k][0] || 'https://images.unsplash.com/photo-1523438097201-512ae7d59c0b?q=80'}">
+      <div class="story-title">${titles[k]}</div>
+    `;
+
+    home.appendChild(div);
   });
 }
 
-/* CONTENT */
-function content(){
-  const c=document.getElementById("content");
-  c.innerHTML="";
+/* OPEN SECTION */
+function openSection(key){
+  document.getElementById("home").style.display="none";
 
-  Object.keys(data).forEach(k=>{
-    const d=document.createElement("div");
-    d.className=`page ${current===k?'active':''}`;
+  const sec=document.getElementById("sections");
+  sec.innerHTML="";
 
-    if(k==="home"){
-      d.innerHTML=`
-        <div class="invite-hero">
-          <div class="overlay"></div>
+  const wrap=document.createElement("div");
+  wrap.className="section active";
 
-          <div class="invite-content">
-            <div class="tag">💌 WEDDING INVITATION</div>
-            <h1>Sammed ❤️ Sahana</h1>
-            <p class="line">Two hearts • One story • Forever begins</p>
+  wrap.innerHTML=`
+    <button class="back" onclick="goBack()">← Back to Story</button>
 
-            <div class="details">
-              <div>📅 June 22, 2026</div>
-              <div>📍 Terdal</div>
-            </div>
-
-            <div class="quote">
-              “A love written by destiny, celebrated with hearts together.”
-            </div>
-          </div>
+    <div class="grid">
+      ${(data[key]||[]).map(i=>`
+        <div class="card" onclick="openImg('${i}')">
+          <img src="${i}">
         </div>
-      `;
-    } else {
-      d.innerHTML=`
-        <div class="title">${titles[k]} Moments</div>
+      `).join("")}
+    </div>
+  `;
 
-        <div class="grid">
-          ${(data[k]||[]).map(i=>`
-            <div class="card" onclick="openImg('${i}')">
-              <img src="${i}">
-            </div>
-          `).join("")}
-        </div>
-      `;
-    }
-
-    c.appendChild(d);
-  });
+  sec.appendChild(wrap);
 }
 
-/* RENDER */
-function render(){
-  nav();
-  content();
-}
+/* BACK */
+window.goBack=function(){
+  document.getElementById("sections").innerHTML="";
+  document.getElementById("home").style.display="grid";
+};
 
-/* IMAGE */
-window.openImg=(src)=>{
+/* POPUP */
+window.openImg=function(src){
   const d=document.createElement("div");
   d.className="popup";
   d.innerHTML=`<img src="${src}">`;
