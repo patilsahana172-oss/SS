@@ -1,66 +1,343 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width">
-<title>Admin 💖</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SS Wedding Admin 💖</title>
 
 <style>
-body{font-family:system-ui;background:#fff1f2;margin:0}
-header{background:#e11d48;color:white;text-align:center;padding:10px}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:10px}
-img{width:100%;border-radius:10px}
+:root{
+  --primary:#e11d48;
+  --secondary:#fb7185;
+  --bg:#fff1f2;
+  --card:#ffffff;
+  --text:#1e293b;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:Inter,system-ui;
+  background:linear-gradient(135deg,#fff1f2,#ffe4e6);
+}
+
+/* HEADER */
+header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:16px;
+  background:rgba(255,255,255,0.7);
+  backdrop-filter:blur(15px);
+  position:sticky;
+  top:0;
+  z-index:10;
+}
+
+.logo{
+  font-weight:800;
+  color:#e11d48;
+}
+
+.actions button{
+  border:none;
+  padding:10px 14px;
+  border-radius:12px;
+  background:linear-gradient(135deg,#e11d48,#fb7185);
+  color:white;
+  margin-left:6px;
+  cursor:pointer;
+}
+
+/* NAV */
+.nav{
+  display:flex;
+  gap:10px;
+  padding:12px;
+  overflow-x:auto;
+}
+
+.nav button{
+  border:none;
+  padding:8px 16px;
+  border-radius:999px;
+  background:white;
+  font-weight:600;
+}
+
+.nav button.active{
+  background:linear-gradient(135deg,#e11d48,#fb7185);
+  color:white;
+}
+
+/* PAGE */
+.page{
+  display:none;
+  padding:16px;
+}
+
+.page.active{
+  display:block;
+  animation:fade .4s;
+}
+
+@keyframes fade{
+  from{opacity:0;transform:translateY(10px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* GRID */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:12px;
+}
+
+/* CARD */
+.card{
+  border-radius:18px;
+  overflow:hidden;
+  background:white;
+  box-shadow:0 8px 20px rgba(0,0,0,.08);
+  position:relative;
+}
+
+.card img{
+  width:100%;
+  height:200px;
+  object-fit:cover;
+}
+
+/* DELETE BTN */
+.delete-photo{
+  position:absolute;
+  top:8px;
+  right:8px;
+  border:none;
+  background:#e11d48;
+  color:white;
+  border-radius:50%;
+  width:30px;
+  height:30px;
+  cursor:pointer;
+}
+
+/* SECTION ACTIONS */
+.section-actions{
+  margin-bottom:10px;
+}
 </style>
 </head>
 
 <body>
 
-<header>Upload Photos 💖</header>
-<input type="file" id="file" multiple>
+<header>
+  <div class="logo">SS Wedding Admin</div>
+  <div class="actions">
+    <button onclick="addSection()">+ Section</button>
+    <button onclick="document.getElementById('file').click()">Upload</button>
+  </div>
+</header>
 
-<div id="gallery" class="grid"></div>
+<div class="nav" id="nav"></div>
+<div id="pages"></div>
+
+<input type="file" id="file" hidden multiple accept="image/*"/>
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 const app = initializeApp({
-  apiKey:'AIzaSyCPVPeU7f8kBBJlcq-WURC2YT5rRQoYFVo',
-  projectId:'ss-wedding-e527d'
+  apiKey: 'AIzaSyCPVPeU7f8kBBJlcq-WURC2YT5rRQoYFVo',
+  authDomain: 'ss-wedding-e527d.firebaseapp.com',
+  projectId: 'ss-wedding-e527d'
 });
+
 const db = getFirestore(app);
 
-let data={wedding:[]};
+const CLOUD_NAME = 'dahg3tht7';
+const UPLOAD_PRESET = 'nipieidp';
 
-async function load(){
-  const s=await getDoc(doc(db,'wedding','album'));
-  if(s.exists() && s.data().data){
-    data=JSON.parse(s.data().data);
-  }
-  if(!data.wedding) data.wedding=[];
-  render();
-}
-
-function render(){
-  document.getElementById("gallery").innerHTML=
-    data.wedding.map(i=>`<img src="${i}">`).join("");
-}
-
-document.getElementById("file").onchange=async e=>{
-  for(const f of e.target.files){
-    const form=new FormData();
-    form.append("file",f);
-    form.append("upload_preset","nipieidp");
-
-    const res=await fetch("https://api.cloudinary.com/v1_1/dahg3tht7/image/upload",{method:"POST",body:form});
-    const json=await res.json();
-    data.wedding.push(json.secure_url);
-  }
-
-  await setDoc(doc(db,'wedding','album'),{data:JSON.stringify(data)});
-  render();
+let current = 'home';
+let data = {
+  home: [],
+  haldi: [],
+  mehendi: [],
+  wedding: [],
+  reception: []
 };
 
-load();
+const sectionTitles = {
+  home:'Invitation',
+  haldi:'Haldi 🌼',
+  mehendi:'Mehendi 💚',
+  wedding:'Wedding 💍',
+  reception:'Reception 🎉'
+};
+
+/* LOAD */
+async function loadData(){
+  const snap = await getDoc(doc(db,'wedding','album'));
+  if(snap.exists() && snap.data().data){
+    data = JSON.parse(snap.data().data);
+  }
+  renderAll();
+}
+
+/* SAVE */
+async function saveData(){
+  await setDoc(doc(db,'wedding','album'), {
+    data: JSON.stringify(data)
+  });
+}
+
+/* NAV */
+function renderNav(){
+  const nav = document.getElementById('nav');
+  nav.innerHTML = '';
+  Object.keys(data).forEach(key=>{
+    const btn = document.createElement('button');
+    btn.textContent = sectionTitles[key] || key;
+    if(key === current) btn.classList.add('active');
+    btn.onclick = ()=>showPage(key);
+    nav.appendChild(btn);
+  });
+}
+
+/* PAGES */
+function renderPages(){
+  const pages = document.getElementById('pages');
+  pages.innerHTML = '';
+
+  Object.keys(data).forEach(key=>{
+    const page = document.createElement('div');
+    page.className = `page ${key === current ? 'active':''}`;
+    page.id = key;
+
+    if(key === 'home'){
+      page.innerHTML = `
+        <h2>💌 Wedding Invitation</h2>
+        <p>Sammed ❤️ Sahana</p>
+        <p>📅 June 22</p>
+      `;
+    } else {
+      page.innerHTML = `
+        <h2>${sectionTitles[key] || key}</h2>
+
+        <div class="section-actions">
+          <button onclick="showPage('${key}');document.getElementById('file').click()">Upload Photos</button>
+          <button onclick="deleteSection('${key}')">Delete Section</button>
+        </div>
+
+        <div class="grid" id="${key}Grid"></div>
+      `;
+    }
+
+    pages.appendChild(page);
+  });
+}
+
+/* GALLERY */
+function renderGallery(){
+  Object.keys(data).forEach(key=>{
+    const grid = document.getElementById(`${key}Grid`);
+    if(!grid) return;
+
+    grid.innerHTML = '';
+    data[key].forEach((img,index)=>{
+      grid.innerHTML += `
+        <div class="card">
+          <img src="${img}" />
+          <button class="delete-photo" onclick="deleteImage('${key}',${index})">×</button>
+        </div>
+      `;
+    });
+  });
+}
+
+/* RENDER */
+function renderAll(){
+  renderNav();
+  renderPages();
+  renderGallery();
+}
+
+/* PAGE SWITCH */
+window.showPage = function(page){
+  current = page;
+  renderAll();
+};
+
+/* ADD SECTION */
+window.addSection = async function(){
+  const name = prompt("Enter section name");
+  if(!name) return;
+
+  const key = name.toLowerCase().replace(/\s+/g,'');
+  if(data[key]) return alert("Already exists");
+
+  data[key] = [];
+  sectionTitles[key] = name;
+
+  current = key;
+  await saveData();
+  renderAll();
+};
+
+/* DELETE SECTION */
+window.deleteSection = async function(section){
+  if(['home','haldi','mehendi','wedding','reception'].includes(section)){
+    alert("Cannot delete default section");
+    return;
+  }
+
+  if(!confirm("Delete section?")) return;
+
+  delete data[section];
+  delete sectionTitles[section];
+
+  current = 'home';
+  await saveData();
+  renderAll();
+};
+
+/* DELETE IMAGE */
+window.deleteImage = async function(section,index){
+  if(!confirm("Delete photo?")) return;
+  data[section].splice(index,1);
+  await saveData();
+  renderGallery();
+};
+
+/* UPLOAD */
+document.getElementById('file').onchange = async e=>{
+  const files = [...e.target.files];
+  if(!files.length || current === 'home') return;
+
+  for(const file of files){
+    const form = new FormData();
+    form.append('file',file);
+    form.append('upload_preset',UPLOAD_PRESET);
+
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,{
+      method:'POST',
+      body:form
+    });
+
+    const json = await res.json();
+    if(json.secure_url){
+      data[current].push(json.secure_url);
+    }
+  }
+
+  await saveData();
+  renderGallery();
+  e.target.value='';
+};
+
+loadData();
 </script>
 
 </body>
