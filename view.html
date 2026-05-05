@@ -13,67 +13,114 @@
 body{
   margin:0;
   font-family:Inter;
-  background:#0b0b0f;
+  background:radial-gradient(circle at top,#1a1a2e,#0b0b0f);
   color:white;
 }
 
 /* HEADER */
 header{
-  padding:14px;
+  padding:16px;
   text-align:center;
-  font-weight:700;
-  background:rgba(0,0,0,0.8);
+  font-family:'Playfair Display';
+  font-size:20px;
+  background:rgba(0,0,0,0.6);
+  backdrop-filter:blur(10px);
   position:sticky;
   top:0;
   z-index:10;
 }
 
-/* STORY CARDS HOME */
-.story-grid{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:14px;
-  padding:14px;
+/* HERO CARD (HOME) */
+.hero{
+  margin:16px;
+  padding:24px;
+  border-radius:22px;
+  background:linear-gradient(135deg,#ffffff,#ffe4e6);
+  color:#111;
+  text-align:center;
+  box-shadow:0 20px 50px rgba(255,0,80,0.2);
 }
 
-.story-card{
-  height:140px;
-  border-radius:18px;
-  position:relative;
+.hero h1{
+  font-family:'Playfair Display';
+  color:#e11d48;
+  margin:0;
+}
+
+/* SECTION GRID (UNIFIED STYLE) */
+.section-title{
+  padding:10px 16px;
+  font-size:18px;
+  font-weight:700;
+  color:#fda4af;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+  padding:12px;
+}
+
+@media(min-width:600px){
+  .grid{grid-template-columns:repeat(3,1fr);}
+}
+
+/* CARD STYLE (USED EVERYWHERE SAME LOOK) */
+.card{
+  border-radius:16px;
   overflow:hidden;
+  position:relative;
   cursor:pointer;
-  transform:scale(1);
+  box-shadow:0 10px 25px rgba(0,0,0,0.4);
   transition:.3s;
 }
 
-.story-card:hover{
-  transform:scale(1.02);
+.card:hover{
+  transform:scale(1.03);
 }
 
-.story-card img{
+.card img{
   width:100%;
-  height:100%;
+  height:170px;
   object-fit:cover;
-  filter:brightness(0.6);
-}
-
-.story-title{
-  position:absolute;
-  bottom:12px;
-  left:12px;
-  font-size:18px;
-  font-weight:700;
-}
-
-/* FULL SECTION */
-.section{
-  display:none;
-  padding:10px;
-}
-
-.section.active{
   display:block;
+}
+
+/* NAV */
+.nav{
+  display:flex;
+  gap:10px;
+  padding:10px;
+  overflow-x:auto;
+  background:rgba(0,0,0,0.7);
+  position:sticky;
+  top:60px;
+  z-index:9;
+}
+
+.nav button{
+  border:none;
+  padding:10px 14px;
+  border-radius:999px;
+  background:#1f1f2b;
+  color:white;
+  white-space:nowrap;
+  font-weight:600;
+}
+
+.nav button.active{
+  background:#e11d48;
+}
+
+/* PAGE SYSTEM */
+.page{
+  display:none;
   animation:fade .5s ease;
+}
+
+.page.active{
+  display:block;
 }
 
 @keyframes fade{
@@ -81,43 +128,21 @@ header{
   to{opacity:1;transform:translateY(0)}
 }
 
-/* IMAGE GRID */
-.grid{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:10px;
-}
-
-.card{
-  border-radius:14px;
-  overflow:hidden;
-  cursor:pointer;
-}
-
-.card img{
-  width:100%;
-  height:160px;
-  object-fit:cover;
-}
-
-/* TOP BACK BUTTON */
-.back{
-  position:sticky;
-  top:60px;
-  padding:10px;
-  background:rgba(0,0,0,0.8);
-  border:none;
-  color:white;
-  width:100%;
-  text-align:left;
-  font-weight:600;
+/* INVITATION CARD */
+.invite{
+  margin:16px;
+  padding:18px;
+  border-radius:18px;
+  background:linear-gradient(135deg,#fff,#ffe4e6);
+  color:#111;
+  text-align:center;
 }
 
 /* POPUP */
 .popup{
   position:fixed;
   inset:0;
-  background:black;
+  background:rgba(0,0,0,0.95);
   display:flex;
   align-items:center;
   justify-content:center;
@@ -128,6 +153,17 @@ header{
   max-width:92%;
   border-radius:12px;
 }
+
+/* BACK BUTTON */
+.back{
+  margin:10px 12px;
+  padding:10px;
+  border:none;
+  border-radius:10px;
+  background:#e11d48;
+  color:white;
+  font-weight:600;
+}
 </style>
 </head>
 
@@ -135,11 +171,11 @@ header{
 
 <header>💍 Sammed ❤️ Sahana</header>
 
-<!-- HOME STORIES -->
-<div id="home" class="story-grid"></div>
+<!-- NAV -->
+<div class="nav" id="nav"></div>
 
-<!-- SECTIONS -->
-<div id="sections"></div>
+<!-- CONTENT -->
+<div id="content"></div>
 
 <!-- MUSIC -->
 <audio id="music" loop>
@@ -166,7 +202,10 @@ let data={
   reception:[]
 };
 
+let current="home";
+
 const titles={
+  home:"Home 💌",
   haldi:"Haldi 🌼",
   mehendi:"Mehendi 💚",
   wedding:"Wedding 💍",
@@ -181,66 +220,87 @@ async function load(){
     data=JSON.parse(snap.data().data);
   }
 
-  renderHome();
+  render();
 
   setTimeout(()=>{
     document.getElementById("music").play();
   },1500);
 }
 
-/* HOME STORY UI */
-function renderHome(){
-  const home=document.getElementById("home");
-  home.innerHTML="";
+/* NAV */
+function nav(){
+  const n=document.getElementById("nav");
+  n.innerHTML="";
 
   Object.keys(data).forEach(k=>{
-    if(k==="home") return;
+    const b=document.createElement("button");
+    b.textContent=titles[k];
+    if(k===current) b.classList.add("active");
 
-    const div=document.createElement("div");
-    div.className="story-card";
-    div.onclick=()=>openSection(k);
+    b.onclick=()=>{
+      current=k;
+      render();
+    };
 
-    div.innerHTML=`
-      <img src="${data[k][0] || ''}">
-      <div class="story-title">${titles[k]}</div>
-    `;
-
-    home.appendChild(div);
+    n.appendChild(b);
   });
 }
 
-/* OPEN SECTION */
-function openSection(key){
-  document.getElementById("home").style.display="none";
+/* CONTENT */
+function content(){
+  const c=document.getElementById("content");
+  c.innerHTML="";
 
-  const sec=document.getElementById("sections");
-  sec.innerHTML="";
+  /* HOME */
+  const home=document.createElement("div");
+  home.className=`page ${current==='home'?'active':''}`;
 
-  const wrap=document.createElement("div");
-  wrap.className="section active";
+  home.innerHTML=`
+    <div class="hero">
+      <h1>Sammed ❤️ Sahana</h1>
+      <p>Our Love Story 💍</p>
+    </div>
 
-  wrap.innerHTML=`
-    <button class="back" onclick="goBack()">← Back</button>
-    <div class="grid">
-      ${(data[key]||[]).map(i=>`
-        <div class="card" onclick="openImg('${i}')">
-          <img src="${i}">
-        </div>
-      `).join("")}
+    <div class="invite">
+      <h3>Wedding Invitation</h3>
+      <p>📅 June 22</p>
+      <p>📍 Terdal</p>
     </div>
   `;
 
-  sec.appendChild(wrap);
+  c.appendChild(home);
+
+  /* SECTIONS */
+  Object.keys(data).forEach(k=>{
+    if(k==="home") return;
+
+    const d=document.createElement("div");
+    d.className=`page ${current===k?'active':''}`;
+
+    d.innerHTML=`
+      <div class="section-title">${titles[k]}</div>
+
+      <div class="grid">
+        ${(data[k]||[]).map(i=>`
+          <div class="card" onclick="openImg('${i}')">
+            <img src="${i}">
+          </div>
+        `).join("")}
+      </div>
+    `;
+
+    c.appendChild(d);
+  });
 }
 
-/* BACK */
-window.goBack=function(){
-  document.getElementById("sections").innerHTML="";
-  document.getElementById("home").style.display="grid";
-};
+/* RENDER */
+function render(){
+  nav();
+  content();
+}
 
-/* IMAGE */
-window.openImg=function(src){
+/* IMAGE POPUP */
+window.openImg=(src)=>{
   const d=document.createElement("div");
   d.className="popup";
   d.innerHTML=`<img src="${src}">`;
